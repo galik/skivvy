@@ -25,7 +25,7 @@ skivvydir = $(prefix)/include/skivvy
 plugindir = $(datadir)/skivvy/plugins
 docsdir = $(datadir)/skivvy
 
-# Required for GCC on some systems it seems
+# Required for GCC on some systems it seems 
 #	-D _GLIBCXX_USE_NANOSLEEP
 #	-D __GXX_EXPERIMENTAL_CXX0X__
 #	-D _GLIBCXX_USE_SCHED_YIELD
