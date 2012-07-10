@@ -1,0 +1,155 @@
+# /*-----------------------------------------------------------------.
+# | Copyright (C) 2011 Galik grafterman@googlemail.com               |
+# '------------------------------------------------------------------'
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+# 02110-1301, USA.
+# 
+# http://www.gnu.org/licenses/gpl-2.0.html
+# 
+# '-----------------------------------------------------------------*/
+
+# Example Config for IrcBot called Skivvy
+# Rename this file to skivvy.conf
+
+# Log to file rather than console
+#log_file: skivvy.log
+
+# Configure server (server_host MUST be set)
+server_host: irc.quakenet.org
+server_port: 6667
+server_pass: <password> (usually blank)
+server_retries: 30
+
+# Alternate names
+nick: Skivvy
+nick: Skavvy
+nick: Skevvy
+user: Skivvy
+mode: 0
+
+# Real Name (yeah right)
+real: Skivvy
+
+# Use this to register with nickserv/Q etc
+# The variable $me is replaced by the nick
+on_connect: /msg Q@CServe.quakenet.org AUTH Skivvy <password>
+on_connect: /mode $me +x
+
+# Set the plugin dirs where plugins can be found
+plugin_dir: /usr/share/skivvy/plugins
+plugin_dir: /usr/local/share/skivvy/plugins
+
+# Select which plugin files are loaded from the plugin folder.
+plugin: skivvy-plugin-artibot.so
+plugin: skivvy-plugin-chanops.so
+plugin: skivvy-plugin-compile.so
+plugin: skivvy-plugin-diction.so
+plugin: skivvy-plugin-grabber.so
+plugin: skivvy-plugin-oastats.so
+plugin: skivvy-plugin-pfinder.so
+plugin: skivvy-plugin-rquotes.so
+plugin: skivvy-plugin-rserver.so
+plugin: skivvy-plugin-trivial.so
+
+# The first thing the bot says when joining a channel
+# A random welcome will be selected.
+welcome: Hi!
+welcome: Hello cruel world...
+welcome: I'm just a poor bot nobody loves me...
+welcome: I think, therefore... hmmm... something important...
+welcome: The bots are back in town!
+
+# The last thing the bot says when parting a channel
+# A random goodbye will be selected.
+goodbye: Goodbye!
+goodbye: Adios amigos!
+goodbye: I'll be back!
+goodbye: Weeeee'll meet agaaain, don't know wheeere don't know wheeeeeen...
+
+# This password protects critical commands like !die
+password: <password>
+
+# Nick's that are ignored
+ban MrTrouble
+ban MsDoubleTrouble
+
+# Channels to join
+join: #mychan1
+join: #mychan2 password // for channels with passwords (keys)
+
+# Greet people as they join the channel
+# (* is replaced by the nick)
+greet: Hello *.
+greet: Hi *, how are you today?
+greet: Welcome *.
+greet: Howdy *, fancy meeting you here!
+greet: Yo! * in da house!
+greet: Good to see you *.
+greet: Hello *, so glad you came.
+
+#-------------------------------------------
+# PLUGINS PROPERTIES
+#-------------------------------------------
+
+# artibot
+artibot.ai: amanda
+#artibot.ai: megahal
+artibot.respond: direct
+artibot.ignore: Hit|er
+artibot.ignore: Hoagie
+artibot.ignore: Dr_Hoagie
+artibot.ignore: Dr_Remmiz
+artibot.banned_word_file: airtibot-banned-words.txt
+#artibot.autoread: 10800
+artibot.random_acts_file: artibot-random-acts.txt
+artibot.random_acts_trigger: 50 // [0-100]%
+artibot.offender_file: artibot-offenders.txt
+
+# chanops
+chanops.user_file: chanops-users.txt
+chanops.ban_file: chanops-bans.txt
+
+# diction
+diction.host: pan.alephnull.com
+diction.port: 2628
+
+# grabber
+grabber.data_file: grabber-data.txt
+
+# oastats
+oastats.max_results: 10
+oastats.delay: 21600 // seconds (= 6 hours)
+oastats.divisions: 4 // number of divisions to list
+
+# rquotes
+quote.mindelay: 60
+quote.maxdelay: 7200
+joke.mindelay: 60
+joke.maxdelay: 7200
+
+# pfinder
+pfinder.links_file: pfinder-links.txt
+pfinder.max_matches: 8
+pfinder.cvar_file: pfinder-cvars.txt
+pfinder.cvar_max_results: 8
+pfinder.tell_file: pfinder-tells.txt";
+
+
+# trivial
+quiz.file: trivial-quiz.txt
+answer.time: 15
+
+
