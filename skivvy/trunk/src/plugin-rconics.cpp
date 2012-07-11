@@ -84,6 +84,17 @@ const siz RCON_STATS_INTERVAL_DEFAULT = 5;
 const str RCON_ADMINKILL_USERS = "rconics.adminkill.user";
 const str RCON_ADMINKILL_PASS = "rconics.adminkill.pass";
 
+const str BAN_BY_GUID = "rconics.autoban.guid";
+const str UNBAN_BY_GUID = "rconics.autounban.guid";
+const str BAN_BY_IP = "rconics.autoban.ip";
+const str UNBAN_BY_IP = "rconics.autounban.ip";
+const str BAN_BY_NAME = "rconics.autoban.name";
+const str UNBAN_BY_NAME = "rconics.autounban.name";
+const str BAN_BY_LOC = "rconics.autoban.loc";
+const str UNBAN_BY_LOC = "rconics.autounban.loc";
+const str BAN_BY_ISP = "rconics.autoban.isp";
+const str UNBAN_BY_ISP = "rconics.autounban.isp";
+
 // alias: GUID, name
 // ip: GUID, IP
 // stat: tot_score, tot_ping, tot_samples
@@ -752,8 +763,8 @@ void write_namelog_to_db(const str& text)
 		std::istringstream iss(line);
 		if(std::getline(iss >> skip >> guid >> ip >> std::ws, names))
 		{
-			if(ip.size() > 7)
-				ip = ip.substr(0, ip.size() - 2);
+			if(ip.size() < 7)
+				continue;
 			bug("skip : " << skip);
 			bug("guid : " << guid);
 			bug("ip   : " << ip);
@@ -772,76 +783,59 @@ void write_namelog_to_db(const str& text)
 	}
 }
 
-//str RConicsIrcBotPlugin::var_sub(const str& s, const str& server)
-//{
-//	// "${guid:1DE6454E} ^3is ADMIN. If you kick, you will be punished..."
-//
-//	const str VAR_GUID = "guid:"; // Player name from GUID database
-//	const str VAR_PLAYER = "player:"; // current player GUID
-//
-//	str ret = s;
-//	siz pos, end;
-//	bool subst = true;
-//	while(subst)
-//	{
-//		subst = false;
-//		if((pos = ret.find("${")) != str::npos)
-//		{
-//			if((end = ret.find("}", pos)) != str::npos)
-//			{
-//				if(ret.substr(pos + 2, VAR_PLAYER.size()) == VAR_PLAYER)
-//				{
-//					str guid = ret.substr(pos + 2 + VAR_PLAYER.size(), 8);
-//					if(is_guid(guid))
-//					{
-//						lock_guard lock(curr_mtx);
-//						player_set_citer p = stl::find_if(curr[server],[guid](const player& p)
-//						{
-//							return p.guid == guid;
-//						});
-//
-//						if(p != curr[server].end())
-//						{
-//							ret.replace(pos, end - pos + 1, p->name);
-//							subst = true;
-//						}
-//						else
-//						{
-//							ret = ""; // name not found, message is irrelevant
-//						}
-//					}
-//				}
-//				else if(ret.substr(pos + 2, VAR_GUID.size()) == VAR_GUID)
-//				{
-//					str guid = ret.substr(pos + 2 + VAR_GUID.size(), 8);
-//					if(is_guid(guid))
-//					{
-//						rec r;
-//						ent_set names;
-//
-//						std::ifstream ifs("data/rconics-db-name.txt");
-//						{
-//							lock_guard lock(db_mtx);
-//							while(ifs >> r)
-//								if(lowercase(r.guid) == lowercase(guid))
-//									names.insert(ent(r.count, r.data));
-//						}
-//						ifs.close();
-//
-//						if(!names.empty())
-//						{
-//							ret.replace(pos, end - pos + 1, names.begin()->data);
-//							subst = true;
-//						}
-//					}
-//				}
-//				if(!subst)
-//					ret.replace(pos, end - pos + 1, "");
-//			}
-//		}
-//	}
-//	return ret;
-//}
+void log_namelog(const str& text)
+{
+	// ^2|<^8MAD^1Kitty Too^7: ^2why no? ))
+	// ^30  (*2BC45233)  77.123.107.231^7 '^2BDSM^7'
+	// ^31  (*1DE6454E)  90.192.206.146^7 '^4A^5ngel ^4E^5yes^7'
+	// -  (*4A8B117F)    86.1.110.133^7 'Andrius [LTU]^7'
+	// ^33  (*F1147474)    37.47.104.24^7 'UFK POLAND^7'
+	// ^34  (*ACF58F90)  95.118.224.206^7 '^1Vamp ^3G^1i^3r^1l^7'
+	// ^35  (*EAF1A70C)  88.114.147.124^7 ':D^7'
+	// -  (*E5DAD0FE)   201.37.205.57^7 '^1*^7M^1*^7^^1p^7ev^7'
+	// -  (*B45368DF)    82.50.105.85^7 'Kiloren^7'
+	// ^36  (*5F9DFD1F)      86.2.36.24^7 'SodaMan^7'
+	// -  (*11045255)   79.154.175.14^7 '^3R^^2ocket^7' '^4G^1O^3O^4G^2L^1E^7'
+
+	static std::mutex mtx;
+	static str_deq lines;
+
+	std::istringstream iss(text);
+	str line, skip, num, guid, ip, names, name;
+	while(std::getline(iss, line))
+	{
+//		bug(line);
+
+		std::istringstream iss(line);
+		if(!std::getline(iss >> num >> guid >> ip >> std::ws, names) || num == "!namelog:")
+			continue;
+
+		if(guid.size() != 11 || guid[0] != '(' || guid [1] != '*' || !is_ip(ip))
+			continue;
+
+		guid = guid.substr(2, 8);
+
+//		bug("num  : " << num);
+//		bug("guid : " << guid);
+//		bug("ip   : " << ip);
+//		bug("names: " << names);
+
+		// Don't log identical lines from the previous 100 unique entries
+		{
+			lock_guard lock(mtx);
+			if(stl::find(lines, line) != lines.end())
+				continue;
+			lines.push_back(line);
+			while(lines.size() > 100) // keep max 100 entries
+				lines.pop_front();
+		}
+
+		iss.clear();
+		iss.str(names);
+		while(std::getline(iss, skip, '\'') && std::getline(iss, name, '\''))
+			log("NAMELOG    : " << num << ' ' << guid << ' ' << ip << ' ' << name);
+	}
+}
 
 str RConicsIrcBotPlugin::var_sub(const str& s, const str& server)
 {
@@ -915,7 +909,7 @@ str RConicsIrcBotPlugin::var_sub(const str& s, const str& server)
 	return ret;
 }
 
-bool autoban_ckeck(const str& server, const str& line, str& ban)
+bool autoban_check(const str& server, const str& line, str& ban)
 {
 	// goo {04:00,10:00} "ban text"
 	str srv, stime, etime, skip;
@@ -947,6 +941,18 @@ bool autoban_ckeck(const str& server, const str& line, str& ban)
 
 	return ios::getstring(iss, ban);
 }
+
+bool autounban_check(const str& server, const str& line, str& ban)
+{
+	// goo "ban text"
+	str srv, skip;
+	std::istringstream iss(line);
+	if(!(iss >> srv) || srv != server)
+		return false;
+
+	return ios::getstring(iss, ban);
+}
+
 void RConicsIrcBotPlugin::regular_poll()
 {
 	bug_func();
@@ -1066,6 +1072,22 @@ void RConicsIrcBotPlugin::regular_poll()
 
 	bug("== GET INTEL ==");
 
+//	1337034130 ^31  (*13108D19)  217.129.144.83^7 'TomStrong^7'
+//	1337034130 ^32  (*1DE6454E)  90.192.206.146^7 'UntamedPlayer^7'
+//	1337034130 ^34  (*A7258494)   83.134.74.251^7 '^3Donut^7'
+//	1337034130 ^35  (*68CF727A)    78.88.59.211^7 'Kurys^7'
+//	1337034130 ^36  (*085C0E2D)   58.164.33.156^7 'Wark^7'
+//	1337034130 -  (*AFB53C41)  98.199.180.216^7 '^6Nyan ^4Cat^7'
+//	1337034130 ^39  (*7C34849D)   83.221.71.197^7 'Kalium^7'
+//	1337034130 ^310 (*6833060B)    77.23.244.17^7 'UnnamedPlayer^7'
+//	1337034130 -  (*6B2E4717)   24.164.36.201^7 '/opt^7'
+//	1337034130 ^30  (*11C09C92)  79.219.184.194^7 '^3^1S^7how^1T^7ime^3^7'
+//	1337034130 ^33  (*066CABFD)   46.16.112.119^7 'Jaagy^7'
+//	1337034130 ^37  (*3C7E7278)   78.13.199.176^7 '{^.^}^7'
+//	1337034130 -  (*80395AE4)    77.202.178.8^7 'SmoKKinG^7'
+//	1337034130 ^38  (*80A2CC68)  81.109.248.108^7 '^3Fish^7'
+
+
 	struct dbent
 	{
 		str guid, ip, name;
@@ -1106,7 +1128,17 @@ void RConicsIrcBotPlugin::regular_poll()
 		// before attempting the second.
 		bool parsed = false;
 
-		str res = rcon("!listplayers", s->second);
+		str res = rcon("!namelog", s->second);
+
+		if(trim(res).empty())
+		{
+			log("No response from rcon !namelog.");
+			continue;
+		}
+
+		log_namelog(res);
+
+		res = rcon("!listplayers", s->second);
 
 		if(trim(res).empty())
 		{
@@ -1140,8 +1172,7 @@ void RConicsIrcBotPlugin::regular_poll()
 
 			curr[server].insert(p);
 
-			str_vec autobans = bot.get_vec("rconics.autoban.guid");
-			for(const str& line: autobans)
+			for(const str& line: bot.get_vec(BAN_BY_GUID))
 			{
 				str srv, guid;
 				if(!(std::istringstream(line) >> srv >> guid))
@@ -1160,7 +1191,7 @@ void RConicsIrcBotPlugin::regular_poll()
 		if(!parsed)
 		{
 			log("Error parsing rcon !listplayers.");
-			bug(res);
+			log(res);
 			continue;
 		}
 
@@ -1205,99 +1236,105 @@ void RConicsIrcBotPlugin::regular_poll()
 
 			str name; // can be empty, if so keep name from !listplayers
 			std::getline(iss, name);
-			log("STATUS: " << p.num << ' ' << p.ping << ' ' << ip << ' '<< name);
+			log("STATUS     : " << p.num << ' ' << p.ping << ' ' << ip << ' '<< name);
 			if(!name.empty() && name != "^7")
 				p.name = name;
 
+
 			// AUTOBAN
+			str_vec reasons, unreasons;
+			str srv, ban, unban;
+
+			// Unban specific GUIDs
+			for(const str& unline: bot.get_vec(UNBAN_BY_GUID))
+				if(autounban_check(server, unline, unban) && p.guid == unban)
+					unreasons.push_back("BAN PROTECTION BY GUID: " + p.guid);
 
 			// rconics.autoban.ip: goo 188.162.80.53
 			// rconics.autoban.name: goo {04:00,10:00} "^0UnnamedPlayer^7"
 			// rconics.autoban.loc: goo {04:00,10:00} "Kingston upon Hull"
 			// rconics.autoban.isp: goo {04:00,10:00} "Virgin Media"
 
-			// AUTOBAN BY IP
+			// AUTOBAN BY TIME AND IP
 
-			str_vec autobans = bot.get_vec("rconics.autoban.ip");
-			for(const str& line: autobans)
+			for(const str& line: bot.get_vec(BAN_BY_IP))
 			{
-				str srv, ban;
-				if(!(std::istringstream(line) >> srv >> ban))
-					continue;
-				if(srv != server || ip.find(ban))
+				if(!autoban_check(server, line, ban) || ip.find(ban))
 					continue;
 
-				log("AUTO-BANNING BY IP: " << ip);
-				res = rcon("!ban " + std::to_string(p.num)	+ " AUTOBAN", s->second);
-				log("RESULT: " << res);
-				res = rcon("addip " + ip, s->second);
-				log("addip RESULT: " << res);
-				if(trim(res).empty())
-					log("No response from rcon addip.");
+				for(const str& unline: bot.get_vec(UNBAN_BY_IP))
+					if(autounban_check(server, unline, unban) && ip.find(unban))
+						unreasons.push_back("BAN PROTECTION BY IP: " + ip);
+
+				reasons.push_back("AUTO-BANNING BY IP: " + ip);
 			}
 
 			// AUTOBAN BY TIME AND NAME
 
-			autobans = bot.get_vec("rconics.autoban.name");
-			for(const str& line: autobans)
+			for(const str& line: bot.get_vec(BAN_BY_NAME))
 			{
-				str ban;
-				if(!autoban_ckeck(server, line, ban))
-					continue;
-				if(p.name != ban)
+				if(!autoban_check(server, line, ban) || p.name != ban)
 					continue;
 
-				log("AUTO-BANNING BY NAME: " << p.name);
-				res = rcon("!ban " + std::to_string(p.num)	+ " AUTOBAN", s->second);
-				log("!ban  RESULT: " << res);
-				res = rcon("addip " + ip, s->second);
-				log("addip RESULT: " << res);
-				if(trim(res).empty())
-					log("No response from rcon addip.");
+				for(const str& unline: bot.get_vec(UNBAN_BY_NAME))
+					if(autounban_check(server, unline, unban)  && p.name == unban)
+						unreasons.push_back("BAN PROTECTION BY NAME: " + p.name);
+
+				reasons.push_back("AUTO-BANNING BY NAME: " + p.name);
 			}
 
 			// AUTOBAN BY TIME AND LOCATION
 
-			autobans = bot.get_vec("rconics.autoban.loc");
-			for(const str& line: autobans)
+			for(const str& line: bot.get_vec(BAN_BY_LOC))
 			{
 				str ban;
-				if(!autoban_ckeck(server, line, ban))
+				if(!autoban_check(server, line, ban))
 					continue;
 
-				const str loc = get_loc(ip, "city");
-				if(lowercase(loc).find(lowercase(ban)) == str::npos)
+				const str loc = lowercase(get_loc(ip, "city"));
+				if(loc.find(lowercase(ban)) == str::npos)
 					continue;
 
-				log("AUTO-BANNING BY LOC: " << loc);
-				res = rcon("!ban " + std::to_string(p.num)	+ " AUTOBAN", s->second);
-				log("!ban  RESULT: " << res);
-				res = rcon("addip " + ip, s->second);
-				log("addip RESULT: " << res);
-				if(trim(res).empty())
-					log("No response from rcon addip.");
+				str srv, unban;
+				for(const str& unline: bot.get_vec(UNBAN_BY_LOC))
+					if(autounban_check(server, unline, unban)  && loc.find(lowercase(unban)) != str::npos)
+						unreasons.push_back("BAN PROTECTION BY LOC: " + get_loc(ip, "city"));
+
+				reasons.push_back("AUTO-BANNING BY LOC: " + get_loc(ip, "city"));
 			}
 
 			// AUTOBAN BY TIME AND ISP
 
-			autobans = bot.get_vec("rconics.autoban.isp");
-			for(const str& line: autobans)
+			for(const str& line: bot.get_vec(BAN_BY_ISP))
 			{
 				str ban;
-				if(!autoban_ckeck(server, line, ban))
+				if(!autoban_check(server, line, ban))
 					continue;
 
-				const str isp = get_isp(ip);
-				if(lowercase(isp).find(lowercase(ban)) == str::npos)
+				const str isp = lowercase(get_isp(ip));
+				if(isp.find(lowercase(ban)) == str::npos)
 					continue;
 
-				log("AUTO-BANNING BY ISP: " << isp);
+				str srv, unban;
+				for(const str& unline: bot.get_vec(UNBAN_BY_ISP))
+					if(autounban_check(server, unline, unban)  && isp.find(lowercase(unban)) != str::npos)
+						unreasons.push_back("BAN PROTECTION BY LOC: " + get_isp(ip));
+
+				reasons.push_back("AUTO-BANNING BY ISP: " + get_isp(ip));
+			}
+
+			for(const str& reason: reasons)
+				log(reason);
+
+			for(const str& unreason: unreasons)
+				log(unreason);
+
+			if(unreasons.empty() && !reasons.empty())
+			{
 				res = rcon("!ban " + std::to_string(p.num)	+ " AUTOBAN", s->second);
 				log("!ban  RESULT: " << res);
 				res = rcon("addip " + ip, s->second);
 				log("addip RESULT: " << res);
-				if(trim(res).empty())
-					log("No response from rcon addip.");
 			}
 
 			player_set_iter psi = curr[server].find(p);
@@ -1434,10 +1471,7 @@ bool RConicsIrcBotPlugin::whois(const message& msg)
 		+ IRC_COLOR + IRC_Black + ": " + IRC_NORMAL;
 
 	if(!is_user_valid(msg, WHOIS_USER))
-	{
-		bot.fc_reply(msg, msg.get_sender() + " is not authorised to use whois database.");
-		return false;
-	}
+		return bot.cmd_error(msg, msg.get_sender() + " is not authorised to use whois database.");
 
 	bool exact = false;
 	bool add_loc = false;
@@ -1555,21 +1589,12 @@ bool RConicsIrcBotPlugin::whois(const message& msg)
 		size += p.second.size();
 
 	std::ostringstream oss;
-	//siz max = 10;
-//	bug("chunk: " << chunk);
-//	bug("size : " << size);
 
 	const siz start = (chunk - 1) * 10;
 	const siz end = (start + 10) > size ? size : (start + 10);
 
-//	bug("start: " << start);
-//	bug("end  : " << end);
-
 	if(((chunk - 1) * 10) > size)
-	{
-		bot.fc_reply(msg, "Batch number too high.");
-		return false;
-	}
+		return bot.cmd_error(msg, "Batch number too high.");
 
 	bot.fc_reply(msg, prompt + "Listing #" + std::to_string(chunk)
 		+ " of " + std::to_string((size + 9)/10)
@@ -1664,10 +1689,7 @@ bool RConicsIrcBotPlugin::notes(const message& msg)
 		+ IRC_COLOR + IRC_Black + ": " + IRC_NORMAL;
 
 	if(!is_user_valid(msg, WHOIS_USER))
-	{
-		bot.fc_reply(msg, msg.get_sender() + " is not authorised to use the whois database.");
-		return false;
-	}
+		return bot.cmd_error(msg, msg.get_sender() + " is not authorised to use the whois database.");
 
 	// !notes <GUID> (add <text> | mod <n> <text> | del <n> | list)
 
@@ -1700,6 +1722,7 @@ bool RConicsIrcBotPlugin::notes(const message& msg)
 		for(const str& note: notes)
 			ofs << guid << ' ' << note << '\n';
 		ofs.close();
+		bot.fc_reply(msg, prompt + "Note added for: " + guid);
 	}
 	else if(cmd == "mod")
 	{
@@ -1710,10 +1733,7 @@ bool RConicsIrcBotPlugin::notes(const message& msg)
 
 		siz n = 0;
 		if(!(std::istringstream(num) >> n))
-		{
-			bot.fc_reply(msg, prompt + "Expected line number, got: " + num);
-			return false;
-		}
+			return bot.cmd_error(msg, prompt + "Expected line number, got: " + num);
 
 		str g, note;
 		str_vec notes;
@@ -1731,6 +1751,7 @@ bool RConicsIrcBotPlugin::notes(const message& msg)
 		for(const str& note: notes)
 			ofs << guid << ' ' << note << '\n';
 		ofs.close();
+		bot.fc_reply(msg, prompt + "Note modified for: " + guid);
 	}
 	else if(cmd == "ins")
 	{
@@ -1741,10 +1762,7 @@ bool RConicsIrcBotPlugin::notes(const message& msg)
 
 		siz n = 0;
 		if(!(std::istringstream(num) >> n))
-		{
-			bot.fc_reply(msg, prompt + "Expected line number, got: " + num);
-			return false;
-		}
+			bot.cmd_error(msg, prompt + "Expected line number, got: " + num);
 
 		str g, note;
 		str_vec notes;
@@ -1768,6 +1786,7 @@ bool RConicsIrcBotPlugin::notes(const message& msg)
 		for(const str& note: notes)
 			ofs << guid << ' ' << note << '\n';
 		ofs.close();
+		bot.fc_reply(msg, prompt + "Note inserted for: " + guid);
 	}
 	else if(cmd == "del")
 	{
@@ -1778,10 +1797,7 @@ bool RConicsIrcBotPlugin::notes(const message& msg)
 
 		siz n = 0;
 		if(!(std::istringstream(num) >> n))
-		{
-			bot.fc_reply(msg, prompt + "Expected line number, got: " + num);
-			return false;
-		}
+			return bot.cmd_error(msg, prompt + "Expected line number, got: " + num);
 
 		str g, note;
 		str_vec notes;
@@ -1798,8 +1814,9 @@ bool RConicsIrcBotPlugin::notes(const message& msg)
 		for(const str& note: notes)
 			ofs << guid << ' ' << note << '\n';
 		ofs.close();
+		bot.fc_reply(msg, prompt + "Note deleted from: " + guid);
 	}
-	else if(cmd == "list")
+	else if(cmd.empty() || cmd == "list")
 	{
 		str g, note;
 		lock_guard lock(db_mtx);
@@ -1808,6 +1825,7 @@ bool RConicsIrcBotPlugin::notes(const message& msg)
 			if(g == guid)
 				bot.fc_reply(msg, prompt + " " + std::to_string(++i) + " " + note);
 		ifs.close();
+		bot.fc_reply(msg, prompt + "End of notes for: " + guid);
 	}
 	else
 	{
