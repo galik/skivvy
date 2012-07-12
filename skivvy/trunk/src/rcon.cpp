@@ -59,10 +59,10 @@ bool plog(const str& msg, bool error)
 
 bool rcon(const str& cmd, str& res, const str& host, int port)
 {
-	//bug_func();
-	//bug(" cmd: " << cmd);
-	//bug("host: " << host);
-	//bug("port: " << port);
+	// One mutex per server:port to ensure that all threads
+	// accessing the same server:port pause for a minimum time
+	// between calls to avoid flood protection.
+	static std::map<str, std::unique_ptr<std::mutex>> mtxs;
 
 	int cs = socket(PF_INET, SOCK_DGRAM, 0);
 
@@ -81,19 +81,29 @@ bool rcon(const str& cmd, str& res, const str& host, int port)
 
 	fcntl(cs, F_SETFL, O_NONBLOCK);
 
+	typedef std::chrono::steady_clock steady_clock;
+	typedef steady_clock::period period;
+	typedef steady_clock::time_point time_point;
+
+
+	const str key = host + ":" + std::to_string(port);
+	if(!mtxs[key].get())
+		mtxs[key].reset(new std::mutex);
+
+	// keep out all threads for the same server:port until the minimum time
+	// has elapsed
+	lock_guard lock(*mtxs[key]);
+	time_point pause = steady_clock::now() + std::chrono::milliseconds(1000);
+
 	const str msg = "\xFF\xFF\xFF\xFF" + cmd;
 	if(send(cs, msg.c_str(), msg.size(), 0) < 1)
 		return plog(strerror(errno), false);
 
 	res.clear();
 
-	const std::chrono::milliseconds ds(100);
-//	const std::chrono::milliseconds cs(10);
-//	const std::chrono::milliseconds ms(1);
-
 	int len;
 	char buf[1024];
-	for(siz i = 0; i < 10; ++i, std::this_thread::sleep_for(ds))
+	for(siz i = 0; i < 10; ++i, std::this_thread::sleep_for(std::chrono::milliseconds(200)))
 	{
 		for(; (len = read(cs, buf, 1024)) > 9; i = 0)
 			res.append(buf + 10, len - 10);
@@ -104,6 +114,8 @@ bool rcon(const str& cmd, str& res, const str& host, int port)
 	}
 
 	close(cs);
+
+	std::this_thread::sleep_until(pause);
 
 	return true;
 }

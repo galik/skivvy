@@ -40,6 +40,8 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <functional>
 #include <mutex>
 
+#include <cassert>
+
 #include <fstream>
 
 #include <tr1/regex>
@@ -106,6 +108,8 @@ struct cmp
 		return m1.to < m2.to;
 	}
 };
+
+std::mutex RConicsIrcBotPlugin::db_mtx;
 
 RConicsIrcBotPlugin::RConicsIrcBotPlugin(IrcBot& bot)
 : BasicIrcBotPlugin(bot)
@@ -405,20 +409,24 @@ str::size_type get_last_field(const str& line, str& val, char delim = ' ')
 	return pos;
 }
 
-bool is_guid(const str& s)
+bool is_guid(const str& s, siz min = 8)
 {
-	return s.size() <= 8
-	&& (siz)std::count_if(s.begin(), s.end(), [](char c) { return isxdigit(c); }) == s.size();
+	assert(min <= 8);
+	return s.size() <= 8 && s.size() >= min
+//	&& (siz)std::count_if(s.begin(), s.end(), [](char c) { return isxdigit(c); }) == s.size();
+	&& stl::count_if(s, std::ptr_fun<int, int>(isxdigit)) == s.size();
 }
 
 bool is_ip(const str& s)
 {
-	siz dot = std::count(s.begin(), s.end(), '.');
+	siz dot = stl::count(s, '.');
 	if(dot > 3)
 		return false;
-	siz dig = std::count_if(s.begin(), s.end(), [](char c) { return isdigit(c); });
+
+	siz dig = stl::count_if(s, std::ptr_fun<int, int>(isdigit));
 	if(dig > dot * 3 + 3)
 		return false;
+
 	return s.size() == dot + dig;
 }
 
@@ -703,7 +711,7 @@ void write_to_db(const str& db, const str& guid_in, const str& data, DB_SORT sor
 		return;
 	}
 
-	str sep;
+//	str sep;
 	str guid, line;
 	siz count;
 	str_siz_map items;
@@ -711,33 +719,36 @@ void write_to_db(const str& db, const str& guid_in, const str& data, DB_SORT sor
 	std::ifstream ifs;
 	std::ofstream ofs;
 
+	// caller locks to facilitate transactions
+//	lock_guard lock(mtx);
+
 	ifs.open(db_file);
 	ofs.open(tmp_file);
-	sep.clear();
+
 	items.clear();
 	while(std::getline(ifs >> guid >> count >> std::ws, line))
 	{
 		if(guid == guid_in)
 			items[line] = count;
 		else
-			{ ofs << sep << guid << ' ' << count << ' ' << line; sep = "\n"; }
+			ofs << guid << ' ' << count << ' ' << line << '\n';
 	}
+	ofs.close();
+	ifs.close();
+
 	if(sort == DB_SORT::MOST_POPULAR && items[data] < std::numeric_limits<siz>::max())
 		++items[data];
 	else if(sort == DB_SORT::MOST_RECENT)
 		items[data] = std::time(0);
 
-	ofs.close();
-	ifs.close();
-
 	ofs.open(db_file);
 	ifs.open(tmp_file);
-	sep.clear();
+
 	while(std::getline(ifs, line))
-		{ ofs << sep << line; sep = "\n"; }
+		ofs << line << '\n';
 	ifs.close();
 	for(const str_siz_pair& s: items)
-		{ ofs << sep << guid_in << ' ' << s.second << ' ' << s.first; sep = "\n"; }
+		ofs << guid_in << ' ' << s.second << ' ' << s.first << '\n';
 	ofs.close();
 }
 
@@ -1240,14 +1251,14 @@ void RConicsIrcBotPlugin::regular_poll()
 			if(!name.empty() && name != "^7")
 				p.name = name;
 
-
 			// AUTOBAN
 			str_vec reasons, unreasons;
-			str srv, ban, unban;
+			str srv, test;//, unban;
+			str loc, isp;
 
 			// Unban specific GUIDs
-			for(const str& unline: bot.get_vec(UNBAN_BY_GUID))
-				if(autounban_check(server, unline, unban) && p.guid == unban)
+			for(const str& line: bot.get_vec(UNBAN_BY_GUID))
+				if(autounban_check(server, line, test) && p.guid == test)
 					unreasons.push_back("BAN PROTECTION BY GUID: " + p.guid);
 
 			// rconics.autoban.ip: goo 188.162.80.53
@@ -1258,70 +1269,42 @@ void RConicsIrcBotPlugin::regular_poll()
 			// AUTOBAN BY TIME AND IP
 
 			for(const str& line: bot.get_vec(BAN_BY_IP))
-			{
-				if(!autoban_check(server, line, ban) || ip.find(ban))
-					continue;
-
-				for(const str& unline: bot.get_vec(UNBAN_BY_IP))
-					if(autounban_check(server, unline, unban) && ip.find(unban))
-						unreasons.push_back("BAN PROTECTION BY IP: " + ip);
-
-				reasons.push_back("AUTO-BANNING BY IP: " + ip);
-			}
+				if(autoban_check(server, line, test) && !ip.find(test))
+					reasons.push_back("AUTO-BANNING BY IP: " + ip);
+			for(const str& line: bot.get_vec(UNBAN_BY_IP))
+				if(autounban_check(server, line, test) && !ip.find(test))
+					unreasons.push_back("BAN PROTECTION BY IP: " + ip);
 
 			// AUTOBAN BY TIME AND NAME
 
 			for(const str& line: bot.get_vec(BAN_BY_NAME))
-			{
-				if(!autoban_check(server, line, ban) || p.name != ban)
-					continue;
-
-				for(const str& unline: bot.get_vec(UNBAN_BY_NAME))
-					if(autounban_check(server, unline, unban)  && p.name == unban)
-						unreasons.push_back("BAN PROTECTION BY NAME: " + p.name);
-
-				reasons.push_back("AUTO-BANNING BY NAME: " + p.name);
-			}
+				if(autoban_check(server, line, test) && p.name == test)
+					reasons.push_back("AUTO-BANNING BY NAME: " + p.name);
+			for(const str& line: bot.get_vec(UNBAN_BY_NAME))
+				if(autounban_check(server, line, test)  && p.name == test)
+					unreasons.push_back("BAN PROTECTION BY NAME: " + p.name);
 
 			// AUTOBAN BY TIME AND LOCATION
 
 			for(const str& line: bot.get_vec(BAN_BY_LOC))
-			{
-				str ban;
-				if(!autoban_check(server, line, ban))
-					continue;
-
-				const str loc = lowercase(get_loc(ip, "city"));
-				if(loc.find(lowercase(ban)) == str::npos)
-					continue;
-
-				str srv, unban;
-				for(const str& unline: bot.get_vec(UNBAN_BY_LOC))
-					if(autounban_check(server, unline, unban)  && loc.find(lowercase(unban)) != str::npos)
-						unreasons.push_back("BAN PROTECTION BY LOC: " + get_loc(ip, "city"));
-
-				reasons.push_back("AUTO-BANNING BY LOC: " + get_loc(ip, "city"));
-			}
+				if(autoban_check(server, line, test))
+					if(lowercase((loc = get_loc(ip, "city"))).find(lowercase(test)) != str::npos)
+						reasons.push_back("AUTO-BANNING BY LOC: " + loc);
+			for(const str& line: bot.get_vec(UNBAN_BY_LOC))
+				if(autounban_check(server, line, test))
+					if(lowercase((loc = get_loc(ip, "city"))).find(lowercase(test)) != str::npos)
+						unreasons.push_back("BAN PROTECTION BY LOC: " + loc);
 
 			// AUTOBAN BY TIME AND ISP
 
 			for(const str& line: bot.get_vec(BAN_BY_ISP))
-			{
-				str ban;
-				if(!autoban_check(server, line, ban))
-					continue;
-
-				const str isp = lowercase(get_isp(ip));
-				if(isp.find(lowercase(ban)) == str::npos)
-					continue;
-
-				str srv, unban;
-				for(const str& unline: bot.get_vec(UNBAN_BY_ISP))
-					if(autounban_check(server, unline, unban)  && isp.find(lowercase(unban)) != str::npos)
-						unreasons.push_back("BAN PROTECTION BY LOC: " + get_isp(ip));
-
-				reasons.push_back("AUTO-BANNING BY ISP: " + get_isp(ip));
-			}
+				if(autoban_check(server, line, test))
+					if(lowercase((isp = get_isp(ip))).find(lowercase(test)) != str::npos)
+						reasons.push_back("AUTO-BANNING BY ISP: " + isp);
+			for(const str& line: bot.get_vec(UNBAN_BY_ISP))
+				if(autounban_check(server, line, test))
+					if(lowercase((isp = get_isp(ip))).find(lowercase(test)) != str::npos)
+						unreasons.push_back("BAN PROTECTION BY ISP: " + isp);
 
 			for(const str& reason: reasons)
 				log(reason);
@@ -1348,21 +1331,19 @@ void RConicsIrcBotPlugin::regular_poll()
 
 				// Renaming of bots
 
-				if(!renames[server].empty() && polltime(poll::RENAMES, 60))
+				if(!polltime(poll::RENAMES, 60) || renames[server].empty())
+					continue;
+				if(renames[server].find(p.name) == renames[server].end())
+					continue;
+				oss.str("");
+				oss << "!rename " << p.num << ' ' << renames[server][p.name];
+				str ret = rcon(oss.str(), s->second);
+				bug_var(ret);
+				for(const message& msg: renames_subs[server])
 				{
-					if(renames[server].find(p.name) != renames[server].end())
-					{
-						oss.str("");
-						oss << "!rename " << p.num << ' ' << renames[server][p.name];
-						str ret = rcon(oss.str(), s->second);
-						bug_var(ret);
-						for(const message& msg: renames_subs[server])
-						{
-							std::istringstream iss(trim(ret));
-							for(str line; getline(iss, line);)
-								bot.fc_reply(msg, "{" + server + "} " + oa_to_IRC(line.c_str()));
-						}
-					}
+					std::istringstream iss(trim(ret));
+					for(str line; std::getline(iss, line);)
+						bot.fc_reply(msg, "{" + server + "} " + oa_to_IRC(line.c_str()));
 				}
 				continue;
 			}
@@ -1431,36 +1412,36 @@ bool RConicsIrcBotPlugin::rpc_get_oatop(const str& params, stats_vector& v)
 {
 	bug_func();
 
-//	IrcBotPluginPtr ptr = bot.get_plugin("OA Stats Reporter");
-//	OAStatsIrcBotPlugin* plugin = dynamic_cast<OAStatsIrcBotPlugin*>(ptr.get());
-//
-//	if(!plugin)
-//	{
-//		log("OA Stats Reporter not found.");
-//		return false;
-//	}
-//
-//	return plugin->get_oatop(params, v);
+	IrcBotPluginPtr ptr = bot.get_plugin("OA Stats Reporter");
+	OAStatsIrcBotPlugin* plugin = dynamic_cast<OAStatsIrcBotPlugin*>(ptr.get());
+//	std::shared_ptr<OAStatsIrcBotPlugin> plugin = bot.get_typed_plugin<OAStatsIrcBotPlugin>("OA Stats Reporter");
+	if(!plugin)
+	{
+		log("OA Stats Reporter not found.");
+		return false;
+	}
+
+	return plugin->get_oatop(params, v);
 
 //	return false;
 
-	IrcBotRPCService* s = bot.get_rpc_service("OA Stats Reporter");
-	if(!s)
-	{
-		log("IrcBotRPCService not present.");
-		return false;
-	}
-	bool ret = false;
-	IrcBotRPCService::call_ptr c = s->create_call();
-	//local_call* cp = dynamic_cast<local_call*>(&(*c));
-	c->set_func("get_oatop");
-	c->add_param(params);
-	c->add_param(v);
-	s->rpc(*c);
-	ret = c->get_return_value<bool>();
-	v.clear();
-	c->get_return_param(v);
-	return ret;
+//	IrcBotRPCService* s = bot.get_rpc_service("OA Stats Reporter");
+//	if(!s)
+//	{
+//		log("IrcBotRPCService not present.");
+//		return false;
+//	}
+//	bool ret = false;
+//	IrcBotRPCService::call_ptr c = s->create_call();
+//	//local_call* cp = dynamic_cast<local_call*>(&(*c));
+//	c->set_func("get_oatop");
+//	c->add_param(params);
+//	c->add_param(v);
+//	s->rpc(*c);
+//	ret = c->get_return_value<bool>();
+//	v.clear();
+//	c->get_return_param(v);
+//	return ret;
 }
 
 bool RConicsIrcBotPlugin::whois(const message& msg)
@@ -1519,7 +1500,7 @@ bool RConicsIrcBotPlugin::whois(const message& msg)
 
 	query = lowercase(query);
 
-	if(is_guid(query))
+	if(is_guid(query, 2))
 	{
 		lock_guard lock(db_mtx);
 		ifs.open("data/rconics-db-name.txt");
@@ -1540,7 +1521,7 @@ bool RConicsIrcBotPlugin::whois(const message& msg)
 
 	if(is_ip(query))
 	{
-		bug("IP Query: " << query);
+		//bug("IP Query: " << query);
 		lock_guard lock(db_mtx);
 		ifs.open("data/rconics-db-ip.txt");
 		while(ifs >> r)
@@ -1567,12 +1548,12 @@ bool RConicsIrcBotPlugin::whois(const message& msg)
 			str data = lowercase(adjust(r.data));
 			if(exact && data == query)
 			{
-				bug("found: " << data << " at " << count);
+				//bug("found: " << data << " at " << count);
 				names[r.guid].insert(ent(r.count, r.data));
 			}
 			else if(!exact && data.find(query) != str::npos)
 			{
-				bug("found: " << data << " at " << count);
+				//bug("found: " << data << " at " << count);
 				names[r.guid].insert(ent(r.count, r.data));
 			}
 		}

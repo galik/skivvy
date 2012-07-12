@@ -481,13 +481,14 @@ private:
 	typedef str_set dispatch_set;
 
 	std::mutex mtx;
-	dispatch_set s; // channels
+	//dispatch_set s; // channels
 	dispatch_map m; // channel -> dispatch_que
 	str c; // current channel being dispatched
 
 	std::future<void> fut;
 	bool dispatching = false;
 
+	bool find_next(str& c);
 	void dispatcher();
 
 public:
@@ -879,16 +880,19 @@ class IrcBot _final_
 {
 public:
 
-	typedef std::multimap<str, str> property_mmap;
+//	typedef std::multimap<str, str> property_mmap;
+	typedef std::map<str, str_vec> property_map;
 	typedef std::pair<str, str> property_pair;
-	typedef property_mmap::iterator property_iter;
-	typedef property_mmap::const_iterator property_citer;
+	typedef property_map::iterator property_iter;
+	typedef property_map::const_iterator property_citer;
 
 	typedef std::pair<property_iter, property_iter> property_iter_pair;
 	typedef std::pair<property_iter, property_iter> property_range;
 
-	typedef std::set<IrcBotPluginPtr> plugin_set;
-	typedef plugin_set::const_iterator plugin_set_citer;
+//	typedef std::set<IrcBotPluginPtr> plugin_set;
+	typedef std::vector<IrcBotPluginPtr> plugin_vec;
+	typedef plugin_vec::iterator plugin_vec_iter;
+	typedef plugin_vec::const_iterator plugin_vec_citer;
 	typedef std::set<IrcBotMonitor*> monitor_set;
 	typedef std::set<IrcBotChoiceListener*> listener_set;
 	typedef std::map<str, IrcBotRPCService*> service_map;
@@ -907,13 +911,13 @@ private:
 //	FloodController fc;
 	FloodController2 fc2;
 
-	plugin_set plugins;
+	plugin_vec plugins;
 	monitor_set monitors;
 	listener_set listeners;
 	service_map services;
 	command_map commands;
 	ban_set banned;
-	property_mmap props;
+	property_map props;
 
 	bool done;
 	bool debug; // debug mode
@@ -979,37 +983,32 @@ public:
 	 */
 	void official_join(const str& channel);
 
-	template<typename Iter>
-	void set_all(const str& s, Iter begin, Iter end)
-	{
-		property_iter_pair i = props.equal_range(s);
-		props.erase(i.first, i.second);
-		for(; begin != end; ++begin)
-		{
-			std::ostringstream oss;
-			oss << begin->second;
-			props.insert(property_pair(begin->first, oss.str()));
-		}
-	}
+//	template<typename Iter>
+//	void set_all(const str& s, Iter begin, Iter end)
+//	{
+//		property_iter_pair i = props.equal_range(s);
+//		props.erase(i.first, i.second);
+//		for(; begin != end; ++begin)
+//		{
+//			std::ostringstream oss;
+//			oss << begin->second;
+//			props.insert(property_pair(begin->first, oss.str()));
+//		}
+//	}
 
 	template<typename T>
 	T get(const str& s, const T& dflt = T())
 	{
-		property_iter_pair i = props.equal_range(s);
-		if(i.first != i.second)
-		{
-			T t;
-			std::istringstream(i.first->second) >> std::boolalpha >> t;
-			return t;
-		}
-		return dflt;
+		if(props[s].empty())
+			return dflt;
+		T t;
+		std::istringstream(props[s][0]) >> std::boolalpha >> t;
+		return t;
 	}
 
 	str get(const str& s, const str& dflt = "")
 	{
-		property_iter_pair i = props.equal_range(s);
-		if(i.first != i.second) return i.first->second;
-		return dflt;
+		return props[s].empty() ? dflt : props[s][0];
 	}
 
 	/**
@@ -1027,11 +1026,7 @@ public:
 
 	str_vec get_vec(const str& s)
 	{
-		str_vec p;
-		property_iter_pair i;
-		for(i = props.equal_range(s); i.first != i.second; ++i.first)
-			p.push_back(i.first->second);
-		return p;
+		return props[s];
 	}
 
 	bool extract_params(const message& msg, std::initializer_list<str*> args, bool report = true);
@@ -1062,6 +1057,15 @@ public:
 			if(plugin->get_name() == name)
 				return plugin;
 		return IrcBotPluginPtr(0);
+	}
+
+	template<typename Plugin>
+	std::shared_ptr<Plugin> get_typed_plugin(const str& name)
+	{
+		for(IrcBotPluginPtr plugin: plugins)
+			if(plugin->get_name() == name)
+				return std::shared_ptr<Plugin>(dynamic_cast<Plugin*>(plugin.get()));
+		return std::shared_ptr<Plugin>(0);
 	}
 
 	/**

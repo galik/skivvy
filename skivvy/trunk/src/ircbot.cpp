@@ -210,7 +210,8 @@ bool RemoteIrcServer::send_unlogged(const str& cmd)
 	mtx_ss.lock();
 	ss << cmd.substr(0, 510) << "\r\n" << std::flush;
 	mtx_ss.unlock();
-	if(!ss) log("ERROR: send failed.");
+	if(!ss)
+		log("ERROR: send failed.");
 	return ss;
 }
 
@@ -352,6 +353,7 @@ bool IrcBotPluginLoader::operator()(const str& file, IrcBot& bot)
 {
 	union { void* dl; void* dlsym; IrcBotPluginPtr(*plugin)(IrcBot&); } ptr;
 
+	log("PLUGIN LOAD: " << file);
 //	if(!(ptr.dl = dlopen(file.c_str(), RTLD_NOW|RTLD_GLOBAL)))
 	if(!(ptr.dl = dlopen(file.c_str(), RTLD_LAZY|RTLD_GLOBAL)))
 	{
@@ -377,7 +379,7 @@ bool IrcBotPluginLoader::operator()(const str& file, IrcBot& bot)
 void IrcBot::del_plugin(const str& name)
 {
 //	IrcBotPlugin* pp;
-	for(plugin_set_citer p =  plugins.begin(); p != plugins.end();)
+	for(plugin_vec_iter p =  plugins.begin(); p != plugins.end();)
 	{
 		if((*p)->get_name() == name)
 		{
@@ -411,7 +413,7 @@ std::istream& operator>>(std::istream& is, IrcBot& bot)
 	log("Loading properties:");
 	bot.props.clear();
 	str line;
-	IrcBot::property_iter p = bot.props.end();
+//	IrcBot::property_iter p = bot.props.end();
 	while(std::getline(is, line))
 	{
 		trim(line);
@@ -435,35 +437,14 @@ std::istream& operator>>(std::istream& is, IrcBot& bot)
 		else if(key == "real") bot.info.real = val;
 		else if(key == "join") bot.add_channel(val);
 		else if(key == "ban") bot.banned.insert(val);
-		else p = bot.props.insert(p, std::make_pair(key, val));
+//		else p = bot.props.insert(p, std::make_pair(key, val));
+		else bot.props[key].push_back(val);
 	}
 	if(is.eof())
 		is.clear();
 	return is;
 }
 
-//bool IrcBot::masks(const str& mask, const str& id)
-//{
-//	// SooKee!~Galik@cpc28-pool12-2-0-cust75.15-1.cable.virginmedia.com
-//	std::istringstream iss(id);
-//	str nick, user, host, domain;
-//	std::getline(iss, nick, '!');
-//	std::getline(iss, user, '@');
-//	std::getline(iss, host);
-//	str::size_type pos;
-//	if((pos = host.find_last_of('.')) != str::npos
-//	&& (pos = host.find_last_of('.', pos)) != str::npos
-//	&& pos + 1 < host.size())
-//	{
-//		domain = host.substr(pos + 1);
-//		host = host.substr(0, pos);
-//	}
-//
-//	// user  : SooKee
-//	// nick  : ~Galik
-//	// host  : cpc28-pool12-2-0-cust75.15-1.cable
-//	// domain: virginmedia.com
-//
 ////    0: *!user@host.domain
 ////    1: *!*user@host.domain
 ////    2: *!*@host.domain
@@ -474,14 +455,11 @@ std::istream& operator>>(std::istream& is, IrcBot& bot)
 ////    7: nick!*@host.domain
 ////    8: nick!*user@*.domain
 ////    9: nick!*@*.domain
-//
-//	return true;
-//}
 
 void IrcBot::add_plugin(IrcBotPluginPtr plugin)
 {
 	if(plugin)
-		this->plugins.insert(plugin);
+		this->plugins.push_back(plugin);
 	else
 		log("ERROR: Adding non-plugin.");
 }
@@ -489,7 +467,8 @@ void IrcBot::add_plugin(IrcBotPluginPtr plugin)
 bool IrcBot::has_plugin(const str& name, const str&  version)
 {
 	for(const IrcBotPluginPtr& p: plugins)
-		if(p->get_name() == name && p->get_version() >= version) return true;
+		if(p->get_name() == name && p->get_version() >= version)
+			return true;
 	return false;
 }
 
@@ -723,13 +702,13 @@ bool IrcBot::init(const str& config_file)
 
 	fc2.start();
 
-	// Initialize plugins
-	plugin_set_citer p = plugins.begin();
+	// Initialise plugins
+	plugin_vec_iter p = plugins.begin();
 	while(p != plugins.end())
 	{
 		if(!(*p))
 		{
-			log("Null plugin found during initialization.");
+			log("Null plugin found during initialisation.");
 			p = plugins.erase(p);
 			continue;
 		}
@@ -739,7 +718,7 @@ bool IrcBot::init(const str& config_file)
 			p = plugins.erase(p);
 			continue;
 		}
-		log("\tPlugin loaded: " << (*p)->get_name() << " v" << (*p)->get_version());
+		log("\tPlugin initialised: " << (*p)->get_name() << " v" << (*p)->get_version());
 		for(str& c: (*p)->list())
 		{
 			log("\t\tRegister command: " << c);
@@ -960,18 +939,18 @@ bool IrcBot::init(const str& config_file)
 							if(trim(vals).empty())
 							{
 								// report current values
-								property_range r = props.equal_range(key);
+	//							property_range r = props.equal_range(key);
 								std::ostringstream oss;
 								oss << key << ":";
-								for(; r.first != r.second; ++r.first)
-									oss << ' ' << r.first->second;
+								for(const str& val: props[key])
+									oss << ' ' << val;
 								fc_reply(msg, oss.str());
 								continue;
 							}
-							str_vec val = split(vals, ',');
+							str_vec valvec = split(vals, ',');
 							props.erase(key);
-							for(str v: val)
-								props.insert(property_pair(key, trim(v)));
+							for(str val: valvec)
+								props[key].push_back(trim(val));
 							fc_reply(msg, "Property set.");
 						}
 					}
@@ -1175,8 +1154,8 @@ void IrcBot::exec(const std::string& cmd, std::ostream* os)
 		else if(cmd == "/reload")
 		{
 			load_plugins(*this);
-			// Initialize plugins
-			plugin_set_citer p = plugins.begin();
+			// Initialise plugins
+			plugin_vec_iter p = plugins.begin();
 			while(p != plugins.end())
 			{
 				if(!(*p))
@@ -1191,7 +1170,7 @@ void IrcBot::exec(const std::string& cmd, std::ostream* os)
 					p = plugins.erase(p);
 					continue;
 				}
-				log("\tPlugin loaded: " << (*p)->get_name() << " v" << (*p)->get_version());
+				log("\tPlugin initialised: " << (*p)->get_name() << " v" << (*p)->get_version());
 				for(str& c: (*p)->list())
 				{
 					log("\t\tRegister command: " << c);
@@ -1585,39 +1564,24 @@ void FloodController::dispatcher()
 {
 	while(dispatching)
 	{
-//		bug("D: waiting");
 		std::this_thread::sleep_for(std::chrono::seconds(2));
 		if(mt_que.empty())
 			continue;
-//		bug("D: prelock");
 		lock_guard lock(mtx);
-//		bug("D: locked");
-//		bug("D: mt_que.size():" << mt_que.size());
 		if(!(++robin < mt_que.size()))
 			robin = 0;
 
-//		bug("D: robin:" << robin);
-
 		mtpq_map_iter i = mt_que.begin();
-//		bug("| i->second.size(): " << i->second.size());
 		std::advance(i, robin);
-//		bug("| i->second.size(): " << i->second.size());
 		mtpq_map_iter end = i;
 
 		while(i != mt_que.end() && i->second.empty())
 		{
-//			bug("] i->second.size(): " << i->second.size());
 			++i;
 		}
 
-		if(i == mt_que.end())
-			for(i = mt_que.begin(); i != end && i->second.empty(); ++i);
-//				bug("[ i->second.size(): " << i->second.size());
-
 		if(i == mt_que.end() || i->second.empty())
 			continue;
-
-//		bug("D: Active queue found: " << i->first);
 
 		i->second.top().func();
 		i->second.pop();
@@ -1625,7 +1589,6 @@ void FloodController::dispatcher()
 		bug("D: robin:" << robin);
 	}
 
-//	bug("D: finishing up");
 	for(mtpq_pair& p: mt_que)
 		while(!p.second.empty())
 		{
@@ -1684,40 +1647,58 @@ FloodController2::FloodController2()
 
 FloodController2::~FloodController2() {}
 
+bool FloodController2::find_next(str& c)
+{
+	if(m.empty())
+		return false;
+
+	const dispatch_map::iterator j = m.find(c);
+	dispatch_map::iterator i;
+
+	for(i = j; i != m.end(); ++i)
+	{
+		if(!i->second.empty())
+		{
+			c = i->first;
+			return true;
+		}
+	}
+
+	for(i = m.begin(); i != j; ++i)
+	{
+		if(!i->second.empty())
+		{
+			c = i->first;
+			return true;
+		}
+	}
+
+	return false;
+}
+
 void FloodController2::dispatcher()
 {
 	bug_func();
 	while(dispatching)
 	{
-		std::this_thread::sleep_for(std::chrono::milliseconds(1200));
-
-		lock_guard lock(mtx);
-		if(m.empty())
-			continue;
-
-		if(c.empty())
-			c = m.begin()->first;
-		else
+		std::this_thread::sleep_for(std::chrono::milliseconds(200));
 		{
-			dispatch_map::iterator i = ++m.find(c);
-			if(i == m.end())
-				c = m.begin()->first;
-			else
-				c = i->first;
+			lock_guard lock(mtx);
+			if(!find_next(c))
+				continue;
+			m[c].front()();
+			m[c].pop();
 		}
-
-		if(m[c].empty())
-			continue;
-
-		m[c].front()();
-		m[c].pop();
+		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 	}
+
+	log("Dispatcher ended.");
 }
 
 bool FloodController2::send(const str& channel, std::function<bool()> func)
 {
 	lock_guard lock(mtx);
-	s.insert(channel);
+	//s.insert(channel);
 	m[channel].push(func);
 	return true;
 }
@@ -1728,7 +1709,6 @@ void FloodController2::start()
 	if(!dispatching)
 	{
 		dispatching = true;
-		//mt_que_iter = mt_que.end();
 		fut = std::async(std::launch::async, [&]{ dispatcher(); });
 	}
 }
@@ -1742,6 +1722,5 @@ void FloodController2::stop()
 	if(fut.valid())
 		fut.get();
 }
-
 
 }} // sookee::ircbot

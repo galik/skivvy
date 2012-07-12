@@ -37,7 +37,7 @@ DEF_FLAGS = \
 	-D REVISION=\"$(shell svn info $(top_srcdir)|grep Revision:|cut -f 2 -d ' ')\" \
 	-D DEFAULT_PLUGIN_DIR=\"$(plugindir)\"
 
-GEN_FLAGS = -Wfatal-errors -Wall -Wextra -Winit-self -ansi -pedantic -pipe -pthread \
+GEN_FLAGS = -Wl,-E -Wfatal-errors -Wall -Wextra -Winit-self -ansi -pedantic -pipe -pthread \
 	-I$(top_srcdir)/src/include
 	
 AM_CXXFLAGS = $(GEN_FLAGS) $(DEF_FLAGS) -std=gnu++11
@@ -75,6 +75,8 @@ noinst_HEADERS = \
 	$(srcdir)/include/skivvy/plugin-trivial.h
 
 BOTLIBS = -lskivvy -ldl
+# -Wl,-E is required for programs that load plugin's
+BOTFLAGS = -Wl,-E
 
 lib_LTLIBRARIES = \
 	libskivvy.la
@@ -133,7 +135,7 @@ skivvy_plugin_rserver_la_LDFLAGS = -module
 skivvy_plugin_trivial_la_LDFLAGS = -module
 
 # Development utils
-noinst_PROGRAMS = test test-server convert-cvars
+noinst_PROGRAMS = test test-server convert-cvars skivlet
 
 test_SOURCES = test.cpp
 test_LDADD = $(BOTLIBS)
@@ -144,6 +146,10 @@ test_server_LDADD = $(BOTLIBS)
 convert_cvars_SOURCES = convert-cvars.cpp
 convert_cvars_LDADD = $(BOTLIBS)
 
+skivlet_SOURCES = skivlet.cpp
+skivlet_LDADD = $(BOTLIBS)
+skivlet_LDFLAGS =
+
 # Skivvy IrcBot
 bin_PROGRAMS = skivvy skivvy-client
 
@@ -152,6 +158,7 @@ skivvy_client_LDADD = $(BOTLIBS)
 
 skivvy_SOURCES = skivvy.cpp
 skivvy_LDADD = $(BOTLIBS)
+skivvy_LDFLAGS = $(BOTFLAGS)
 
 docs_DATA = $(top_srcdir)/docs/manual.text
 

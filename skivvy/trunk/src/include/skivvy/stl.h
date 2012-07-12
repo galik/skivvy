@@ -35,6 +35,18 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 namespace skivvy { namespace stl {
 
+template<typename Container, typename T>
+size_t count(const Container& c, const T& t)
+{
+	return std::count(c.begin(), c.end(), t);
+}
+
+template<typename Container, typename Pred>
+size_t count_if(const Container& c, Pred pred)
+{
+	return std::count_if(c.begin(), c.end(), pred);
+}
+
 template<typename Container, typename T> inline
 typename Container::iterator find(Container& c, const T& t)
 {

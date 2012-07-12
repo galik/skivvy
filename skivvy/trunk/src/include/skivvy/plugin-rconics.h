@@ -61,8 +61,8 @@ private:
 	inline bool polltime(const poll& p, siz secs)
 	{
 		siz secs_so_far = siz(std::time(0) - polls[p]);
-		bug_var(secs);
-		bug_var(secs_so_far);
+//		bug_var(secs);
+//		bug_var(secs_so_far);
 		if(secs < secs_so_far)
 		{
 			bug("POLLING");
@@ -213,7 +213,7 @@ private:
 	//str_vec managed;
 
 	bool write_db = true;
-	std::mutex db_mtx;
+	static std::mutex db_mtx;
 
 	// rename
 	typedef std::map<str, str_map> str_str_map;
