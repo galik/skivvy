@@ -35,6 +35,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <skivvy/rpc.h>
 #include <skivvy/logrep.h>
 #include <skivvy/socketstream.h>
+#include <skivvy/FloodController.h>
 
 #include <map>
 #include <set>
@@ -424,81 +425,81 @@ public:
 	bool turn_off();
 };
 
-/**
- * Producer/Consumer priority que for dispatching
- * event at a configurable minimal interval.
- */
-class FloodController
-{
-private:
-	struct dispatch
-	{
-		size_t priority;
-		//std::thread::id id;
-		std::function<bool()> func;
-		bool operator<(const dispatch& d) const { return priority > d.priority; }
-		dispatch(size_t priority, std::function<bool()> func): priority(priority), func(func) {}
-	};
-	typedef std::priority_queue<dispatch> dispatch_que;
-
-	std::mutex mtx;
-	std::future<void> fut;
-	dispatch_que que;
-	bool dispatching;
-	size_t priority; // current priority entry point
-	size_t max;
-
-
-	typedef std::map<const std::thread::id, dispatch_que> mtpq_map;
-	typedef std::pair<const std::thread::id, dispatch_que> mtpq_pair;
-	typedef mtpq_map::iterator mtpq_map_iter;
-	typedef mtpq_map::const_iterator mtpq_map_citer;
-
-	std::map<std::thread::id, siz> mt_priority;
-	mtpq_map mt_que;
-//	std::map<std::thread::id, std::priority_queue<dispatch>>::iterator mt_que_iter;
-	siz robin;
-
-	size_t get_priority(const std::thread::id& id);
-	void dispatcher();
-
-public:
-	FloodController();
-	~FloodController();
-
-	bool send(std::function<bool()> func);
-	void start();
-	void stop();
-};
-
-class FloodController2
-{
-private:
-	typedef std::queue<std::function<bool()>> dispatch_que;
-	typedef std::map<str, dispatch_que> dispatch_map;
-	typedef std::pair<const str, dispatch_que> dispatch_pair;
-
-	typedef str_set dispatch_set;
-
-	std::mutex mtx;
-	//dispatch_set s; // channels
-	dispatch_map m; // channel -> dispatch_que
-	str c; // current channel being dispatched
-
-	std::future<void> fut;
-	bool dispatching = false;
-
-	bool find_next(str& c);
-	void dispatcher();
-
-public:
-	FloodController2();
-	~FloodController2();
-
-	bool send(const str& channel, std::function<bool()> func);
-	void start();
-	void stop();
-};
+///**
+// * Producer/Consumer priority que for dispatching
+// * event at a configurable minimal interval.
+// */
+//class FloodController
+//{
+//private:
+//	struct dispatch
+//	{
+//		size_t priority;
+//		//std::thread::id id;
+//		std::function<bool()> func;
+//		bool operator<(const dispatch& d) const { return priority > d.priority; }
+//		dispatch(size_t priority, std::function<bool()> func): priority(priority), func(func) {}
+//	};
+//	typedef std::priority_queue<dispatch> dispatch_que;
+//
+//	std::mutex mtx;
+//	std::future<void> fut;
+//	dispatch_que que;
+//	bool dispatching;
+//	size_t priority; // current priority entry point
+//	size_t max;
+//
+//
+//	typedef std::map<const std::thread::id, dispatch_que> mtpq_map;
+//	typedef std::pair<const std::thread::id, dispatch_que> mtpq_pair;
+//	typedef mtpq_map::iterator mtpq_map_iter;
+//	typedef mtpq_map::const_iterator mtpq_map_citer;
+//
+//	std::map<std::thread::id, siz> mt_priority;
+//	mtpq_map mt_que;
+////	std::map<std::thread::id, std::priority_queue<dispatch>>::iterator mt_que_iter;
+//	siz robin;
+//
+//	size_t get_priority(const std::thread::id& id);
+//	void dispatcher();
+//
+//public:
+//	FloodController();
+//	~FloodController();
+//
+//	bool send(std::function<bool()> func);
+//	void start();
+//	void stop();
+//};
+//
+//class FloodController2
+//{
+//private:
+//	typedef std::queue<std::function<bool()>> dispatch_que;
+//	typedef std::map<str, dispatch_que> dispatch_map;
+//	typedef std::pair<const str, dispatch_que> dispatch_pair;
+//
+//	typedef str_set dispatch_set;
+//
+//	std::mutex mtx;
+//	//dispatch_set s; // channels
+//	dispatch_map m; // channel -> dispatch_que
+//	str c; // current channel being dispatched
+//
+//	std::future<void> fut;
+//	bool dispatching = false;
+//
+//	bool find_next(str& c);
+//	void dispatcher();
+//
+//public:
+//	FloodController2();
+//	~FloodController2();
+//
+//	bool send(const str& channel, std::function<bool()> func);
+//	void start();
+//	void stop();
+//};
 
 // ==================================================
 // Bot Plugin Framework
@@ -908,8 +909,7 @@ public:
 
 private:
 	RemoteIrcServer irc;
-//	FloodController fc;
-	FloodController2 fc2;
+	FloodController fc;
 
 	plugin_vec plugins;
 	monitor_set monitors;

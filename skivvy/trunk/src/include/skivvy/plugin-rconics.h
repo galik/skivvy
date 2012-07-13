@@ -163,6 +163,9 @@ private:
 	std::mutex stats_subs_mtx;
 //	bool echomsg = false;
 
+//	bool autoban_check(const str& server, const str& line, const str& data, str& test);
+	str get_isp(const str& ip);
+
 	void read_automsgs();
 	void write_automsgs();
 

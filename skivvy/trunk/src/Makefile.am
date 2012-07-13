@@ -43,6 +43,7 @@ GEN_FLAGS = -Wl,-E -Wfatal-errors -Wall -Wextra -Winit-self -ansi -pedantic -pip
 AM_CXXFLAGS = $(GEN_FLAGS) $(DEF_FLAGS) -std=gnu++11
 
 skivvy_HEADERS = \
+	$(srcdir)/include/skivvy/FloodController.h \
 	$(srcdir)/include/skivvy/ios.h \
 	$(srcdir)/include/skivvy/rpc.h \
 	$(srcdir)/include/skivvy/str.h \
@@ -97,6 +98,7 @@ plugin_LTLIBRARIES =  \
 
 # IrcBot framework
 libskivvy_la_SOURCES = \
+	FloodController.cpp \
 	ios.cpp \
 	irc.cpp \
 	ircbot.cpp \

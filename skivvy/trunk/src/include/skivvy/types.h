@@ -57,9 +57,14 @@ typedef std::vector<int> int_vec;
 typedef std::vector<siz> siz_vec;
 
 typedef std::vector<str> str_vec;
+typedef str_vec::iterator str_vec_itr;
+typedef str_vec::const_iterator str_vec_citr;
 
 typedef std::set<str> str_set;
 typedef str_set::const_iterator str_set_citer;
+
+typedef std::map<str, time_t> str_time_map;
+typedef std::pair<const str, time_t> str_time_pair;
 
 
 typedef std::multiset<str> str_mset;

@@ -214,8 +214,6 @@ str RConicsIrcBotPlugin::do_rcon(const message& msg, str cmd, const str& host, s
 	str res;
 	std::ostringstream oss;
 
-	const str bot_name = bot.get(RCON_BOT_NAME, RCON_BOT_NAME_DEFAULT);
-
 	// Drop mega advertising
 	str lwr = lowercase(cmd);
 	if(lwr.find(" mega") != str::npos
@@ -225,6 +223,8 @@ str RConicsIrcBotPlugin::do_rcon(const message& msg, str cmd, const str& host, s
 		log("MEGA advert eradicated: " << cmd);
 		return "";
 	}
+
+	const str bot_name = bot.get(RCON_BOT_NAME, RCON_BOT_NAME_DEFAULT);
 
 	if(!cmd.find("say_team"))
 		cmd = "say_team ^7(" + bot_name + "^7) " + cmd.substr(8);
@@ -555,21 +555,102 @@ bool get_loc_map(const str& ip, location_map& m)
 	return true;
 }
 
-str get_isp(const str& ip)
+// search engine details
+struct eng
+{
+	str host;
+	str path;
+	str lhs;
+	str rhs;
+	siz fail;
+	time_t down;
+};
+
+str RConicsIrcBotPlugin::get_isp(const str& ip)
 {
 	static std::mutex mtx;
 	static str_map ispmap; // ip -> IAP
 	static str_siz_map retries; // ip -> tries
+
+	if(!is_ip(ip))
+		return "";
 
 	lock_guard lock(mtx);
 
 	if(ispmap.find(ip) != ispmap.cend())
 		return ispmap[ip];
 
+	static const std::vector<eng> builtin_engs =
+	{
+		{"www.ip-adress.com", "/reverse_ip/", "ISP:</h3>", "<", 0, 0}
+		, {"whatismyipaddress.com", "/ip/", "ISP:</th><td>", "<", 0, 0}
+	};
+
+	static time_t engs_loaded = 0;
+	static std::vector<eng> engs;
+	if(bot.get_config_load_time() > engs_loaded)
+	{
+		engs.assign(builtin_engs.cbegin(), builtin_engs.cend());
+		str_vec cfengs = bot.get_vec("rconics.engine.isp");
+		for(const str& cfeng: cfengs)
+		{
+			// rconics.engine.isp: www.ip-adress.com /reverse_ip/ "ISP:</h3>" "<"
+			eng e;
+			std::istringstream iss(cfeng);
+			if(ios::getstring(iss, e.host)
+			&& ios::getstring(iss, e.path)
+			&& ios::getstring(iss, e.lhs)
+			&& ios::getstring(iss, e.rhs))
+				engs.push_back(e);
+			else
+				log("Error reading custom ISP engine: " << cfeng);
+		}
+		engs_loaded = std::time(0);
+	}
+
+	static siz idx = 0;
+
+	// http://whatismyipaddress.com/ip/178.239.102.183
+	if(engs.empty())
+		return "no isp search engines";
+
+	time_t now = std::time(0);
+	for(eng& e: engs)
+		if(e.down && (now - e.down) > 60 * 60) // 1 hour
+			{ e.fail = 0; e.down = 0; }
+
+	++idx;
+	if(idx == engs.size())
+		idx = 0;
+
+	siz i;
+	for(i = idx; i < engs.size(); ++i)
+		if(!engs[i].down)
+			break;
+
+	if(i == engs.size())
+	{
+		for(i = 0; i < idx; ++i)
+			if(!engs[i].down)
+				break;
+		if(i == idx)
+			return "all isp engines down";
+	}
+
+
+	eng& e = engs[i];
+
+	bug_var(e.host);
+	bug_var(e.fail);
+	con("GET " << e.path << ip << " HTTP/1.1");
+
+	// http://www.iplocation.net/index.php?query=195.67.217.88
+	// http://www.robtex.com/ip/178.239.102.183.html#ip
+
 	net::socketstream ss;
-	ss.open("www.ip-adress.com", 80);
-	ss << "GET /reverse_ip/" << ip << " HTTP/1.1\r\n";
-	ss << "Host: www.ip-adress.com" << "\r\n";
+	ss.open(e.host, 80);
+	ss << "GET " << e.path << ip << " HTTP/1.1\r\n";
+	ss << "Host: " << e.host << "\r\n";
 	ss << "User-Agent: Skivvy: " << VERSION << "\r\n";
 	ss << "Accept: text/html" << "\r\n";
 	ss << "\r\n" << std::flush;
@@ -577,6 +658,9 @@ str get_isp(const str& ip)
 	net::header_map headers;
 	if(!net::read_http_headers(ss, headers))
 	{
+		++e.fail;
+		if(e.fail > 3)
+			e.down = std::time(0);
 		log("ERROR reading headers.");
 		return "";
 	}
@@ -584,10 +668,15 @@ str get_isp(const str& ip)
 	str html;
 	if(!net::read_http_response_data(ss, headers, html))
 	{
+		++e.fail;
+		if(e.fail > 3)
+			e.down = std::time(0);
 		log("ERROR reading response data.");
 		return "";
 	}
 	ss.close();
+
+	e.fail = 0; // clear failures on success
 
 	// <h3> IP:</h3>83.100.193.172<h3> server location:</h3>Kingston Upon Hull in United Kingdom<h3> ISP:</h3>Kcom<!-- google_ad_section_end -->
 
@@ -598,10 +687,10 @@ str get_isp(const str& ip)
 		if(line.find("<h3>"))
 			continue;
 		siz pos;
-		if((pos = line.find("ISP:</h3>")) != str::npos)
+		if((pos = line.find(e.lhs)) != str::npos)
 		{
-			line = line.substr(pos + 9);
-			if((pos = line.find('<')) != str::npos)
+			line = line.substr(pos + e.lhs.size());
+			if((pos = line.find(e.rhs)) != str::npos)
 				return (ispmap[ip] = line.substr(0, pos));
 		}
 	}
@@ -920,7 +1009,72 @@ str RConicsIrcBotPlugin::var_sub(const str& s, const str& server)
 	return ret;
 }
 
-bool autoban_check(const str& server, const str& line, str& ban)
+//bool RConicsIrcBotPlugin::autoban_check(const str& server, const str& line, const str& data, str& test)
+//{
+//	typedef std::map<str_pair, bool> data_cache;
+//	typedef std::pair<const str_pair, bool> data_cache_pair;
+//	typedef data_cache::iterator data_cache_itr;
+//	typedef data_cache::const_iterator data_cache_citr;
+//
+//	typedef std::pair<str, str> time_pair;
+//	typedef std::map<str, time_pair> time_cache;
+//	typedef time_cache::iterator time_cache_itr;
+//	typedef time_cache::const_iterator time_cache_citr;
+//
+//	static time_cache tc; // line -> {begin, end} time of rule
+//	static data_cache dc; // (line, data} -> result
+//	static time_t cache_cleared = 0;
+//
+//	str srv;
+//	std::istringstream iss(line);
+//	iss >> srv;
+//	if(srv != server)
+//		return false;
+//
+//	if(cache_cleared < bot.get_config_load_time())
+//	{
+//		dc.clear();
+//		cache_cleared = std::time(0);
+//	}
+//
+//	time_cache_itr tci = time_cache.find(line);
+//	if(tci == time_cache.end())
+//	{
+//		// need to cache line in time_cache
+//		time_pair tp;
+//		std::getline(iss, skip, '{');
+//		std::getline(iss, tp.first, ',');
+//		std::getline(iss, tp.second, '}');
+//
+//		if(!iss)
+//			return false;
+//
+//		trim(tp.first);
+//		trim(tp.second);
+//		tci = time_cache.insert(time_cache.begin(), std::make_pair(line, tp));
+//	}
+//
+//	time_t t = std::time(0);
+//	str now = std::ctime(&t); // now = "Www Mmm dd hh:mm:ss yyyy"
+//	if(now.size() < 17)
+//		return false;
+//	now = now.substr(11, 5);
+//
+//	if(now < tci->second.first || now > tci->second.second)
+//		return false;
+//
+//	// rule still in force
+//	str_pair dp = std::make_pair(line, data);
+//	data_cache_itr dci = dc.find(dp);
+//	if(dci != sc.end())
+//		return dci->second; // cached result
+//
+//	// result needs calculating/caching
+//	dc[dp] = autoban_check()
+//	return true;
+//}
+
+bool autoban_check(const str& server, const str& line, str& test)
 {
 	// goo {04:00,10:00} "ban text"
 	str srv, stime, etime, skip;
@@ -948,9 +1102,9 @@ bool autoban_check(const str& server, const str& line, str& ban)
 	now = now.substr(11, 5);
 
 	if(now < stime || now > etime)
-	return false;
+		return false;
 
-	return ios::getstring(iss, ban);
+	return ios::getstring(iss, test);
 }
 
 bool autounban_check(const str& server, const str& line, str& ban)
@@ -1191,7 +1345,7 @@ void RConicsIrcBotPlugin::regular_poll()
 				if(srv != server || guid != p.guid)
 					continue;
 
-				log("AUTO-BANNING BY GUID: " << p.guid);
+				log("AUTO-BAN BY GUID: " << p.guid);
 				res = rcon("!ban " + std::to_string(p.num) + " AUTOBAN", s->second);
 				log("RESULT: " << res);
 				if(trim(res).empty())
@@ -1259,52 +1413,62 @@ void RConicsIrcBotPlugin::regular_poll()
 			// Unban specific GUIDs
 			for(const str& line: bot.get_vec(UNBAN_BY_GUID))
 				if(autounban_check(server, line, test) && p.guid == test)
-					unreasons.push_back("BAN PROTECTION BY GUID: " + p.guid);
+					unreasons.push_back("AUTO-BAN PROTECTION BY GUID: " + p.guid);
 
 			// rconics.autoban.ip: goo 188.162.80.53
 			// rconics.autoban.name: goo {04:00,10:00} "^0UnnamedPlayer^7"
 			// rconics.autoban.loc: goo {04:00,10:00} "Kingston upon Hull"
 			// rconics.autoban.isp: goo {04:00,10:00} "Virgin Media"
 
+//			static str_map ban_cache;
+//			static str_map unban_cache;
+//			static time_t bans_loaded = 0;
+//
+//			if(bans_loaded < bot.get_config_load_time())
+//			{
+//				ban_cache.clear();
+//				unban_cache.clear();
+//				bans_loaded = std::time(0);
+//			}
 			// AUTOBAN BY TIME AND IP
 
 			for(const str& line: bot.get_vec(BAN_BY_IP))
 				if(autoban_check(server, line, test) && !ip.find(test))
-					reasons.push_back("AUTO-BANNING BY IP: " + ip);
+					reasons.push_back("AUTO-BAN BY IP: " + ip);
 			for(const str& line: bot.get_vec(UNBAN_BY_IP))
 				if(autounban_check(server, line, test) && !ip.find(test))
-					unreasons.push_back("BAN PROTECTION BY IP: " + ip);
+					unreasons.push_back("AUTO-BAN PROTECTION BY IP: " + ip);
 
 			// AUTOBAN BY TIME AND NAME
 
 			for(const str& line: bot.get_vec(BAN_BY_NAME))
 				if(autoban_check(server, line, test) && p.name == test)
-					reasons.push_back("AUTO-BANNING BY NAME: " + p.name);
+					reasons.push_back("AUTO-BAN BY NAME: " + p.name);
 			for(const str& line: bot.get_vec(UNBAN_BY_NAME))
 				if(autounban_check(server, line, test)  && p.name == test)
-					unreasons.push_back("BAN PROTECTION BY NAME: " + p.name);
+					unreasons.push_back("AUTO-BAN PROTECTION BY NAME: " + p.name);
 
 			// AUTOBAN BY TIME AND LOCATION
 
 			for(const str& line: bot.get_vec(BAN_BY_LOC))
 				if(autoban_check(server, line, test))
 					if(lowercase((loc = get_loc(ip, "city"))).find(lowercase(test)) != str::npos)
-						reasons.push_back("AUTO-BANNING BY LOC: " + loc);
+						reasons.push_back("AUTO-BAN BY LOC: " + loc);
 			for(const str& line: bot.get_vec(UNBAN_BY_LOC))
 				if(autounban_check(server, line, test))
 					if(lowercase((loc = get_loc(ip, "city"))).find(lowercase(test)) != str::npos)
-						unreasons.push_back("BAN PROTECTION BY LOC: " + loc);
+						unreasons.push_back("AUTO-BAN PROTECTION BY LOC: " + loc);
 
 			// AUTOBAN BY TIME AND ISP
 
 			for(const str& line: bot.get_vec(BAN_BY_ISP))
 				if(autoban_check(server, line, test))
 					if(lowercase((isp = get_isp(ip))).find(lowercase(test)) != str::npos)
-						reasons.push_back("AUTO-BANNING BY ISP: " + isp);
+						reasons.push_back("AUTO-BAN BY ISP: " + isp);
 			for(const str& line: bot.get_vec(UNBAN_BY_ISP))
 				if(autounban_check(server, line, test))
 					if(lowercase((isp = get_isp(ip))).find(lowercase(test)) != str::npos)
-						unreasons.push_back("BAN PROTECTION BY ISP: " + isp);
+						unreasons.push_back("AUTO-BAN PROTECTION BY ISP: " + isp);
 
 			for(const str& reason: reasons)
 				log(reason);

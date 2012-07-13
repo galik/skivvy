@@ -489,7 +489,7 @@ RemoteIrcServer& IrcBot::get_irc_server() { return irc; }
 bool IrcBot::fc_reply(const message& msg, const str& text)
 {
 //	return fc.send([&,msg,text]()->bool{ return irc.reply(msg, text); });
-	return fc2.send(msg.to, [&,msg,text]()->bool{ return irc.reply(msg, text); });
+	return fc.send(msg.to, [&,msg,text]()->bool{ return irc.reply(msg, text); });
 }
 
 bool IrcBot::fc_reply_help(const message& msg, const str& text, const str& prefix)
@@ -498,7 +498,7 @@ bool IrcBot::fc_reply_help(const message& msg, const str& text, const str& prefi
 	for(const str& s: v)
 //		if(!fc.send([&,msg,prefix,s]()->bool{ return irc.reply(msg, prefix + s); }))
 //			return false;
-		if(!fc2.send(msg.to, [&,msg,prefix,s]()->bool{ return irc.reply(msg, prefix + s); }))
+		if(!fc.send(msg.to, [&,msg,prefix,s]()->bool{ return irc.reply(msg, prefix + s); }))
 			return false;
 	return true;
 }
@@ -507,7 +507,7 @@ bool IrcBot::fc_reply_pm(const message& msg, const str& text)//, size_t priority
 {
 //	bug_func();
 //	return fc.send([&,msg,text]()->bool{ return irc.reply_pm(msg, text); });
-	return fc2.send(msg.to, [&,msg,text]()->bool{ return irc.reply_pm(msg, text); });
+	return fc.send(msg.to, [&,msg,text]()->bool{ return irc.reply_pm(msg, text); });
 }
 
 bool IrcBot::fc_reply_pm_help(const message& msg, const str& text, const str& prefix)
@@ -516,7 +516,7 @@ bool IrcBot::fc_reply_pm_help(const message& msg, const str& text, const str& pr
 	for(const str& s: v)
 //		if(!fc.send([&,msg,prefix,s]()->bool{ return irc.reply_pm(msg, prefix + s); }))
 //			return false;
-		if(!fc2.send(msg.to, [&,msg,prefix,s]()->bool{ return irc.reply_pm(msg, prefix + s); }))
+		if(!fc.send(msg.to, [&,msg,prefix,s]()->bool{ return irc.reply_pm(msg, prefix + s); }))
 			return false;
 	return true;
 }
@@ -700,7 +700,7 @@ bool IrcBot::init(const str& config_file)
 
 	log(get_name() << " v" << get_version());
 
-	fc2.start();
+	fc.start();
 
 	// Initialise plugins
 	plugin_vec_iter p = plugins.begin();
@@ -1018,7 +1018,7 @@ bool IrcBot::init(const str& config_file)
 		p->exit();
 	}
 
-	fc2.stop();
+	fc.stop();
 	log("Closing down pinger:");
 	done = true;
 	if(png.valid())
@@ -1542,185 +1542,185 @@ bool MessageTimer::off(const message& m)
 	return true;
 }
 
-FloodController::FloodController()
-: dispatching(false)
-, priority(0)
-, max(100)
-{
-}
-
-FloodController::~FloodController() {}
-
-size_t FloodController::get_priority(const std::thread::id& id)
-{
-	lock_guard lock(mtx);
-//	std::thread::id id = std::this_thread::get_id();
-	if(mt_que[id].empty())
-		return (mt_priority[id] = 0);
-	return ++mt_priority[id];
-}
-
-void FloodController::dispatcher()
-{
-	while(dispatching)
-	{
-		std::this_thread::sleep_for(std::chrono::seconds(2));
-		if(mt_que.empty())
-			continue;
-		lock_guard lock(mtx);
-		if(!(++robin < mt_que.size()))
-			robin = 0;
-
-		mtpq_map_iter i = mt_que.begin();
-		std::advance(i, robin);
-		mtpq_map_iter end = i;
-
-		while(i != mt_que.end() && i->second.empty())
-		{
-			++i;
-		}
-
-		if(i == mt_que.end() || i->second.empty())
-			continue;
-
-		i->second.top().func();
-		i->second.pop();
-		robin = std::distance(mt_que.begin(), i);
-		bug("D: robin:" << robin);
-	}
-
-	for(mtpq_pair& p: mt_que)
-		while(!p.second.empty())
-		{
-			std::this_thread::sleep_for(std::chrono::seconds(2));
-			p.second.top().func();
-			p.second.pop();
-		}
-
-	log("Dispatcher ended.");
-}
-
-bool FloodController::send(std::function<bool()> func)
-{
-//	bug_func();
-	std::thread::id id = std::this_thread::get_id();
-//	bug("id: " << id);
-	if(!(mt_que[id].size() < max))
-		return false;
-
-	const size_t priority = get_priority(id);
-//	bug("priority: " << priority);
-	lock_guard lock(mtx);
-//	bug("pushing item in que: " << id);
-	mt_que[id].push({priority, func});
-	//mt_que_iter = mt_que.end();
-	return true;
-}
-
-void FloodController::start()
-{
-	log("Starting up dispatcher.");
-	if(!dispatching)
-	{
-		dispatching = true;
-		//mt_que_iter = mt_que.end();
-		fut = std::async(std::launch::async, [&]{ dispatcher(); });
-	}
-}
-
-void FloodController::stop()
-{
-	log("Closing down dispatcher.");
-	if(!dispatching)
-		return;
-	dispatching = false;
-	if(fut.valid())
-		fut.get();
-}
-
-// FC 2
-
-FloodController2::FloodController2()
+//FloodController::FloodController()
 //: dispatching(false)
-{
-}
-
-FloodController2::~FloodController2() {}
-
-bool FloodController2::find_next(str& c)
-{
-	if(m.empty())
-		return false;
-
-	const dispatch_map::iterator j = m.find(c);
-	dispatch_map::iterator i;
-
-	for(i = j; i != m.end(); ++i)
-	{
-		if(!i->second.empty())
-		{
-			c = i->first;
-			return true;
-		}
-	}
-
-	for(i = m.begin(); i != j; ++i)
-	{
-		if(!i->second.empty())
-		{
-			c = i->first;
-			return true;
-		}
-	}
-
-	return false;
-}
-
-void FloodController2::dispatcher()
-{
-	bug_func();
-	while(dispatching)
-	{
-		std::this_thread::sleep_for(std::chrono::milliseconds(200));
-		{
-			lock_guard lock(mtx);
-			if(!find_next(c))
-				continue;
-			m[c].front()();
-			m[c].pop();
-		}
-		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-	}
-
-	log("Dispatcher ended.");
-}
-
-bool FloodController2::send(const str& channel, std::function<bool()> func)
-{
-	lock_guard lock(mtx);
-	//s.insert(channel);
-	m[channel].push(func);
-	return true;
-}
-
-void FloodController2::start()
-{
-	log("Starting up dispatcher.");
-	if(!dispatching)
-	{
-		dispatching = true;
-		fut = std::async(std::launch::async, [&]{ dispatcher(); });
-	}
-}
-
-void FloodController2::stop()
-{
-	log("Closing down dispatcher.");
-	if(!dispatching)
-		return;
-	dispatching = false;
-	if(fut.valid())
-		fut.get();
-}
+//, priority(0)
+//, max(100)
+//{
+//}
+//
+//FloodController::~FloodController() {}
+//
+//size_t FloodController::get_priority(const std::thread::id& id)
+//{
+//	lock_guard lock(mtx);
+////	std::thread::id id = std::this_thread::get_id();
+//	if(mt_que[id].empty())
+//		return (mt_priority[id] = 0);
+//	return ++mt_priority[id];
+//}
+//
+//void FloodController::dispatcher()
+//{
+//	while(dispatching)
+//	{
+//		std::this_thread::sleep_for(std::chrono::seconds(2));
+//		if(mt_que.empty())
+//			continue;
+//		lock_guard lock(mtx);
+//		if(!(++robin < mt_que.size()))
+//			robin = 0;
+//
+//		mtpq_map_iter i = mt_que.begin();
+//		std::advance(i, robin);
+//		mtpq_map_iter end = i;
+//
+//		while(i != mt_que.end() && i->second.empty())
+//		{
+//			++i;
+//		}
+//
+//		if(i == mt_que.end() || i->second.empty())
+//			continue;
+//
+//		i->second.top().func();
+//		i->second.pop();
+//		robin = std::distance(mt_que.begin(), i);
+//		bug("D: robin:" << robin);
+//	}
+//
+//	for(mtpq_pair& p: mt_que)
+//		while(!p.second.empty())
+//		{
+//			std::this_thread::sleep_for(std::chrono::seconds(2));
+//			p.second.top().func();
+//			p.second.pop();
+//		}
+//
+//	log("Dispatcher ended.");
+//}
+//
+//bool FloodController::send(std::function<bool()> func)
+//{
+////	bug_func();
+//	std::thread::id id = std::this_thread::get_id();
+////	bug("id: " << id);
+//	if(!(mt_que[id].size() < max))
+//		return false;
+//
+//	const size_t priority = get_priority(id);
+////	bug("priority: " << priority);
+//	lock_guard lock(mtx);
+////	bug("pushing item in que: " << id);
+//	mt_que[id].push({priority, func});
+//	//mt_que_iter = mt_que.end();
+//	return true;
+//}
+//
+//void FloodController::start()
+//{
+//	log("Starting up dispatcher.");
+//	if(!dispatching)
+//	{
+//		dispatching = true;
+//		//mt_que_iter = mt_que.end();
+//		fut = std::async(std::launch::async, [&]{ dispatcher(); });
+//	}
+//}
+//
+//void FloodController::stop()
+//{
+//	log("Closing down dispatcher.");
+//	if(!dispatching)
+//		return;
+//	dispatching = false;
+//	if(fut.valid())
+//		fut.get();
+//}
+//
+//// FC 2
+//
+//FloodController2::FloodController2()
+////: dispatching(false)
+//{
+//}
+//
+//FloodController2::~FloodController2() {}
+//
+//bool FloodController2::find_next(str& c)
+//{
+//	if(m.empty())
+//		return false;
+//
+//	const dispatch_map::iterator j = m.find(c);
+//	dispatch_map::iterator i;
+//
+//	for(i = j; i != m.end(); ++i)
+//	{
+//		if(!i->second.empty())
+//		{
+//			c = i->first;
+//			return true;
+//		}
+//	}
+//
+//	for(i = m.begin(); i != j; ++i)
+//	{
+//		if(!i->second.empty())
+//		{
+//			c = i->first;
+//			return true;
+//		}
+//	}
+//
+//	return false;
+//}
+//
+//void FloodController2::dispatcher()
+//{
+//	bug_func();
+//	while(dispatching)
+//	{
+//		std::this_thread::sleep_for(std::chrono::milliseconds(200));
+//		{
+//			lock_guard lock(mtx);
+//			if(!find_next(c))
+//				continue;
+//			m[c].front()();
+//			m[c].pop();
+//		}
+//		std::this_thread::sleep_for(std::chrono::milliseconds(1200));
+//	}
+//
+//	log("Dispatcher ended.");
+//}
+//
+//bool FloodController2::send(const str& channel, std::function<bool()> func)
+//{
+//	lock_guard lock(mtx);
+//	//s.insert(channel);
+//	m[channel].push(func);
+//	return true;
+//}
+//
+//void FloodController2::start()
+//{
+//	log("Starting up dispatcher.");
+//	if(!dispatching)
+//	{
+//		dispatching = true;
+//		fut = std::async(std::launch::async, [&]{ dispatcher(); });
+//	}
+//}
+//
+//void FloodController2::stop()
+//{
+//	log("Closing down dispatcher.");
+//	if(!dispatching)
+//		return;
+//	dispatching = false;
+//	if(fut.valid())
+//		fut.get();
+//}
 
 }} // sookee::ircbot
