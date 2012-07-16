@@ -72,7 +72,7 @@ std::istream& delay::parse(std::istream& is)
 	return is;
 }
 
-bool delay::parse(str s)
+bool delay::parse(const str& s)
 {
 	std::istringstream iss(s);
 	return parse(iss);

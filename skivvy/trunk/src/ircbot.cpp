@@ -855,7 +855,7 @@ bool IrcBot::init(const str& config_file)
 		{
 			if(!msg.text.empty() && msg.text[0] == '!')
 			{
-				str cmd = msg.get_user_cmd();
+				str cmd = lowercase(msg.get_user_cmd());
 				log("Processing command: " << cmd);
 				if(cmd == "!die")
 				{

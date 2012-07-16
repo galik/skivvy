@@ -85,15 +85,18 @@ struct delay
 {
 	siz d;
 	delay(siz d = 0): d(d) {}
-	delay(str s) : d(0) { parse(s); }
+	delay(const str& s) : d(0) { parse(s); }
 //	delay(const delay& d): d(d.d) {}
 	std::istream& parse(std::istream& is);
 
-	bool parse(str s);
+	bool parse(const str& s);
 
 	operator siz() { return d; }
+	operator int() { return int(d); }
 
 	bool operator<(const delay& d) const { return this->d < d.d; }
+	bool operator<(int i) const { return (int)this->d < i; }
+	bool operator<(siz i) const { return this->d < i; }
 
 	friend std::ostream& operator<<(std::ostream& os, const delay& d)
 	{

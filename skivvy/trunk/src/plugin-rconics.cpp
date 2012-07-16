@@ -97,6 +97,14 @@ const str UNBAN_BY_LOC = "rconics.autounban.loc";
 const str BAN_BY_ISP = "rconics.autoban.isp";
 const str UNBAN_BY_ISP = "rconics.autounban.isp";
 
+const str LOCMAP_FILE = "rconics.locmap.file";
+const str LOCMAP_FILE_DEFAULT = "rconics-locmap.txt";
+const str ISPMAP_FILE = "rconics.ispmap.file";
+const str ISPMAP_FILE_DEFAULT = "rconics-ispmap.txt";
+
+const str SEARCH_ENGINE_ISP = "rconics.engine.isp";
+
+
 // alias: GUID, name
 // ip: GUID, IP
 // stat: tot_score, tot_ping, tot_samples
@@ -430,23 +438,23 @@ bool is_ip(const str& s)
 	return s.size() == dot + dig;
 }
 
-struct rec
+struct db_rec
 {
 	str guid;
 	siz count;
 	str data;
 
-	rec(): count(0) {}
+	db_rec(): count(0) {}
 
-	bool operator<(const rec& r) const { return guid < r.guid; }
+	bool operator<(const db_rec& r) const { return guid < r.guid; }
 
-	friend std::ostream& operator<<(std::ostream& os, const rec& r)
+	friend std::ostream& operator<<(std::ostream& os, const db_rec& r)
 	{
-		return os << r.guid << ' ' << r.count << ' ' << r.data;
+		return os << r.guid << ' ' << r.count << ' ' << r.data << '\n';
 	}
-	friend std::istream& operator>>(std::istream& is, rec& r)
+	friend std::istream& operator>>(std::istream& is, db_rec& r)
 	{
-		return std::getline(is >> r.guid >> r.count >> std::ws, r.data);
+		return std::getline((is >> r.guid >> r.count).ignore(), r.data);
 	}
 };
 
@@ -465,8 +473,8 @@ struct ent
 	}
 };
 
-typedef std::map<const str, rec> str_rec_map;
-typedef std::pair<const str, rec> str_rec_pair;
+typedef std::map<const str, db_rec> str_rec_map;
+typedef std::pair<const str, db_rec> str_rec_pair;
 typedef std::set<ent> ent_set;
 typedef std::map<const str, ent_set> str_ent_set_map;
 typedef std::pair<const str, ent_set> str_ent_set_pair;
@@ -480,9 +488,7 @@ str adjust(const str& name)
 	return s;
 }
 
-typedef str_map location_map;
-
-bool get_loc_map(const str& ip, location_map& m)
+bool RConicsIrcBotPlugin::get_loc_map(const str& ip, location_map& m)
 {
 	bug_func();
 	static const str_map itemmap =
@@ -497,7 +503,58 @@ bool get_loc_map(const str& ip, location_map& m)
 	};
 
 	typedef std::map<str, location_map> location_cache;
+	typedef std::pair<str, location_map> location_pair;
 	static location_cache cache;
+	static time_t cache_read = 0;
+
+	const time_t now = std::time(0);
+
+	int keep = bot.get("rconics.cache.loc.keep", delay("1w"));
+	if(keep < (now - cache_read))
+		cache.clear(); // re-read cache every week
+
+	static std::mutex mtx;
+	lock_guard lock(mtx);
+	if(cache.empty())
+	{
+		log("initialising locmap:");
+		bool modified = false;
+		time_t time; // time cached
+		str line, key, k, v;
+		std::ifstream ifs(bot.getf(LOCMAP_FILE, LOCMAP_FILE_DEFAULT));
+		while(std::getline(ifs, line))
+		{
+			std::istringstream iss(line);
+			if(iss >> time && keep < (now - time))
+			{
+				modified = true;
+				continue; // drop from cache after 1 week
+			}
+			if(std::getline(iss >> key >> std::ws, line))
+			{
+				std::istringstream iss(line);
+				while(ios::getstring(iss >> k >> std::ws, v))
+				{
+					cache[key][k] = v;
+				}
+			}
+		}
+		ifs.close();
+		if(modified) // write changes back to disk
+		{
+			log("writing back changes to locmap:");
+			std::ofstream ofs(bot.getf(LOCMAP_FILE, LOCMAP_FILE_DEFAULT));
+			for(const location_pair& lp: cache)
+			{
+				ofs << std::time(0) << ' ' << lp.first;
+				for(const str_pair sp: lp.second)
+					ofs << ' ' << sp.first << " \"" << sp.second << "\"";
+				ofs << '\n';
+			}
+
+		}
+		cache_read = now;
+	}
 
 	if(cache.find(ip) != cache.end())
 	{
@@ -539,18 +596,23 @@ bool get_loc_map(const str& ip, location_map& m)
 		for(const str_pair& item: itemmap)
 		{
 			siz pos;
-			if((pos = line.find(itemmap.at(item.second))) != str::npos)
+			if((pos = line.find(item.second)) != str::npos)
 			{
-				line = line.substr(pos + itemmap.at(item.second).size());
+				line = line.substr(pos + item.second.size());
 				if((pos = line.find('<')) != str::npos)
 				{
-					m[item.first] = line.substr(0, pos);
+					m[item.first] = net::fix_entities(line.substr(0, pos));
 				}
 			}
 		}
 	}
 
 	cache[ip] = m;
+	std::ofstream ofs(bot.getf(LOCMAP_FILE, LOCMAP_FILE_DEFAULT), std::ios::app);
+	ofs << std::time(0) << ' ' << ip;
+	for(const str_pair sp: cache[ip])
+		ofs << ' ' << sp.first << " \"" << sp.second << "\"";
+	ofs << '\n';
 
 	return true;
 }
@@ -575,6 +637,42 @@ str RConicsIrcBotPlugin::get_isp(const str& ip)
 	if(!is_ip(ip))
 		return "";
 
+	static time_t cache_read = 0;
+
+	const time_t now = std::time(0);
+
+	int keep = bot.get("rconics.cache.isp.keep", delay("1w"));
+	if(keep < (now - cache_read))
+		ispmap.clear(); // re-read cache every week
+
+	if(ispmap.empty())
+	{
+		log("initialising ispmap:");
+		bool modified = false;
+		str k, v;
+		time_t time;
+		std::ifstream ifs(bot.getf(ISPMAP_FILE, ISPMAP_FILE_DEFAULT));
+		while(std::getline(ifs >> time >> k >> std::ws, v))
+		{
+			if(keep < (now - time))
+			{
+				modified = true;
+				continue;
+			}
+			ispmap[k] = v;
+		}
+		ifs.close();
+		if(modified)
+		{
+			// write changes back to disk
+			log("writing back changes to ispmap:");
+			std::ofstream ofs(bot.getf(ISPMAP_FILE, ISPMAP_FILE_DEFAULT));
+			for(str_pair sp: ispmap)
+				ofs << std::time(0) << ' ' << sp.first << ' ' << sp.second << '\n';
+		}
+		cache_read = now;
+	}
+
 	lock_guard lock(mtx);
 
 	if(ispmap.find(ip) != ispmap.cend())
@@ -591,7 +689,7 @@ str RConicsIrcBotPlugin::get_isp(const str& ip)
 	if(bot.get_config_load_time() > engs_loaded)
 	{
 		engs.assign(builtin_engs.cbegin(), builtin_engs.cend());
-		str_vec cfengs = bot.get_vec("rconics.engine.isp");
+		str_vec cfengs = bot.get_vec(SEARCH_ENGINE_ISP);
 		for(const str& cfeng: cfengs)
 		{
 			// rconics.engine.isp: www.ip-adress.com /reverse_ip/ "ISP:</h3>" "<"
@@ -614,9 +712,8 @@ str RConicsIrcBotPlugin::get_isp(const str& ip)
 	if(engs.empty())
 		return "no isp search engines";
 
-	time_t now = std::time(0);
 	for(eng& e: engs)
-		if(e.down && (now - e.down) > 60 * 60) // 1 hour
+		if(e.down && (now - e.down) > int(bot.get("rconics.server.down.retry", delay("1h"))))
 			{ e.fail = 0; e.down = 0; }
 
 	++idx;
@@ -636,7 +733,6 @@ str RConicsIrcBotPlugin::get_isp(const str& ip)
 		if(i == idx)
 			return "all isp engines down";
 	}
-
 
 	eng& e = engs[i];
 
@@ -680,18 +776,21 @@ str RConicsIrcBotPlugin::get_isp(const str& ip)
 
 	// <h3> IP:</h3>83.100.193.172<h3> server location:</h3>Kingston Upon Hull in United Kingdom<h3> ISP:</h3>Kcom<!-- google_ad_section_end -->
 
+	siz pos;
 	str line;
 	std::istringstream iss(html);
 	while(std::getline(iss, line))
 	{
-		if(line.find("<h3>"))
-			continue;
-		siz pos;
 		if((pos = line.find(e.lhs)) != str::npos)
 		{
 			line = line.substr(pos + e.lhs.size());
 			if((pos = line.find(e.rhs)) != str::npos)
-				return (ispmap[ip] = line.substr(0, pos));
+			{
+				std::ofstream ofs(bot.getf(ISPMAP_FILE, ISPMAP_FILE_DEFAULT), std::ios::app);
+				line = net::fix_entities(line.substr(0, pos));
+				ofs << std::time(0) << ' ' << ip << ' ' << line << '\n';
+				return (ispmap[ip] = line);
+			}
 		}
 	}
 	if(++retries[ip] > 3)
@@ -702,93 +801,16 @@ str RConicsIrcBotPlugin::get_isp(const str& ip)
 	return "";
 }
 
-str get_loc(const str& ip, const str& item = "code")
+str RConicsIrcBotPlugin::get_loc(const str& ip, const str& item)
 {
-	static std::mutex mtx;
-
-	static const str_map itemmap =
-	{
-		{"code", "<tr><td width=200>My IP country code:</td><td>"}
-		, {"country", "<tr><td>My IP address country: </td><td>"}
-		, {"state", "<tr><td>My IP address state:</td><td>"}
-		, {"city", "<tr><td>My IP address city:</td><td>"}
-		, {"zip", "<tr><td>My IP postcode:	</td><td>"}
-		, {"lat", "<tr><td>My IP address latitude:	</td><td>"}
-		, {"long", "<tr><td>My IP address longitude:</td><td>"}
-	};
-
-	if(itemmap.find(item) == itemmap.cend())
-		return "";
-
-	// http://www.my-ip-address-is.com/ip/188.80.54.0
-	// "<tr><td>My IP address country: </td><td>Portugal</td></tr>"
-
-	typedef std::map<str, str_map> str_str_map;
-	static str_str_map locmap;
-	static str_siz_map retries;
-
-	lock_guard lock(mtx);
-
-	if(locmap[item].find(ip) != locmap[item].end())
-		return locmap[item][ip];
-
-	net::socketstream ss;
-	ss.open("www.my-ip-address-is.com", 80);
-	ss << "GET /ip/" << ip << " HTTP/1.1\r\n";
-	ss << "Host: www.my-ip-address-is.com" << "\r\n";
-	ss << "User-Agent: Skivvy: " << VERSION << "\r\n";
-	ss << "Accept: text/html" << "\r\n";
-	ss << "\r\n" << std::flush;
-
-	net::header_map headers;
-	if(!net::read_http_headers(ss, headers))
-	{
-		log("ERROR reading headers.");
-		return "";
-	}
-
-//	for(const net::header_pair& hp: headers)
-//		con(hp.first << ": " << hp.second);
-
-	str html;
-	if(!net::read_http_response_data(ss, headers, html))
-	{
-		log("ERROR reading response data.");
-		return "";
-	}
-	ss.close();
-
-	str line;
-	std::istringstream iss(html);
-	while(std::getline(iss, line))
-	{
-		siz pos;
-		if((pos = line.find(itemmap.at(item))) != str::npos)
-		{
-			line = line.substr(pos + itemmap.at(item).size());
-			if((pos = line.find('<')) != str::npos)
-			{
-				locmap[item][ip] = line.substr(0, pos);
-				return locmap[item][ip];
-			}
-		}
-	}
-	if(++retries[ip] > 3)
-	{
-		retries.erase(ip);
-		return (locmap[item][ip] = "unknown");
-	}
-
+	location_map m;
+	if(get_loc_map(ip, m))
+		return m[item];
 	return "";
 }
 
-enum class DB_SORT
-{
-	MOST_POPULAR
-	, MOST_RECENT
-};
-
-void write_to_db(const str& db, const str& guid_in, const str& data, DB_SORT sort)
+void RConicsIrcBotPlugin::write_to_db(const str& db, const str& guid_in
+	, const str& data, DB_SORT sort)
 {
 	// TODO: use standard variables "data_dir" etc...
 	const str db_file = "data/rconics-db-" + db + ".txt";
@@ -802,25 +824,26 @@ void write_to_db(const str& db, const str& guid_in, const str& data, DB_SORT sor
 
 //	str sep;
 	str guid, line;
-	siz count;
+//	siz count;
 	str_siz_map items;
 
 	std::ifstream ifs;
 	std::ofstream ofs;
 
-	// caller locks to facilitate transactions
-//	lock_guard lock(mtx);
+	// same mutex because they all use the same temp file
+	lock_guard lock(db_mtx);
 
 	ifs.open(db_file);
 	ofs.open(tmp_file);
 
+	db_rec r;
 	items.clear();
-	while(std::getline(ifs >> guid >> count >> std::ws, line))
+	while(ifs >> r)
 	{
-		if(guid == guid_in)
-			items[line] = count;
+		if(r.guid == guid_in)
+			items[r.data] = r.count;
 		else
-			ofs << guid << ' ' << count << ' ' << line << '\n';
+			ofs << r;
 	}
 	ofs.close();
 	ifs.close();
@@ -833,55 +856,60 @@ void write_to_db(const str& db, const str& guid_in, const str& data, DB_SORT sor
 	ofs.open(db_file);
 	ifs.open(tmp_file);
 
-	while(std::getline(ifs, line))
-		ofs << line << '\n';
+	while(ifs >> r)
+		ofs << r;
 	ifs.close();
+	r.guid = guid_in;
 	for(const str_siz_pair& s: items)
-		ofs << guid_in << ' ' << s.second << ' ' << s.first << '\n';
+	{
+		r.count = s.second;
+		r.data = s.first;
+		ofs << r;
+	}
 	ofs.close();
 }
 
-void write_namelog_to_db(const str& text)
-{
-	// ^2|<^8MAD^1Kitty Too^7: ^2why no? ))
-	// ^30  (*2BC45233)  77.123.107.231^7 '^2BDSM^7'
-	// ^31  (*1DE6454E)  90.192.206.146^7 '^4A^5ngel ^4E^5yes^7'
-	// -  (*4A8B117F)    86.1.110.133^7 'Andrius [LTU]^7'
-	// ^33  (*F1147474)    37.47.104.24^7 'UFK POLAND^7'
-	// ^34  (*ACF58F90)  95.118.224.206^7 '^1Vamp ^3G^1i^3r^1l^7'
-	// ^35  (*EAF1A70C)  88.114.147.124^7 ':D^7'
-	// -  (*E5DAD0FE)   201.37.205.57^7 '^1*^7M^1*^7^^1p^7ev^7'
-	// -  (*B45368DF)    82.50.105.85^7 'Kiloren^7'
-	// ^36  (*5F9DFD1F)      86.2.36.24^7 'SodaMan^7'
-	// -  (*11045255)   79.154.175.14^7 '^3R^^2ocket^7' '^4G^1O^3O^4G^2L^1E^7'
-
-	std::istringstream iss(text);
-	str line, skip, guid, ip, names, name;
-	while(std::getline(iss, line))
-	{
-		bug("line: " << line);
-		std::istringstream iss(line);
-		if(std::getline(iss >> skip >> guid >> ip >> std::ws, names))
-		{
-			if(ip.size() < 7)
-				continue;
-			bug("skip : " << skip);
-			bug("guid : " << guid);
-			bug("ip   : " << ip);
-			bug("names: " << names);
-			if(is_ip(ip) && guid.size() == 11 && guid[0] == '(' && guid [1] == '*')
-			{
-				guid = guid.substr(2, 8);
-				write_to_db("ip", guid, ip, DB_SORT::MOST_RECENT);
-
-				std::istringstream iss(names);
-				while(std::getline(iss, skip, '\'') && std::getline(iss, name, '\''))
-					write_to_db("name", guid, name, DB_SORT::MOST_POPULAR);
-			}
-			bug("");
-		}
-	}
-}
+//void write_namelog_to_db(const str& text)
+//{
+//	// ^2|<^8MAD^1Kitty Too^7: ^2why no? ))
+//	// ^30  (*2BC45233)  77.123.107.231^7 '^2BDSM^7'
+//	// ^31  (*1DE6454E)  90.192.206.146^7 '^4A^5ngel ^4E^5yes^7'
+//	// -  (*4A8B117F)    86.1.110.133^7 'Andrius [LTU]^7'
+//	// ^33  (*F1147474)    37.47.104.24^7 'UFK POLAND^7'
+//	// ^34  (*ACF58F90)  95.118.224.206^7 '^1Vamp ^3G^1i^3r^1l^7'
+//	// ^35  (*EAF1A70C)  88.114.147.124^7 ':D^7'
+//	// -  (*E5DAD0FE)   201.37.205.57^7 '^1*^7M^1*^7^^1p^7ev^7'
+//	// -  (*B45368DF)    82.50.105.85^7 'Kiloren^7'
+//	// ^36  (*5F9DFD1F)      86.2.36.24^7 'SodaMan^7'
+//	// -  (*11045255)   79.154.175.14^7 '^3R^^2ocket^7' '^4G^1O^3O^4G^2L^1E^7'
+//
+//	std::istringstream iss(text);
+//	str line, skip, guid, ip, names, name;
+//	while(std::getline(iss, line))
+//	{
+//		bug("line: " << line);
+//		std::istringstream iss(line);
+//		if(std::getline(iss >> skip >> guid >> ip >> std::ws, names))
+//		{
+//			if(ip.size() < 7)
+//				continue;
+//			bug("skip : " << skip);
+//			bug("guid : " << guid);
+//			bug("ip   : " << ip);
+//			bug("names: " << names);
+//			if(is_ip(ip) && guid.size() == 11 && guid[0] == '(' && guid [1] == '*')
+//			{
+//				guid = guid.substr(2, 8);
+//				write_to_db("ip", guid, ip, DB_SORT::MOST_RECENT);
+//
+//				std::istringstream iss(names);
+//				while(std::getline(iss, skip, '\'') && std::getline(iss, name, '\''))
+//					write_to_db("name", guid, name, DB_SORT::MOST_POPULAR);
+//			}
+//			bug("");
+//		}
+//	}
+//}
 
 void log_namelog(const str& text)
 {
@@ -987,17 +1015,17 @@ str RConicsIrcBotPlugin::var_sub(const str& s, const str& server)
 			str guid = ret.substr(pos + 2 + VAR_GUID.size(), 8);
 			if(is_guid(guid))
 			{
-				rec r;
+				db_rec r;
 				ent_set names;
 
-				std::ifstream ifs("data/rconics-db-name.txt");
 				{
 					lock_guard lock(db_mtx);
+					std::ifstream ifs("data/rconics-db-name.txt");
 					while(ifs >> r)
 						if(lowercase(r.guid) == lowercase(guid))
 							names.insert(ent(r.count, r.data));
+					ifs.close();
 				}
-				ifs.close();
 
 				if(!names.empty())
 					ret.replace(pos, end - pos + 1, names.begin()->data);
@@ -1128,8 +1156,8 @@ void RConicsIrcBotPlugin::regular_poll()
 
 	for(const rcon_server_pair& s: sm)
 	{
-		bug_var(s.first);
-		bug_var(do_automsg);
+		log("server: " << s.first);
+//		bug_var(do_automsg);
 		if(do_automsg && polltime(poll::RCONMSG, 60))
 		{
 			lock_guard lock(automsgs_mtx);
@@ -1163,7 +1191,7 @@ void RConicsIrcBotPlugin::regular_poll()
 		}
 
 		siz ival = bot.get(RCON_STATS_INTERVAL, RCON_STATS_INTERVAL_DEFAULT);
-		bug_var(do_stats.count(s.first));
+		//bug_var(do_stats.count(s.first));
 		// every ival minutes
 		if(do_stats.count(s.first) && polltime(poll::STATS, ival * 60) && bot.has_plugin("OA Stats Reporter"))
 		{
@@ -1176,7 +1204,7 @@ void RConicsIrcBotPlugin::regular_poll()
 				lock_guard lock(mtx);
 				if(v.empty())
 					if(!rpc_get_oatop("", v))
-						bug("rpc_get_oatop() error");
+						log("rpc_get_oatop() error");
 
 				std::sort(v.begin(), v.end(), [&](const keystats& ks1, const keystats& ks2)
 				{
@@ -1186,30 +1214,30 @@ void RConicsIrcBotPlugin::regular_poll()
 				if(v.size() > 20)
 					v.erase(v.begin() + 20, v.end());
 
-				siz i = 0;
-				for(const keystats& ks: v)
-					bug("ks: " << (++i) << " [" << ks.to << "] "<< ks.name);
-				for(i = 0; i < v.size(); ++i)
-				{
-					bug_var(i);
-					bug_var(v[i].rank);
-					bug_var(v[i].name);
-					bug("");
-				}
+//				siz i = 0;
+//				for(const keystats& ks: v)
+//					bug("ks: " << (++i) << " [" << ks.to << "] "<< ks.name);
+//				for(i = 0; i < v.size(); ++i)
+//				{
+//					bug_var(i);
+//					bug_var(v[i].rank);
+//					bug_var(v[i].name);
+//					bug("");
+//				}
 //					bug("i: " << std::to_string(i) << " " << v[i]);
 			}
 
-			bug_var(v.size());
+//			bug_var(v.size());
 
 			siz max = v.size() > 20 ? 20 : v.size();
-			bug_var(max);
+//			bug_var(max);
 
 			if(!v.empty())
 			{
 				siz i = rand_int(0, max - 1);
-				bug_var(i);
-				bug_var(v[i].rank);
-				bug_var(v[i].name);
+//				bug_var(i);
+//				bug_var(v[i].rank);
+//				bug_var(v[i].name);
 
 				oss.str("");
 				oss.precision(1);
@@ -1226,9 +1254,9 @@ void RConicsIrcBotPlugin::regular_poll()
 					bot.fc_reply(msg, "{" + s.first + "} " + oa_to_IRC(trim(ret).c_str()));
 
 				bug("STATS ANNOUNCE: " << oss.str());
-				bug_var(v.size());
+//				bug_var(v.size());
 				v.erase(v.begin() + i);
-				bug_var(v.size());
+//				bug_var(v.size());
 			}
 		}
 	}
@@ -1258,10 +1286,14 @@ void RConicsIrcBotPlugin::regular_poll()
 		str guid, ip, name;
 		dbent(const str& guid, const str& ip, const str& name): guid(guid), ip(ip), name(name) {}
 		dbent(const dbent& e): guid(e.guid), ip(e.ip), name(e.name) {}
-		dbent& operator=(const dbent& e) { guid = e.guid; ip = e.ip; name = e.name; return *this; }
-		bool operator<(const dbent& e) const { return guid < e.guid; }
-		bool operator==(const dbent& e) const { return guid == e.guid && ip == e.ip && name == e.name; }
-		bool operator!=(const dbent& e) const { return !(*this == e); }
+		bool operator<(const dbent& e) const
+		{
+			if(guid != e.guid)
+				return guid < e.guid;
+			if(ip != e.ip)
+				return ip < e.ip;
+			return name < e.name;
+		}
 	};
 
 	static std::set<dbent> db_cache;
@@ -1275,7 +1307,7 @@ void RConicsIrcBotPlugin::regular_poll()
 	str_vec managed = bot.get_vec(RCON_MANAGED);
 	for(const str& server: managed)
 	{
-		bug_var(server);
+		log("server: " << server);
 
 		if((s = sm.find(server)) == sm.cend())
 		{
@@ -1288,20 +1320,17 @@ void RConicsIrcBotPlugin::regular_poll()
 			curr[server].clear();
 		}
 
+		str res = rcon("!namelog", s->second);
+
+		if(trim(res).empty())
+			log("No response from rcon !namelog.");
+		else
+			log_namelog(res);
+
 		// We have two data streams to parse in order to get one whole data item
 		// for each player. So we need to record if the first parsing succeeded
 		// before attempting the second.
 		bool parsed = false;
-
-		str res = rcon("!namelog", s->second);
-
-		if(trim(res).empty())
-		{
-			log("No response from rcon !namelog.");
-			continue;
-		}
-
-		log_namelog(res);
 
 		res = rcon("!listplayers", s->second);
 
@@ -1379,6 +1408,7 @@ void RConicsIrcBotPlugin::regular_poll()
 			if(!line.find("map:") && line.size() > 5)
 				mapname = line.substr(5);
 
+		str prev_line[2]; // TODO: DEBUG LINE
 		while(std::getline(iss, line) && !trim(line).empty())
 		{
 			player p;
@@ -1398,6 +1428,15 @@ void RConicsIrcBotPlugin::regular_poll()
 			std::istringstream iss(line.substr(0, pos + 1));
 			iss >> p.num >> p.score >> p.ping; // >> std::ws;
 			iss.ignore(1);
+
+			if(ip.find("---") != str::npos)
+			{
+				log("IP PARSE ERROR: " << prev_line[0]);
+				log("IP PARSE ERROR: " << prev_line[1]);
+				log("IP PARSE ERROR: " << line);
+				prev_line[0] = prev_line[1];
+				prev_line[1] = line;
+			}
 
 			str name; // can be empty, if so keep name from !listplayers
 			std::getline(iss, name);
@@ -1448,28 +1487,6 @@ void RConicsIrcBotPlugin::regular_poll()
 				if(autounban_check(server, line, test)  && p.name == test)
 					unreasons.push_back("AUTO-BAN PROTECTION BY NAME: " + p.name);
 
-			// AUTOBAN BY TIME AND LOCATION
-
-			for(const str& line: bot.get_vec(BAN_BY_LOC))
-				if(autoban_check(server, line, test))
-					if(lowercase((loc = get_loc(ip, "city"))).find(lowercase(test)) != str::npos)
-						reasons.push_back("AUTO-BAN BY LOC: " + loc);
-			for(const str& line: bot.get_vec(UNBAN_BY_LOC))
-				if(autounban_check(server, line, test))
-					if(lowercase((loc = get_loc(ip, "city"))).find(lowercase(test)) != str::npos)
-						unreasons.push_back("AUTO-BAN PROTECTION BY LOC: " + loc);
-
-			// AUTOBAN BY TIME AND ISP
-
-			for(const str& line: bot.get_vec(BAN_BY_ISP))
-				if(autoban_check(server, line, test))
-					if(lowercase((isp = get_isp(ip))).find(lowercase(test)) != str::npos)
-						reasons.push_back("AUTO-BAN BY ISP: " + isp);
-			for(const str& line: bot.get_vec(UNBAN_BY_ISP))
-				if(autounban_check(server, line, test))
-					if(lowercase((isp = get_isp(ip))).find(lowercase(test)) != str::npos)
-						unreasons.push_back("AUTO-BAN PROTECTION BY ISP: " + isp);
-
 			for(const str& reason: reasons)
 				log(reason);
 
@@ -1482,6 +1499,44 @@ void RConicsIrcBotPlugin::regular_poll()
 				log("!ban  RESULT: " << res);
 				res = rcon("addip " + ip, s->second);
 				log("addip RESULT: " << res);
+			}
+			else if(unreasons.empty()) // Do other (slower) checks
+			{
+				// AUTOBAN BY TIME AND LOCATION
+
+				for(const str& line: bot.get_vec(BAN_BY_LOC))
+					if(autoban_check(server, line, test))
+						if(lowercase((loc = get_loc(ip, "city"))).find(lowercase(test)) != str::npos)
+							reasons.push_back("AUTO-BAN BY LOC: " + loc);
+				for(const str& line: bot.get_vec(UNBAN_BY_LOC))
+					if(autounban_check(server, line, test))
+						if(lowercase((loc = get_loc(ip, "city"))).find(lowercase(test)) != str::npos)
+							unreasons.push_back("AUTO-BAN PROTECTION BY LOC: " + loc);
+
+				// AUTOBAN BY TIME AND ISP
+
+				for(const str& line: bot.get_vec(BAN_BY_ISP))
+					if(autoban_check(server, line, test))
+						if(lowercase((isp = get_isp(ip))).find(lowercase(test)) != str::npos)
+							reasons.push_back("AUTO-BAN BY ISP: " + isp);
+				for(const str& line: bot.get_vec(UNBAN_BY_ISP))
+					if(autounban_check(server, line, test))
+						if(lowercase((isp = get_isp(ip))).find(lowercase(test)) != str::npos)
+							unreasons.push_back("AUTO-BAN PROTECTION BY ISP: " + isp);
+
+				for(const str& reason: reasons)
+					log(reason);
+
+				for(const str& unreason: unreasons)
+					log(unreason);
+
+				if(unreasons.empty() && !reasons.empty())
+				{
+					res = rcon("!ban " + std::to_string(p.num)	+ " AUTOBAN", s->second);
+					log("!ban  RESULT: " << res);
+					res = rcon("addip " + ip, s->second);
+					log("addip RESULT: " << res);
+				}
 			}
 
 			player_set_iter psi = curr[server].find(p);
@@ -1559,7 +1614,6 @@ void RConicsIrcBotPlugin::regular_poll()
 		bug_var(write_db);
 		if(write_db && polltime(poll::DB_WRITE, 5 * 60) && !db_cache.empty())
 		{
-			lock_guard lock(db_mtx);
 			for(const dbent& e: db_cache)
 			{
 				bug("ADD TO DB: " << e.guid);
@@ -1660,7 +1714,7 @@ bool RConicsIrcBotPlugin::whois(const message& msg)
 	str_ent_set_map names;
 	str_ent_set_map ips;
 
-	rec r;
+	db_rec r;
 
 	query = lowercase(query);
 
@@ -1691,7 +1745,7 @@ bool RConicsIrcBotPlugin::whois(const message& msg)
 		while(ifs >> r)
 			if(exact && r.data == query)
 				ips[r.guid].insert(ent(r.count, r.data));
-			else if(!exact && r.data.find(query) != str::npos)
+			else if(!exact && !r.data.find(query)) // starts with
 				ips[r.guid].insert(ent(r.count, r.data));
 		ifs.close();
 		ifs.open("data/rconics-db-name.txt");
@@ -2384,7 +2438,7 @@ bool RConicsIrcBotPlugin::adminkill(const message& msg)
 		}
 
 		// get all their IP addresses
-		rec r;
+		db_rec r;
 		str_set ips;
 		std::ifstream ifs("data/rconics-db-ip.txt");
 		while(ifs >> r)

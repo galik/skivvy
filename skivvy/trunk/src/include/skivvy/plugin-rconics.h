@@ -164,7 +164,11 @@ private:
 //	bool echomsg = false;
 
 //	bool autoban_check(const str& server, const str& line, const str& data, str& test);
+	typedef str_map location_map;
+
 	str get_isp(const str& ip);
+	bool get_loc_map(const str& ip, location_map& m);
+	str get_loc(const str& ip, const str& item = "code");
 
 	void read_automsgs();
 	void write_automsgs();
@@ -215,8 +219,15 @@ private:
 
 	//str_vec managed;
 
+	enum class DB_SORT
+	{
+		MOST_POPULAR
+		, MOST_RECENT
+	};
+
 	bool write_db = true;
 	static std::mutex db_mtx;
+	void write_to_db(const str& db, const str& guid_in, const str& data, DB_SORT sort);
 
 	// rename
 	typedef std::map<str, str_map> str_str_map;
