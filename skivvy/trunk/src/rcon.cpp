@@ -93,7 +93,10 @@ bool rcon(const str& cmd, str& res, const str& host, int port)
 
 	const str msg = "\xFF\xFF\xFF\xFF" + cmd;
 	if(send(cs, msg.c_str(), msg.size(), 0) < 1)
-		return plog(strerror(errno), false);
+	{
+		log(strerror(errno));
+		return false;
+	}
 
 	res.clear();
 
