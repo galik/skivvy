@@ -7,7 +7,7 @@ A - Addition
 F - FIXED
 X - Won't fix
 
-M Channel lock - lock output per channel rather than priority queue
+M Per channel plugin activation
 B Grabber needs to be channel aware.
 M Make !oastat accept multiple palayers and multiple types (pw ck)
 A Add a Persistant Storage Service to IrcBot for session management

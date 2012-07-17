@@ -459,7 +459,11 @@ std::istream& operator>>(std::istream& is, IrcBot& bot)
 void IrcBot::add_plugin(IrcBotPluginPtr plugin)
 {
 	if(plugin)
+	{
 		this->plugins.push_back(plugin);
+		// give every plugin 'free pass' access to channels
+		chan_access["*"].insert(plugin->get_name());
+	}
 	else
 		log("ERROR: Adding non-plugin.");
 }
@@ -1041,6 +1045,7 @@ str_vec IrcBot::list() const
 			v.push_back(i);
 	return v;
 }
+
 void IrcBot::execute(const str& cmd, const message& msg)
 {
 	if(commands.find(cmd) == commands.end())
@@ -1049,8 +1054,34 @@ void IrcBot::execute(const str& cmd, const message& msg)
 		return;
 	}
 	if(commands[cmd])
-		commands[cmd]->execute(cmd, msg);
+	{
+		// "*" -> free pass list
+		// "PM" -> PM list
+		if(msg.from_channel())
+		{
+			// apply channel authorization
+			if(chan_access["*"].count(commands[cmd]->get_name()))
+				commands[cmd]->execute(cmd, msg);
+			else if(chan_access[msg.get_sender()].count(commands[cmd]->get_name()))
+				commands[cmd]->execute(cmd, msg);
+			else
+				log("PLUGIN " << commands[cmd]->get_name()
+					<< " NOT AUTHORISED FOR CHANNEL: " << msg.get_sender());
+		}
+		else
+		{
+			// apply PM authorization
+			if(chan_access["*"].count(commands[cmd]->get_name()))
+				commands[cmd]->execute(cmd, msg);
+			else if(chan_access["PM"].count(commands[cmd]->get_name()))
+				commands[cmd]->execute(cmd, msg);
+			else
+				log("PLUGIN " << commands[cmd]->get_name()
+					<< " NOT AUTHORISED FOR PM TO: " << msg.get_sender());
+		}
+	}
 }
+
 str IrcBot::help(const str& cmd) const
 {
 	if(commands.find(cmd) != commands.end())

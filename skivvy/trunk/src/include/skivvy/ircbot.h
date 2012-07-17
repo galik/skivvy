@@ -900,10 +900,11 @@ public:
 	typedef std::set<str> channel_set;
 	typedef std::set<str> ban_set;
 	typedef std::map<str, IrcBotPluginPtr> command_map;
-	typedef std::pair<str, IrcBotPluginPtr> command_pair;
+	typedef std::pair<str, IrcBotPluginPtr> command_map_pair;
 
 	typedef std::map<const str, str_set> nicks_map;
-	typedef std::pair<const str, str_set> nicks_pair;
+	typedef std::pair<const str, str_set> nicks_map_pair;
+	typedef std::map<const str, str_set> str_str_set_map;
 	typedef nicks_map::iterator nicks_iter;
 	typedef nicks_map::const_iterator nick_citer;
 
@@ -916,8 +917,11 @@ private:
 	listener_set listeners;
 	service_map services;
 	command_map commands;
+//	command_map channels; //
 	ban_set banned;
 	property_map props;
+
+	str_str_set_map chan_access; // ("#channel"|"*"|"PM") -> { "plugin#1", "plugin#2" }
 
 	bool done;
 	bool debug; // debug mode

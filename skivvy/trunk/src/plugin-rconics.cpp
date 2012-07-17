@@ -1426,17 +1426,24 @@ void RConicsIrcBotPlugin::regular_poll()
 				pos = get_last_field(line.substr(0, pos + 1), skip);
 			while(pos != str::npos && line[pos] == ' ') --pos;
 			std::istringstream iss(line.substr(0, pos + 1));
-			iss >> p.num >> p.score >> p.ping; // >> std::ws;
-			iss.ignore(1);
 
-			if(ip.find("---") != str::npos)
+			if(!(iss >> p.num >> p.score >> p.ping).ignore())
+				continue;
+//			iss.ignore(1);
+
+			if(ip != "bot" && !is_ip(ip))
 			{
 				log("IP PARSE ERROR: " << prev_line[0]);
 				log("IP PARSE ERROR: " << prev_line[1]);
 				log("IP PARSE ERROR: " << line);
-				prev_line[0] = prev_line[1];
-				prev_line[1] = line;
+				bug("==================================================");
+				bug(res);
+				bug("==================================================");
+				continue;
 			}
+
+			prev_line[0] = prev_line[1];
+			prev_line[1] = line;
 
 			str name; // can be empty, if so keep name from !listplayers
 			std::getline(iss, name);
