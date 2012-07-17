@@ -2,7 +2,7 @@
 #ifndef _SKIVVY_PLUGIN_EXAMPLE_H_
 #define _SKIVVY_PLUGIN_EXAMPLE_H_
 /*
- * ircbot-example.h
+ * plugin-example.h
  *
  *  Created on: 30 Jan 2012
  *      Author: oasookee@googlemail.com
@@ -42,7 +42,7 @@ using namespace skivvy::ircbot;
  */
 class ExampleIrcBotPlugin
 : public BasicIrcBotPlugin
- , public IrcBotMonitor // only is you want to monitor general chatter
+ , public IrcBotMonitor // only if you want to monitor general chatter
 {
 private:
 
@@ -67,7 +67,7 @@ public:
 
 	// INTERFACE: IrcBotMonitor
 
-	virtual void event(const message& msg); // only is you want have IrcBotMonitor
+	virtual void event(const message& msg); // only if you want have IrcBotMonitor
 };
 
 }} // myspace::example

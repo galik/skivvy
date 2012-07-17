@@ -70,7 +70,7 @@ bool ExampleIrcBotPlugin::initialize()
 	//({
 	//	"!do_other_stuff"
 	//	, "!do_other_stuff Do other stuff!"
-	//	, [&](const message& msg){ do_stuff(msg); }
+	//	, [&](const message& msg){ do_other_stuff(msg); }
 	//});
 
 	bot.add_monitor(*this);

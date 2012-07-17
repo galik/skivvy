@@ -101,17 +101,25 @@ bug("-----------------------------------------------------")
 
 #endif
 
+#ifndef DEV
+#define DEV "unset"
+#endif
+
 #ifndef STAMP
 #define STAMP "00000000"
 #endif
 
+#ifndef COMMITS
+#define COMMITS "0000"
+#endif
+
 #ifndef REVISION
-#define REVISION "0"
+#define REVISION "0000000"
 #endif
 
 #define PLUGIN_INFO(N, V) \
 	static const char* NAME = N; \
-	static const char* VERSION = V "-" REVISION "-" STAMP
+	static const char* VERSION = V "-" STAMP "-" COMMITS "-" REVISION "-" DEV
 
 /*
  * Basic logging.
