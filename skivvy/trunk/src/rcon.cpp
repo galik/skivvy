@@ -67,7 +67,10 @@ bool rcon(const str& cmd, str& res, const str& host, int port)
 	int cs = socket(PF_INET, SOCK_DGRAM, 0);
 
 	if(cs <= 0)
-		return plog(strerror(errno), false);
+	{
+		log(strerror(errno));
+		return false;
+	}
 
 	sockaddr_in sin;
 	hostent *he = gethostbyname(host.c_str());
