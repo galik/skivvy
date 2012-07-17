@@ -34,7 +34,7 @@ DEF_FLAGS = \
 	-D _GLIBCXX_USE_NANOSLEEP \
 	-D _GLIBCXX_USE_SCHED_YIELD \
 	-D STAMP=\"$(shell date +%Y%m%d-%H%M%S)\" \
-	-D REVISION=\"$(shell git log -n 1 --pretty=format:%H)$(shell git diff --quiet || echo -dev)\" \
+	-D REVISION=\"$(shell git log -n 1 --pretty=format:%H|tr [:lower:] [:upper:])$(shell git diff --quiet || echo -dev)\" \
 	-D DEFAULT_PLUGIN_DIR=\"$(plugindir)\"
 
 GEN_FLAGS = -Wl,-E -Wfatal-errors -Wall -Wextra -Winit-self -ansi -pedantic -pipe -pthread \
