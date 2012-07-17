@@ -51,12 +51,6 @@ using namespace skivvy;
 using namespace skivvy::utils;
 using namespace skivvy::types;
 
-bool plog(const str& msg, bool error)
-{
-	log(msg);
-	return error;
-}
-
 bool rcon(const str& cmd, str& res, const str& host, int port)
 {
 	// One mutex per server:port to ensure that all threads
@@ -73,23 +67,22 @@ bool rcon(const str& cmd, str& res, const str& host, int port)
 	}
 
 	sockaddr_in sin;
-	hostent *he = gethostbyname(host.c_str());
+	hostent* he = gethostbyname(host.c_str());
 	std::copy(he->h_addr, he->h_addr + he->h_length
 		, reinterpret_cast<char*>(&sin.sin_addr.s_addr));
 	sin.sin_family = AF_INET;
 	sin.sin_port = htons(port);
 
 	if(connect(cs, reinterpret_cast<sockaddr*>(&sin), sizeof(sin)) < 0)
-		return plog(strerror(errno), false);
+	{
+		log(strerror(errno));
+		return false;
+	}
 
 	fcntl(cs, F_SETFL, O_NONBLOCK);
 
-	typedef std::chrono::steady_clock steady_clock;
-	typedef steady_clock::period period;
-	typedef steady_clock::time_point time_point;
-
-
 	const str key = host + ":" + std::to_string(port);
+
 	if(!mtxs[key].get())
 		mtxs[key].reset(new std::mutex);
 
@@ -106,7 +99,7 @@ bool rcon(const str& cmd, str& res, const str& host, int port)
 
 	int len;
 	char buf[1024];
-	for(siz i = 0; i < 10; ++i, std::this_thread::sleep_for(std::chrono::milliseconds(200)))
+	for(siz i = 0; i < 10; ++i)
 	{
 		for(; (len = read(cs, buf, 1024)) > 9; i = 0)
 			res.append(buf + 10, len - 10);
@@ -114,6 +107,7 @@ bool rcon(const str& cmd, str& res, const str& host, int port)
 			res.append(buf, len);
 		else if(len == 0)
 			break;
+		std::this_thread::sleep_for(std::chrono::milliseconds(200));
 	}
 
 	close(cs);

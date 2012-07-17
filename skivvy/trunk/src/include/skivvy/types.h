@@ -39,10 +39,11 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <map>
 #include <set>
 #include <deque>
+#include <mutex>
 #include <stack>
 #include <vector>
 #include <random>
-#include <mutex>
+#include <chrono>
 #include <istream>
 
 namespace skivvy { namespace types {
@@ -80,6 +81,9 @@ typedef std::map<const str, str_set> str_set_map;
 typedef std::pair<const str, str_set> str_set_pair;
 
 typedef std::lock_guard<std::mutex> lock_guard;
+typedef std::chrono::steady_clock steady_clock;
+typedef steady_clock::period period;
+typedef steady_clock::time_point time_point;
 
 struct delay
 {
