@@ -35,7 +35,7 @@ DEF_FLAGS = \
 	-D _GLIBCXX_USE_SCHED_YIELD \
 	-D STAMP=\"$(shell date +%Y%m%d-%H%M%S)\" \
 	-D DEV=\"$(shell git diff --quiet || echo -dev)\" \
-	-D COMMITS=\"$(shell printf "%04d" $(git log --after={yesterday} --pretty=oneline|wc -l))\" \
+	-D COMMITS=\"$(shell printf %04d \"$(git log --after={yesterday} --pretty=oneline|wc -l)\")\" \
 	-D REVISION=\"$(shell git log -n 1 --pretty=format:%h|tr [:lower:] [:upper:])\" \
 	-D DEFAULT_PLUGIN_DIR=\"$(plugindir)\"
 
@@ -110,7 +110,7 @@ libskivvy_la_SOURCES = \
 	server.cpp \
 	str.cpp \
 	types.cpp
-	
+
 # IrcBot plugins
 skivvy_plugin_artibot_la_SOURCES = plugin-artibot.cpp mh/megahal.cpp
 skivvy_plugin_chanops_la_SOURCES = plugin-chanops.cpp
