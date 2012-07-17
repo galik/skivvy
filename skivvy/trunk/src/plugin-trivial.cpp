@@ -56,13 +56,17 @@ std::istream& operator>>(std::istream& is, question& q)
 	bug_func();
 	q.q.clear();
 	q.a.clear();
+	q.i.clear();
 	std::getline(is, q.q);
 	bug("q: " << q.q);
 	str line;
 	while(std::getline(is, line) && !trim(line).empty())
 	{
 		bug("a: " << line);
-		q.a.push_back(line);
+		if(line[0] == '#')
+			q.i = line;
+		else
+			q.a.push_back(line);
 	}
 	return is;
 }
@@ -85,7 +89,7 @@ void TrivialIrcBotPlugin::q_open(const message& msg)
 	bug_msg(msg);
 
 	questions.clear();
-	std::ifstream ifs(bot.get("quiz.file", "quiz.txt"));
+	std::ifstream ifs(bot.getf("trivial.quiz.file", "trivial-quiz.txt"));
 
 	question q;
 	while(ifs >> q)
@@ -97,7 +101,7 @@ void TrivialIrcBotPlugin::q_open(const message& msg)
 
 void TrivialIrcBotPlugin::q_end(const message& msg)
 {
-	time_t secs = bot.get("answer.time", 20);
+	time_t secs = bot.get("trivial.quiz.answer.time", 20);
 	std::this_thread::sleep_for(std::chrono::seconds(secs));
 	accepting_answers = false;
 
@@ -145,7 +149,8 @@ void TrivialIrcBotPlugin::q_ask(const message& msg)
 		}
 	}
 
-	if(fut.valid()) fut.get();
+	if(fut.valid())
+		fut.get();
 	answered.clear();
 	answer_found = false;
 	accepting_answers = true;
@@ -211,7 +216,7 @@ void TrivialIrcBotPlugin::event(const message& msg)
 //		bug("event() RECEIVED");
 //		bug("accepting_answers" << accepting_answers);
 //		bug("msg.text" << msg.text);
-		size_t ans;
+		siz ans;
 		if(accepting_answers && std::istringstream(msg.text) >> ans)
 		{
 			if(stl::find(answered, msg.get_sender()) != answered.end())
