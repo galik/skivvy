@@ -1502,7 +1502,53 @@ void RConicsIrcBotPlugin::regular_poll()
 
 			if(unreasons.empty() && !reasons.empty())
 			{
-				res = rcon("!ban " + std::to_string(p.num)	+ " AUTOBAN", s->second);
+				// str cmd = "!ban " + std::to_string(p.num)	+ " AUTOBAN";
+
+				// 2012-07-18 03:30:50: STATUS     : 1 103 90.192.206.157 ^3*^7m^3*^^1Z^6immer^4106^7
+				// 2012-07-18 03:30:50: STATUS     : 10 999 181.95.101.149 ^0UnnamedPlayer^7
+				// 2012-07-18 03:30:50: AUTO-BAN BY NAME: ^0UnnamedPlayer^7
+
+				// Correctly !ban client #10 in admin.log
+				// 19:15: -1: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX: console: : ban: "10 AUTOBAN"
+
+				// Incorrectly kicked client #1 according to rcon return info (and reality)
+				// 2012-07-18 03:30:52: !ban  RESULT: !ban: WARNING bot or without GUID or IP cannot write to ban file
+				// broadcast: print "^3*^7m^3*^^1Z^6immer^4106^7 has been banned by console^7, duration: PERMANENT, reason: AUTOBAN\n"
+				// Kill: 1022 1 20: <world> killed ^3*^7m^3*^^1Z^6immer^4106 by MOD_SUICIDE
+				// PlayerScore: 1 51: ^3*^7m^3*^^1Z^6immer^4106 now has 51 points
+				// Playerstore: Stored player with guid: 2A5E71DF80B9A6BA7796CB3F1DE6454E in 0
+				// ClientDisconnect: 1
+
+				// Incorrectly kicked client #1 according to server.log
+				// (note client #10 leaves before kick is issued)
+				// 19:10 ClientUserinfoChanged: 10 n\UnnamedPlayer\t\3\model\beret/red\hmodel\beret/red\g_redteam\\g_blueteam\\c1\\c2\\hc\100\w\0\l\0\tt\0\tl\0\id\74587B3A2D1BE4AD3D87887957D295B6
+				// 19:10 ClientConnect: 10
+				// 19:12 Kill: 8 3 10: ^1*M^5*^1^^5L^1E^5G^1E^5N^1D killed Pixelized by MOD_RAILGUN
+				// 19:12 PlayerScore: 8 83: ^1*M^5*^1^^5L^1E^5G^1E^5N^1D now has 83 points
+				// 19:12 Challenge: 8 215 1: Client 8 got award 215
+				// 19:12 Challenge: 8 1 1: Client 8 got award 1
+				// 19:12 Challenge: 3 2 1: Client 3 got award 2
+				// 19:12 Award: 8 1: ^1*M^5*^1^^5L^1E^5G^1E^5N^1D gained the EXCELLENT award!
+				// 19:12 Challenge: 8 302 1: Client 8 got award 302
+				// 19:12 Award: 8 2: ^1*M^5*^1^^5L^1E^5G^1E^5N^1D gained the IMPRESSIVE award!
+				// 19:12 Challenge: 8 301 1: Client 8 got award 301
+				// 19:12 Kill: 5 8 10: ^1D^2i^3n^4g^5L^6e^7s killed ^1*M^5*^1^^5L^1E^5G^1E^5N^1D by MOD_RAILGUN
+				// 19:12 PlayerScore: 5 28: ^1D^2i^3n^4g^5L^6e^7s now has 28 points
+				// 19:12 Challenge: 5 215 1: Client 5 got award 215
+				// 19:12 Challenge: 5 1 1: Client 5 got award 1
+				// 19:12 Challenge: 8 2 1: Client 8 got award 2
+				// 19:13 ClientDisconnect: 10
+				// 19:13 Item: 6 team_CTF_blueflag
+				// 19:13 PlayerScore: 6 78: portuano now has 78 points
+				// 19:13 CTF: 6 2 2: portuano returned the BLUE flag!
+				// 19:15 Kill: 1022 1 20: <world> killed ^3*^7m^3*^^1Z^6immer^4106 by MOD_SUICIDE
+				// 19:15 PlayerScore: 1 51: ^3*^7m^3*^^1Z^6immer^4106 now has 51 points
+				// 19:15 Playerstore: Stored player with guid: 2A5E71DF80B9A6BA7796CB3F1DE6454E in 0
+				// 19:15 ClientDisconnect: 1
+
+				str cmd = "!ban " + ip	+ " AUTOBAN"; // use ip because #num is buggy
+				log("cmd: " << cmd);
+				res = rcon(cmd, s->second);
 				log("!ban  RESULT: " << res);
 				res = rcon("addip " + ip, s->second);
 				log("addip RESULT: " << res);
@@ -2609,6 +2655,7 @@ str RConicsIrcBotPlugin::get_version() const { return VERSION; }
 
 void RConicsIrcBotPlugin::exit()
 {
+	automsg_timer.turn_off();
 }
 
 }} // sookee::ircbot

@@ -48,4 +48,7 @@ int main(int argc, char* argv[])
 	IrcBot bot;
 	log(bot.get_name() + " v" + bot.get_version());
 	bot.init(argc > 1 ? argv[1] : "");
+	if(bot.restart)
+		std::exit(6);
+	std::exit(0);
 }

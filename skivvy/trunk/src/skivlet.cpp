@@ -43,6 +43,29 @@ using namespace skivvy::types;
 using namespace skivvy::utils;
 using namespace skivvy::ircbot;
 
+
+inline
+str stamp()
+{
+	time_t rawtime = std::time(0);
+	tm* timeinfo = std::localtime(&rawtime);
+	char buffer[9];
+	std::strftime(buffer, 32, "%H:%M:%S", timeinfo);
+
+	return std::string(buffer);
+}
+
+#define prompt(m) do{std::cout << "[" << stamp() << "] " << m << "\n> " << std::flush;}while(false)
+
+struct _
+{
+	const char* n;
+	_(const char* n): n(n) { prompt("---> " << n); }
+	~_() { prompt("<--- " << n); }
+};
+
+#define func() _ __(__PRETTY_FUNCTION__)
+
 /*
  * Wait for a condition to become true else timeout.
  *
@@ -68,7 +91,7 @@ class Bot
 	bool connected = false;
 	bool done = false;
 
-	str_vec nick = {"SooKee", "Skivlet_2", "Skivlet_3", "Skivlet_4", "Skivlet_5"};
+	str_vec nick = {"Skivlet", "Skivlet_2", "Skivlet_3", "Skivlet_4", "Skivlet_5"};
 	siz uniq = 0;
 
 	std::future<void> responder_fut;
@@ -79,7 +102,8 @@ public:
 
 	void start()
 	{
-		bug_func();
+		std::cout << "> " << std::flush;
+		func();
 		std::srand(std::time(0));
 		ss.open(host, port);
 		connecter_fut = std::async(std::launch::async, [&]{ connecter(); });
@@ -90,7 +114,7 @@ public:
 
 	void send(const str& cmd)
 	{
-		bug("send: " << cmd);
+//		bug("send: " << cmd);
 		static std::mutex mtx;
 		lock_guard lock(mtx);
 		ss << cmd.substr(0, 510) << "\r\n" << std::flush;
@@ -101,24 +125,24 @@ public:
 
 	void connecter()
 	{
-		bug_func();
+		func();
 		send("PASS none");
 		send("NICK " + nick[uniq]);
 		while(!done)
 		{
 			if(!connected)
 			{
-				con("Attempting to connect...");
+				prompt("Attempting to connect...");
 				send("USER Skivlet 0 * :Skivlet");
 				spin_wait(done, 30);
 			}
 			if(connected)
 			{
-				bug_var(uniq);
+//				bug_var(uniq);
 				if(uniq)
 					send("NICK " + nick[0]); // try to regain primary nick
 				send("PING " + (ping = std::to_string(std::rand())));
-				spin_wait(done, 30);
+				spin_wait(done, 60);
 				if(ping != pong)
 					connected = false;
 			}
@@ -127,12 +151,12 @@ public:
 
 	void cli()
 	{
-		bug_func();
+		func();
 		str cmd;
 		str line;
 		str channel;
 		std::istringstream iss;
-		std::cout << "> " << std::flush;
+//		std::cout << "> " << std::flush;
 		while(!done)
 		{
 			if(!std::getline(std::cin, line))
@@ -145,24 +169,26 @@ public:
 			if(cmd == "/exit")
 			{
 				done = true;
+				send("QUIT :leaving");
 			}
 			else if(cmd == "/join")
 			{
 				if(!channel.empty())
-					send("PART " + channel);
+					send("PART " + channel + ": ...places to go people to see...");
 				iss >> channel;
 				send("JOIN " + channel);
 			}
 			else if(cmd == "/part")
 			{
 				if(!channel.empty())
-					send("PART " + channel);
+					send("PART " + channel + " ...places to go people to see...");
 			}
 			else
 			{
 				send("PRIVMSG " + channel + " :" + line);
 			}
 			std::cout << "> " << std::flush;
+			//prompt("");
 		}
 	}
 
@@ -177,21 +203,65 @@ public:
 
 	void responder()
 	{
-		bug_func();
+		func();
 		str line;
 		message msg;
 		while(!done)
 		{
 			if(!std::getline(ss, line))
 				continue;
-			bug("recv: " << line);
+//			bug("recv: " << line);
 			std::istringstream iss(line);
 			parsemsg(iss, msg);
-			bug_msg(msg);
+//			bug_msg(msg);
+
 			if(msg.cmd == "001")
 				connected = true;
+			else if(msg.cmd == "JOIN")
+			{
+				// :Skivlet!~Skivlet@cpc21-pool13-2-0-cust125.15-1.cable.virginmedia.com JOIN #teammega
+//				prompt("recv: " << line);
+//				bug_msg(msg);
+				prompt(msg.get_sender() << " has joined " << msg.params);
+			}
+			else if(msg.cmd == "QUIT")
+				prompt(msg.get_sender() << " has quit: " << msg.text);
 			else if(msg.cmd == "PING")
 				send("PONG " + msg.text);
+			else if(msg.cmd == "332") // RPL_TOPIC
+				;
+			else if(msg.cmd == "333") // Undocumented
+				;
+			else if(msg.cmd == "353") // RPL_NAMREPLY
+			{
+				str nick;
+				str_vec ops, vocs, nons;
+				std::istringstream iss(msg.text);
+				while(iss >> nick)
+				{
+					if(nick.empty())
+						continue;
+					if(nick[0] == '@')
+						ops.push_back(nick);
+					else if(nick[0] == '+')
+						vocs.push_back(nick);
+					else
+						nons.push_back(nick);
+				}
+				std::sort(ops.begin(), ops.end());
+				std::sort(vocs.begin(), vocs.end());
+				std::sort(nons.begin(), nons.end());
+				for(const str& nick: ops)
+					prompt(nick);
+				for(const str& nick: vocs)
+					prompt(nick);
+				for(const str& nick: nons)
+					prompt(nick);
+			}
+			else if(msg.cmd == "372") // RPL_MOTD
+				prompt("MOTD: " << msg.text);
+			else if(msg.cmd == "376") // RPL_ENDOFMOTD
+				prompt("MOTD: " << msg.text);
 			else if(msg.cmd == "433") // NICK IN USE
 			{
 				++uniq;
@@ -201,9 +271,11 @@ public:
 			else if(msg.cmd == "PONG")
 				pong = msg.text;
 			else if(msg.cmd == "NOTICE")
-				std::cout << "NOTICE: " << msg.text << std::endl;
+				prompt("NOTICE: " << msg.text);
 			else if(msg.cmd == "PRIVMSG")
-				std::cout << msg.to << ": " << msg.text << std::endl;
+				prompt(msg.to << ": <" << msg.get_sender() << "> " << msg.text);
+			else
+				prompt("recv: " << line);
 		}
 	}
 };

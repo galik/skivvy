@@ -924,7 +924,7 @@ private:
 	str_str_set_map chan_access; // ("#channel"|"*"|"PM") -> { "plugin#1", "plugin#2" }
 
 	bool done;
-	bool debug; // debug mode
+	bool debug;
 
 	bool connected;
 	bool registered;
@@ -953,6 +953,7 @@ private:
 	time_t config_loaded;
 
 public:
+	bool restart = false;
 
 	time_t get_config_load_time() { return config_loaded; }
 

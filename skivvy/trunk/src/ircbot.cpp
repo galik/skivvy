@@ -411,22 +411,26 @@ IrcBot::IrcBot()
 std::istream& operator>>(std::istream& is, IrcBot& bot)
 {
 	log("Loading properties:");
-	bot.props.clear();
+	siz pos;
 	str line;
-//	IrcBot::property_iter p = bot.props.end();
+	bot.props.clear();
+
 	while(std::getline(is, line))
 	{
-		trim(line);
-		if(line.empty() or line[0] == '#') continue;
-
-		if(siz pos = line.find("//") != str::npos)
+		if((pos = line.find("//")) != str::npos)
 			line.erase(pos);
+		trim(line);
 
-		std::istringstream iss(line);
+		if(line.empty() || line[0] == '#')
+			continue;
+
 		str key, val;
-		std::getline(iss, key, ':');
-		iss >> std::ws;
-		std::getline(iss, val);
+		std::istringstream iss(line);
+		if(!std::getline(std::getline(iss >> std::ws, key, ':') >> std::ws, val))
+		{
+			log("Error parsing prop: " << line);
+			continue;
+		}
 
 		trim(key);
 		trim(val);
@@ -437,7 +441,6 @@ std::istream& operator>>(std::istream& is, IrcBot& bot)
 		else if(key == "real") bot.info.real = val;
 		else if(key == "join") bot.add_channel(val);
 		else if(key == "ban") bot.banned.insert(val);
-//		else p = bot.props.insert(p, std::make_pair(key, val));
 		else bot.props[key].push_back(val);
 	}
 	if(is.eof())
@@ -492,7 +495,6 @@ RemoteIrcServer& IrcBot::get_irc_server() { return irc; }
 // flood control
 bool IrcBot::fc_reply(const message& msg, const str& text)
 {
-//	return fc.send([&,msg,text]()->bool{ return irc.reply(msg, text); });
 	return fc.send(msg.to, [&,msg,text]()->bool{ return irc.reply(msg, text); });
 }
 
@@ -500,8 +502,6 @@ bool IrcBot::fc_reply_help(const message& msg, const str& text, const str& prefi
 {
 	const str_vec v = split(text, '\n');
 	for(const str& s: v)
-//		if(!fc.send([&,msg,prefix,s]()->bool{ return irc.reply(msg, prefix + s); }))
-//			return false;
 		if(!fc.send(msg.to, [&,msg,prefix,s]()->bool{ return irc.reply(msg, prefix + s); }))
 			return false;
 	return true;
@@ -509,8 +509,6 @@ bool IrcBot::fc_reply_help(const message& msg, const str& text, const str& prefi
 
 bool IrcBot::fc_reply_pm(const message& msg, const str& text)//, size_t priority)
 {
-//	bug_func();
-//	return fc.send([&,msg,text]()->bool{ return irc.reply_pm(msg, text); });
 	return fc.send(msg.to, [&,msg,text]()->bool{ return irc.reply_pm(msg, text); });
 }
 
@@ -518,8 +516,6 @@ bool IrcBot::fc_reply_pm_help(const message& msg, const str& text, const str& pr
 {
 	const str_vec v = split(text, '\n');
 	for(const str& s: v)
-//		if(!fc.send([&,msg,prefix,s]()->bool{ return irc.reply_pm(msg, prefix + s); }))
-//			return false;
 		if(!fc.send(msg.to, [&,msg,prefix,s]()->bool{ return irc.reply_pm(msg, prefix + s); }))
 			return false;
 	return true;
@@ -923,40 +919,65 @@ bool IrcBot::init(const str& config_file)
 						}
 					}
 				}
-				else if(cmd == "!pset")
+				else if(cmd == "!restart")
 				{
-					str_vec params = split_params(msg.get_user_params(), ' ');
+					str pass;
+					std::istringstream iss(msg.get_user_params());
 
-					if(params.size() < 2)
+					if(!(ios::getstring(iss, pass)))
 					{
-						fc_reply(msg, "!pset <password> var: [val1, val2...]");
+						fc_reply(msg, "!restart <password>");
 						continue;
 					}
-					// !pset <password> var: val1, val2, val3
-					if(!have(PROP_PASSWORD) || get(PROP_PASSWORD) == params[0])
+					bug_var(pass);
+					if(!have(PROP_PASSWORD) || get(PROP_PASSWORD) == pass)
 					{
-						std::istringstream iss(msg.get_user_params());
-						str key, vals;
-						if(std::getline(iss, key, ':') && !trim(key).empty())
+						done = true;
+						restart = true;
+					}
+				}
+				else if(cmd == "!pset")
+				{
+					//str_vec params = split_params(msg.get_user_params(), ' ');
+
+					str pass;
+					std::istringstream iss(msg.get_user_params());
+
+					if(!(ios::getstring(iss, pass)))
+					{
+						fc_reply(msg, "!pset <password> <key>: [<val1> <val2> ...]");
+						continue;
+					}
+					bug_var(pass);
+					// !pset <password> var: val1, val2, val3
+					if(!have(PROP_PASSWORD) || get(PROP_PASSWORD) == pass)
+					{
+						str key, val;
+						str_vec vals;
+
+						if(!std::getline(iss >> std::ws, key, ':') || trim(key).empty())
 						{
-							std::getline(iss, vals);
-							if(trim(vals).empty())
-							{
-								// report current values
-	//							property_range r = props.equal_range(key);
-								std::ostringstream oss;
-								oss << key << ":";
-								for(const str& val: props[key])
-									oss << ' ' << val;
-								fc_reply(msg, oss.str());
-								continue;
-							}
-							str_vec valvec = split(vals, ',');
-							props.erase(key);
-							for(str val: valvec)
-								props[key].push_back(trim(val));
-							fc_reply(msg, "Property set.");
+							fc_reply(msg, "Expected <key>: [<val1> <val2> ...]");
+							continue;
 						}
+						bug_var(key);
+						while(ios::getstring(iss, val))
+						{
+							bug_var(val);
+							vals.push_back(val);
+						}
+						if(vals.empty())
+						{
+							// report current values
+							for(const str& val: props[key])
+								fc_reply(msg, key + ": " + val);
+							continue;
+						}
+
+						props.erase(key);
+						for(str val: vals)
+							props[key].push_back(trim(val));
+						fc_reply(msg, "Property " + key + " has been set.");
 					}
 					else
 					{

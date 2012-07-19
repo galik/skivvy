@@ -253,8 +253,19 @@ static const str_map ents =
 	, {"&quot;", "\""}
 };
 
-str fix_urlisms(std::string s)
+str fix_entities(std::string s)
 {
+//	bug_func();
+	str::size_type p;
+	for(const str_pair& e: ents)
+		while((p = s.find(e.first)) != str::npos)
+			s.replace(p, e.first.size(), e.second);
+	return s;
+}
+
+str urldecode(std::string s)
+{
+//	bug_func();
 	static str_map urlism;
 	if(urlism.empty())
 	{
@@ -326,19 +337,10 @@ std::istream& read_tag_by_att(std::istream& is, std::ostream& os, const str& tag
 	return is;
 }
 
-str fix_entities(std::string s)
-{
-	str::size_type p;
-	for(const str_pair& e: ents)
-		while((p = s.find(e.first)) != str::npos)
-			s.replace(p, e.first.size(), e.second);
-	return s;
-}
-
 void html_to_text(std::istream& i, std::ostream& o)
 {
 	for(std::string s; std::getline(i, s, '<'); std::getline(i, s, '>'))
-		o << fix_urlisms(fix_entities(s));
+		o << urldecode(fix_entities(s));
 }
 
 str html_to_text(const str& html)

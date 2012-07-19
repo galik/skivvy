@@ -103,6 +103,8 @@ std::istream& read_tag(std::istream& is, std::ostream& os, const str& tag);
 std::istream& read_tag_by_att(std::istream& is, std::ostream& os, const str& tag, const str& att, const str& val);
 
 str fix_entities(str s);
+str urldecode(std::string s);
+
 str html_to_text(const str& html);
 void html_to_text(std::istream& i, std::ostream& o);
 
