@@ -48,18 +48,18 @@ using namespace skivvy::types;
 using namespace skivvy::utils;
 using namespace skivvy::string;
 
-static const str BAN_FILE = "chanops.ban_file";
+static const str BAN_FILE = "chanops.ban.file";
 static const str BAN_FILE_DEFAULT = "chanops-bans.txt";
-static const str USER_FILE = "chanops.user_file";
+static const str USER_FILE = "chanops.user.file";
 static const str USER_FILE_DEFAULT = "chanops-users.txt";
-const str GREET_JOINERS = "chanops.greet_joiners";
+const str GREET_JOINERS = "chanops.greet.active";
 const bool GREET_JOINERS_DEFAULT = false;
-const str UNGREET_FILE = "chanops.ungreet_file";
+const str UNGREET_FILE = "chanops.ungreet.file";
 const str UNGREET_FILE_DEFAULT = "chanops-ungreets.txt";
 const str GREETINGS_VEC = "chanops.greet";
-const str GREET_MIN_DELAY = "chanops.greet_min_delay";
+const str GREET_MIN_DELAY = "chanops.greet.delay.min";
 const siz GREET_MIN_DELAY_DEFAULT = 1;
-const str GREET_MAX_DELAY = "chanops.greet_max_delay";
+const str GREET_MAX_DELAY = "chanops.greet.delay.max";
 const siz GREET_MAX_DELAY_DEFAULT = 6;
 
 #define CHANOPS_PERM(name,ord) \
@@ -74,7 +74,8 @@ CHANOPS_PERM(ROOT, 4);
 
 static uint32_t checksum(const std::string& pass)
 {
-	if(pass.size() < sizeof(uint32_t)) return 0;
+	if(pass.size() < sizeof(uint32_t))
+		return 0;
 	uint32_t sum = 0xAA55AA55; // salt
 	for(size_t i = 0; i < pass.size() - sizeof(uint32_t); ++i)
 		sum *= *reinterpret_cast<const uint32_t*>(&pass[i]);
@@ -314,6 +315,15 @@ void ChanopsIrcBotPlugin::reclaim(const message& msg)
 }
 
 // INTERFACE: BasicIrcBotPlugin
+void ChanopsIrcBotPlugin::exec(const message& msg)
+{
+	const str cmd = msg.get_user_cmd();
+
+	if(cmd == "!users")
+	{
+
+	}
+}
 
 bool ChanopsIrcBotPlugin::initialize()
 {
