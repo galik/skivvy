@@ -107,6 +107,11 @@ private:
 
 	void reclaim(const message& msg);
 
+	// All functions requiring logged in permissions
+	// are called through her from ircbot
+	// Check permissions before executing
+	void exec(const message& msg);
+
 //	void op(std::string& nick);
 //	void voice(std::string& nick);
 //	void kick(std::string& nick);
