@@ -149,7 +149,5 @@ pfinder.tell_file: pfinder-tells.txt";
 
 
 # trivial
-quiz.file: trivial-quiz.txt
-answer.time: 15
-
-
+trivial.quiz.file: trivial-quiz.txt
+trivial.quiz.answer.time: 15
