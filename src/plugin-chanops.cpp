@@ -62,16 +62,6 @@ const siz GREET_MIN_DELAY_DEFAULT = 1;
 const str GREET_MAX_DELAY = "chanops.greet.delay.max";
 const siz GREET_MAX_DELAY_DEFAULT = 6;
 
-#define CHANOPS_PERM(name,ord) \
-static const ChanopsIrcBotPlugin::perm_set P_##name(~(-1U << ord)); \
-static const ChanopsIrcBotPlugin::perm_set R_##name((1U << ord) >> 1)
-
-CHANOPS_PERM(NONE, 0);
-CHANOPS_PERM(USER, 1);
-CHANOPS_PERM(OPER, 2);
-CHANOPS_PERM(SUPR, 3);
-CHANOPS_PERM(ROOT, 4);
-
 static uint32_t checksum(const std::string& pass)
 {
 	if(pass.size() < sizeof(uint32_t))
@@ -82,31 +72,31 @@ static uint32_t checksum(const std::string& pass)
 	return sum;
 }
 
-std::istream& operator>>(std::istream& is, ChanopsIrcBotPlugin::user_rec& ur)
-{
-	// user:00000000:pass
-	// SooKee:00000000:8860884
-//	is >> std::ws;
-//	std::getline(is, ur.user, ':');
-//	is >> ur.perms;
-//	is.ignore();
-//	is >> std::hex >> ur.sum;
-//	bug("is: " << bool(is));
-	char c;
-	std::getline(is, ur.user, ':');
-	is >> ur.perms;
-	is >> c >> std::hex >> ur.sum;
-	std::getline(is, ur.acts);
-	return is;
-}
 
-std::ostream& operator<<(std::ostream& os, const ChanopsIrcBotPlugin::user_rec& ur)
+std::ostream& operator<<(std::ostream& os, const ChanopsIrcBotPlugin::user_r& ur)
 {
-	os << ':' << ur.user;
-	os << ':' << ur.perms;
-	os << ':' << std::hex << ur.sum;
-	os << ':' << ur.acts;
+	bug_func();
+	os << ur.user << '\n';
+	os << std::hex << ur.sum << '\n';
+	os << ur.groups.size() << '\n';
+	for(const str& g: ur.groups)
+		os << g << '\n';
 	return os;
+}
+std::istream& operator>>(std::istream& is, ChanopsIrcBotPlugin::user_r& ur)
+{
+	bug_func();
+	siz s;
+	str line, g;
+	std::getline(is, ur.user);
+	std::getline(is, line);
+	std::istringstream(line) >> std::hex >> ur.sum;
+	std::getline(is, line);
+	std::istringstream(line) >> s;
+	for(siz i = 0; i < s; ++i)
+		if(std::getline(is, g))
+			ur.groups.insert(g);
+	return is;
 }
 
 ChanopsIrcBotPlugin::ChanopsIrcBotPlugin(IrcBot& bot)
@@ -116,16 +106,32 @@ ChanopsIrcBotPlugin::ChanopsIrcBotPlugin(IrcBot& bot)
 
 ChanopsIrcBotPlugin::~ChanopsIrcBotPlugin() {}
 
-bool ChanopsIrcBotPlugin::verify(const message& msg, const perm_set& perms)
+bool ChanopsIrcBotPlugin::permit(const message& msg)
 {
 	BUG_COMMAND(msg);
 
-	if(perms == R_NONE) return true;
+	const str& group = perms[msg.get_user_cmd()];
+
+	// not accessible via exec(msg);
+	if(group.empty())
+		return false;
+
+	// anyone can call
+	if(group == "*")
+		return true;
 
 	bool in = false;
 	for(const user_t& u: users)
-		if(u.prefix == msg.from && (in = true) && (u.perms.to_ulong() & perms.to_ulong()))
-			return true;
+	{
+		if(u.prefix != msg.from)
+			continue;
+		in = true;
+		for(const str& g: u.groups)
+			if(g == group)
+				return true;
+		break;
+	}
+
 	if(in)
 		bot.fc_reply_pm(msg, "ERROR: You do not have sufficient access.");
 	else
@@ -134,135 +140,94 @@ bool ChanopsIrcBotPlugin::verify(const message& msg, const perm_set& perms)
 	return false;
 }
 
-void ChanopsIrcBotPlugin::signup(const message& msg)
+bool ChanopsIrcBotPlugin::signup(const message& msg)
 {
 	BUG_COMMAND(msg);
 
 	std::string user, pass, pass2;
-	if(!extract_params(msg, {&user, &pass, &pass2}))
-		return;
+	if(!bot.extract_params(msg, {&user, &pass, &pass2}))
+		return false;
 
 	bug("user: " << user);
 	bug("pass: " << pass);
 	bug("pass2: " << pass2);
 
 	if(pass.size() < sizeof(uint32_t))
-	{
-		bot.fc_reply_pm(msg, "ERROR: Password must be at least 4 characters long.");
-		return;
-	}
+		return bot.cmd_error_pm(msg, "ERROR: Password must be at least 4 characters long.");
 
 	if(pass != pass2)
-	{
-		bot.fc_reply_pm(msg, "ERROR: Passwords don't match.");
-		return;
-	}
+		return bot.cmd_error_pm(msg, "ERROR: Passwords don't match.");
 
-	user_rec ur;
+	user_r ur;
 	std::string line;
 	std::ifstream ifs(bot.getf(USER_FILE, USER_FILE_DEFAULT));
-	while(std::getline(ifs, line))
+	while(ifs >> ur)
 	{
-		trim(line);
-		if(line.empty())
-			continue;
-		if(line[0] == '#')
-			continue;
-		bug("line:" << line);
-		if(std::istringstream(line) >> ur)
-		{
-			bug("ur:\n" << ur);
-			if(ur.user == user)
-			{
-				bot.fc_reply_pm(msg, "ERROR: User already registered.");
-				return;
-			}
-		}
+		bug("ur:\n" << ur);
+		if(ur.user == user)
+			return bot.cmd_error_pm(msg, "ERROR: User already registered.");
 	}
 
 	ur.user = user;
-	ur.perms = P_USER;
+	ur.groups.insert(G_USER);
 	ur.sum = checksum(pass);
 	std::ofstream ofs(bot.getf(USER_FILE, USER_FILE_DEFAULT), std::ios::app);
-	ofs << ur << '\n';
-	bot.fc_reply_pm(msg, "Successfully registered.");
-}
+	if(!(ofs << ur))
+		return bot.cmd_error_pm(msg, "ERROR: Writing use record to: " + bot.getf(USER_FILE, USER_FILE_DEFAULT));
 
-bool ChanopsIrcBotPlugin::extract_params(const message& msg, std::initializer_list<str*> args)
-{
-	std::istringstream iss(msg.get_user_params());
-	for(str* arg: args)
-		if(!(ios::getstring(iss, *arg)))
-		{
-			bot.fc_reply_pm(msg, help(msg.get_user_cmd()));
-			return false;
-		}
+	bot.fc_reply_pm(msg, "Successfully registered.");
 	return true;
 }
 
-void ChanopsIrcBotPlugin::login(const message& msg)
+bool ChanopsIrcBotPlugin::login(const message& msg)
 {
 	BUG_COMMAND(msg);
 
 	std::string user;
 	std::string pass;
-	if(!extract_params(msg, {&user, &pass}))
-		return;
+	if(!bot.extract_params(msg, {&user, &pass}))
+		return false;
 
 	bug("user: " << user);
 	bug("pass: " << pass);
 	uint32_t sum = checksum(pass);
 	bug("sum: " << std::hex << sum);
 
-	user_rec ur;
-	std::string line;
+	user_r ur;
 	std::ifstream ifs(bot.getf(USER_FILE, USER_FILE_DEFAULT));
-	while(std::getline(ifs, line))
+	while(ifs >> ur)
 	{
-		trim(line);
-		if(line.empty())
-			continue;
-		if(line[0] == '#')
-			continue;
-
-		bug("line: " << line);
-
-		if(!(std::istringstream(line) >> ur))
-			continue;
 		bug("ur.user: " << ur.user);
 		bug("ur.sum: " << std::hex << ur.sum);
 
-		if(ur.user == user)
-		{
-			bug("user match!");
-			if(ur.sum == sum)
-			{
-				user_t u(msg.from, ur.user, ur.perms);
-				lock_guard lock(users_mtx);
-				if(users.count(u))
-				{
-					bot.fc_reply_pm(msg, "You are already logged in to " + bot.nick);
-					return;
-				}
-				u.nick = msg.get_sender();
-				users.insert(u);
-				bot.fc_reply_pm(msg, "You are now logged in to " + bot.nick);
-				//irc->mode(u.flags);
-				return;
-			}
-			bot.fc_reply_pm(msg, "ERROR: Bad password");
-			return;
-		}
+		if(ur.user != user)
+			continue;
+		bug("user match!");
+		if(ur.sum != sum)
+			return bot.cmd_error_pm(msg, "ERROR: Bad password");
+
+		user_t u(msg, ur);
+
+		lock_guard lock(users_mtx);
+		if(users.count(u))
+			return bot.cmd_error_pm(msg, "You are already logged in to " + bot.nick);
+
+		users.insert(u);
+
+		bot.fc_reply_pm(msg, "You are now logged in to " + bot.nick);
+		return true;
 	}
+
 	bot.fc_reply_pm(msg, "ERROR: Username not found.");
+	return false;
 }
 
-void ChanopsIrcBotPlugin::list_users(const message& msg)
+bool ChanopsIrcBotPlugin::list_users(const message& msg)
 {
 	BUG_COMMAND(msg);
 
-	if(!verify(msg, R_USER))
-		return;
+	if(!permit(msg))
+		return false;
 
 	bot.fc_reply_pm(msg, "Logged in users:");
 
@@ -270,75 +235,67 @@ void ChanopsIrcBotPlugin::list_users(const message& msg)
 
 	for(const user_t& u: users)
 		bot.fc_reply_pm(msg, u.user + ": " + u.prefix);
+	return true;
 }
 
-void ChanopsIrcBotPlugin::ban(const message& msg)
+bool ChanopsIrcBotPlugin::ban(const message& msg)
 {
 	BUG_COMMAND(msg);
 
 	// MODE #skivvy +b *!*Skivvy@*.users.quakenet.org
 	// MODE #skivvy -b *!*Skivvy@*.users.quakenet.org
-	if(!verify(msg, R_OPER))
-		return;
+	if(!permit(msg))
+		return false;
 
-	std::string channel;
-	std::string nick;
-	if(!extract_params(msg, {&channel, &nick}))
-		return;
+	str nick;
+	str channel;
+	if(!bot.extract_params(msg, {&channel, &nick}))
+		return false;
 
 	bug("nick: " << nick);
 
 	irc->mode(channel, "+b *!*" + nick + "@*");
 
-	bot.fc_reply_pm(msg, "Logged in users:");
-	users_mtx.lock();
-	for(const user_t& u: users)
-		bot.fc_reply_pm(msg, u.prefix);
-	users_mtx.unlock();
+	return true;
 }
 
-void ChanopsIrcBotPlugin::reclaim(const message& msg)
+bool ChanopsIrcBotPlugin::reclaim(const message& msg)
 {
 	BUG_COMMAND(msg);
 
-	std::string nick;
-	if(!extract_params(msg, {&nick}))
-		return;
+	str nick;
+	if(!bot.extract_params(msg, {&nick}))
+		return false;
 
 	bug("nick: " << nick);
 
-	bot.fc_reply_pm(msg, "Attempting to claim nick: " + nick);
-	users_mtx.lock();
-	for(const user_t& u: users)
-		bot.fc_reply_pm(msg, u.prefix);
-	users_mtx.unlock();
+	return true;
 }
+
+// every function belongs to a group
 
 // INTERFACE: BasicIrcBotPlugin
-void ChanopsIrcBotPlugin::exec(const message& msg)
-{
-	const str cmd = msg.get_user_cmd();
-
-	if(cmd == "!users")
-	{
-
-	}
-}
 
 bool ChanopsIrcBotPlugin::initialize()
 {
-	std::ifstream ifs(bot.getf(BAN_FILE, BAN_FILE_DEFAULT));
+//	std::ifstream ifs(bot.getf(BAN_FILE, BAN_FILE_DEFAULT));
+	perms =
+	{
+		{"!users", G_USER}
+		, {"!reclaim", G_USER}
+		, {"!ban", G_OPER}
+	};
 
 	add
 	({
 		"register" // no ! indicated PM only command
-		, "register <nick> <password> <password>"
+		, "register <username> <password> <password>"
 		, [&](const message& msg){ signup(msg); }
 	});
 	add
 	({
 		"login" // no ! indicated PM only command
-		, "login <nick> <password>"
+		, "login <username> <password>"
 		, [&](const message& msg){ login(msg); }
 	});
 	add
@@ -347,18 +304,18 @@ bool ChanopsIrcBotPlugin::initialize()
 		, "!users List logged in users."
 		, [&](const message& msg){ list_users(msg); }
 	});
-	add
-	({
-		"!claim"
-		, "!claim <nick> Keep trying to change nick to one already in use."
-		, [&](const message& msg){ reclaim(msg); }
-	});
-	add
-	({
-		"!reclaim"
-		, "!claim <nick> Keep trying to change nick to one already in use."
-		, [&](const message& msg){ reclaim(msg); }
-	});
+//	add
+//	({
+//		"!claim"
+//		, "!claim <nick> Keep trying to change nick to one already in use."
+//		, [&](const message& msg){ exec(msg); }
+//	});
+//	add
+//	({
+//		"!reclaim"
+//		, "!claim <nick> Keep trying to change nick to one already in use."
+//		, [&](const message& msg){ exec(msg); }
+//	});
 	bot.add_monitor(*this);
 	return true;
 }
@@ -381,7 +338,7 @@ void ChanopsIrcBotPlugin::event(const message& msg)
 		join_event(msg);
 }
 
-void ChanopsIrcBotPlugin::join_event(const message& msg)
+bool ChanopsIrcBotPlugin::join_event(const message& msg)
 {
 	BUG_COMMAND(msg);
 
@@ -416,6 +373,8 @@ void ChanopsIrcBotPlugin::join_event(const message& msg)
 			});
 		}
 	}
+
+	return true;
 }
 
 }} // sookee::ircbot

@@ -527,6 +527,12 @@ bool IrcBot::cmd_error(const message& msg, const str& text, bool rv)
 	return rv;
 }
 
+bool IrcBot::cmd_error_pm(const message& msg, const str& text, bool rv)
+{
+	fc_reply_pm(msg, msg.get_user_cmd() + ": " + text);
+	return rv;
+}
+
 str IrcBot::locate_file(const str& name)
 {
 	if(name.empty() || name[0] == '/')

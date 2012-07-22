@@ -1098,6 +1098,7 @@ public:
 	bool fc_reply_pm_help(const message& msg, const str& text, const str& prefix = "");
 
 	bool cmd_error(const message& msg, const str& text, bool rv = false);
+	bool cmd_error_pm(const message& msg, const str& text, bool rv = false);
 
 	/**
 	 * Return a list of nicks registered to a given channel

@@ -1150,7 +1150,6 @@ void RConicsIrcBotPlugin::regular_poll()
 {
 	bug_func();
 
-	static const message msg {bot.get(RCON_BOT_NAME, RCON_BOT_NAME_DEFAULT),"","","",""};
 	std::ostringstream oss;
 	const rcon_server_map& sm = get_rcon_server_map();
 
@@ -1179,7 +1178,7 @@ void RConicsIrcBotPlugin::regular_poll()
 
 					str ret;
 					if(!text.empty())
-						ret = do_rcon(msg, text, s.second);
+						ret = rcon(text, s.second);
 					amsg.when = std::time(0);
 
 					// Echo to all subscribing channels
@@ -1213,31 +1212,13 @@ void RConicsIrcBotPlugin::regular_poll()
 
 				if(v.size() > 20)
 					v.erase(v.begin() + 20, v.end());
-
-//				siz i = 0;
-//				for(const keystats& ks: v)
-//					bug("ks: " << (++i) << " [" << ks.to << "] "<< ks.name);
-//				for(i = 0; i < v.size(); ++i)
-//				{
-//					bug_var(i);
-//					bug_var(v[i].rank);
-//					bug_var(v[i].name);
-//					bug("");
-//				}
-//					bug("i: " << std::to_string(i) << " " << v[i]);
 			}
 
-//			bug_var(v.size());
-
 			siz max = v.size() > 20 ? 20 : v.size();
-//			bug_var(max);
 
 			if(!v.empty())
 			{
 				siz i = rand_int(0, max - 1);
-//				bug_var(i);
-//				bug_var(v[i].rank);
-//				bug_var(v[i].name);
 
 				oss.str("");
 				oss.precision(1);
@@ -1248,15 +1229,13 @@ void RConicsIrcBotPlugin::regular_poll()
 				oss << " ^61v1 ^7" << int(v[i].pw + 0.5);
 				oss << " ^3All ^7" << v[i].overall;
 				oss << " " << v[i].name;
-				str ret = do_rcon(msg, oss.str(), s.second);
+				str ret = rcon(oss.str(), s.second);
 
 				for(const message& msg: stats_subs)
 					bot.fc_reply(msg, "{" + s.first + "} " + oa_to_IRC(trim(ret).c_str()));
 
 				bug("STATS ANNOUNCE: " << oss.str());
-//				bug_var(v.size());
 				v.erase(v.begin() + i);
-//				bug_var(v.size());
 			}
 		}
 	}
@@ -1264,22 +1243,6 @@ void RConicsIrcBotPlugin::regular_poll()
 	//return;
 
 	bug("== GET INTEL ==");
-
-//	1337034130 ^31  (*13108D19)  217.129.144.83^7 'TomStrong^7'
-//	1337034130 ^32  (*1DE6454E)  90.192.206.146^7 'UntamedPlayer^7'
-//	1337034130 ^34  (*A7258494)   83.134.74.251^7 '^3Donut^7'
-//	1337034130 ^35  (*68CF727A)    78.88.59.211^7 'Kurys^7'
-//	1337034130 ^36  (*085C0E2D)   58.164.33.156^7 'Wark^7'
-//	1337034130 -  (*AFB53C41)  98.199.180.216^7 '^6Nyan ^4Cat^7'
-//	1337034130 ^39  (*7C34849D)   83.221.71.197^7 'Kalium^7'
-//	1337034130 ^310 (*6833060B)    77.23.244.17^7 'UnnamedPlayer^7'
-//	1337034130 -  (*6B2E4717)   24.164.36.201^7 '/opt^7'
-//	1337034130 ^30  (*11C09C92)  79.219.184.194^7 '^3^1S^7how^1T^7ime^3^7'
-//	1337034130 ^33  (*066CABFD)   46.16.112.119^7 'Jaagy^7'
-//	1337034130 ^37  (*3C7E7278)   78.13.199.176^7 '{^.^}^7'
-//	1337034130 -  (*80395AE4)    77.202.178.8^7 'SmoKKinG^7'
-//	1337034130 ^38  (*80A2CC68)  81.109.248.108^7 '^3Fish^7'
-
 
 	struct dbent
 	{

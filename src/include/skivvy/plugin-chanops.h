@@ -38,34 +38,48 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 namespace skivvy { namespace ircbot {
 
+#define CHANOPS_GROUP(name) \
+static const str G_##name = #name
+
+CHANOPS_GROUP(NONE);
+CHANOPS_GROUP(USER);
+CHANOPS_GROUP(OPER);
+CHANOPS_GROUP(SUPR);
+CHANOPS_GROUP(ROOT);
+
 class ChanopsIrcBotPlugin _final_
 : public BasicIrcBotPlugin
 , public IrcBotMonitor
 {
 public:
-	typedef std::bitset<4> perm_set;
-	struct user_rec
-	{
-		str user;
-		perm_set perms;
-		uint32_t sum;
-		str acts; // +o auto-opp +v auto-voice
 
-		friend std::istream& operator>>(std::istream& is, user_rec& ur);
-		friend std::ostream& operator<<(std::ostream& os, const user_rec& ur);
+	/*
+	 * User database record
+	 */
+	struct user_r
+	{
+		str user; // the user by which we log in as
+		uint32_t sum; // password sum
+		str_set groups;
+
+		friend std::istream& operator>>(std::istream& is, user_r& ur);
+		friend std::ostream& operator<<(std::ostream& os, const user_r& ur);
 	};
 
+
+	/**
+	 * User object
+	 */
 	struct user_t
 	{
 		str prefix; // <nick>!<ircuser>@<host>
 		str user; // the user by which we logged in as
-		perm_set perms;
-		str flags; // ???
 		str nick; // current nick
+		str_set groups;
 
-		user_t(const user_t& u): prefix(u.prefix), perms(u.perms) {}
-		user_t(const std::string& id, const std::string& user, const perm_set& perm)
-		: prefix(id), user(user), perms(perm) {}
+//		user_t(const user_t& u): prefix(u.prefix) {}
+		user_t(const message& msg, const user_r& ur)
+		: prefix(msg.from), user(ur.user), nick(msg.get_sender()), groups(ur.groups) {}
 
 		bool operator<(const user_t& u) const { return prefix < u.prefix; }
 		bool operator==(const user_t& u) const { return prefix == u.prefix; }
@@ -82,35 +96,33 @@ private:
 	std::mutex bans_mtx;
 	str_set bans;
 
-	bool extract_params(const message& msg, std::initializer_list<str*> args);
+//	bool extract_params(const message& msg, std::initializer_list<str*> args);
 
 	/**
 	 * Verify of the user sending the message has
 	 * the various permissions.
 	 */
-	bool verify(const message& msg, const perm_set& perms);
+	bool permit(const message& msg);
 
-	void signup(const message& msg);
+	bool signup(const message& msg);
 
-	void login(const message& msg);
+	bool login(const message& msg);
 	void apply_acts(const str& id);
 	void apply_acts(const user_t& u);
 
 	/**
 	 * List users
 	 */
-	void list_users(const message& msg);
-	void ban(const message& msg);
-	void join_event(const message& msg);
+	bool list_users(const message& msg);
+	bool ban(const message& msg);
+	bool join_event(const message& msg);
 
 //	RandomTimer rt;
 
-	void reclaim(const message& msg);
+	bool reclaim(const message& msg);
 
-	// All functions requiring logged in permissions
-	// are called through her from ircbot
-	// Check permissions before executing
-	void exec(const message& msg);
+	// Assign each function to a group
+	str_map perms; // msg.get_user_cmd() -> G_GROUP
 
 //	void op(std::string& nick);
 //	void voice(std::string& nick);

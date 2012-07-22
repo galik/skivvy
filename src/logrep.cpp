@@ -70,7 +70,10 @@ str obj_name(void* id)
 	{
 		obj_map[id] = obj_count++;
 	}
-	return "{" + std::to_string(obj_map[id]) + "}";
+//	return "{" + std::to_string(obj_map[id]) + "}";
+	std::ostringstream oss;
+	oss << std::hex << id;
+	return "{" + std::to_string(obj_map[id]) + ": " + oss.str() + "}";
 }
 
 }} // sookee::utils
