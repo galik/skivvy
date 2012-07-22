@@ -37,7 +37,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <thread>
 #include <mutex>
 
-namespace skivvy { namespace prop {
+namespace skivvy { namespace props {
 
 using namespace skivvy::types;
 using namespace skivvy::utils;
@@ -111,13 +111,15 @@ public:
 	void set(const str& s, const T& t)
 	{
 		bug_func();
-		set(s, (std::ostringstream() << t).str());
+		std::ostringstream oss;
+		oss << t;
+		set(s, oss.str());
 	}
 
 private:
 	friend class transaction;
 
-	virtual void commit(const std::thread::id& id)
+	virtual void commit()
 	{
 		lock_guard lock(mtx);
 		for(const property_pair& p: t)
@@ -125,7 +127,7 @@ private:
 		t.clear();
 	}
 
-	virtual void unroll(const std::thread::id& id)
+	virtual void rollback()
 	{
 		lock_guard lock(mtx);
 		t.clear();
@@ -135,16 +137,23 @@ private:
 class transaction
 {
 	properties& props;
-	std::thread::id id;
-
-public:
-	transaction(properties& props): props(props), id(std::this_thread::get_id()) {}
-	//~transaction() { props.unroll(id); }
-	void commit()
-	{
-		props.commit(id);
-	}
+	transaction(properties& props): props(props) {}
+	~transaction() { props.commit(); }
 };
+
+//class transaction
+//{
+//	properties& props;
+//	std::thread::id id;
+//
+//public:
+//	transaction(properties& props): props(props), id(std::this_thread::get_id()) {}
+//	//~transaction() { props.unroll(id); }
+//	void commit()
+//	{
+//		props.commit(id);
+//	}
+//};
 
 
 //class persistant_properties

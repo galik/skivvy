@@ -53,6 +53,7 @@ skivvy_HEADERS = \
 	$(srcdir)/include/skivvy/types.h \
 	$(srcdir)/include/skivvy/ircbot.h \
 	$(srcdir)/include/skivvy/logrep.h \
+	$(srcdir)/include/skivvy/props.h \
 	$(srcdir)/include/skivvy/socketstream.h
 
 noinst_HEADERS = \
@@ -106,6 +107,7 @@ libskivvy_la_SOURCES = \
 	ircbot.cpp \
 	logrep.cpp \
 	network.cpp \
+	props.cpp \
 	rpc.cpp \
 	server.cpp \
 	str.cpp \
@@ -139,10 +141,18 @@ skivvy_plugin_rserver_la_LDFLAGS = -module
 skivvy_plugin_trivial_la_LDFLAGS = -module
 
 # Development utils
-noinst_PROGRAMS = test test-server convert-cvars skivlet
+noinst_PROGRAMS = \
+	convert-cvars \
+	skivlet \
+	test \
+	test-props \
+	test-server
 
 test_SOURCES = test.cpp
 test_LDADD = $(BOTLIBS)
+
+test_props_SOURCES = test-props.cpp
+test_props_LDADD = $(BOTLIBS)
 
 test_server_SOURCES = test-server.cpp
 test_server_LDADD = $(BOTLIBS)
