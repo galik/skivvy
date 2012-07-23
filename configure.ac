@@ -1,5 +1,5 @@
 # /*-----------------------------------------------------------------.
-# | Copyright (C) 2011 Galik oasookee@googlemail.com               |
+# | Copyright (C) 2011 SooKee oasookee@gmail.com               |
 # '------------------------------------------------------------------'
 # 
 # This program is free software; you can redistribute it and/or
@@ -21,7 +21,7 @@
 # 
 # '-----------------------------------------------------------------*/
 
-AC_INIT([skivvy],[0.1-alpha],[oasookee@googlemail.com],[skivvy])
+AC_INIT([skivvy],[0.1],[oasookee@gmail.com],[skivvy])
 AC_CONFIG_SRCDIR([src/test.cpp])
 AC_CONFIG_HEADERS([config.h])
 
@@ -33,16 +33,15 @@ AC_PROG_CXX
 AC_PROG_INSTALL
 
 AC_LANG(C++)
-#AC_MSG_CHECKING(if $CXX supports C++11)
-#AC_TRY_COMPILE(
-#[],
-#for(int i: {1}) (i = i);,
-#[cpp11support=yes],
-#[cpp11support=no])
-#AC_MSG_RESULT($cpp11support)
-#if [ ${cpp11support} == "no" ]; then
-#	AC_MSG_FAILURE(C++11 support is required,[1])
+AC_MSG_CHECKING(if $CXX supports C++11)
+
+#CXXFLAGS="$CXXFLAGS -std=gnu++11"
+#AC_COMPILE_IFELSE(AC_LANG_PROGRAM([],[for(int i: {0})]),[cpp11=yes],[cpp11=no])
+#AC_MSG_RESULT($cpp11)
+#if test "$cpp11" = "no"; then
+#	AC_MSG_ERROR([C++11 support is required.])
 #fi
+
 
 AC_CONFIG_MACRO_DIR([m4])
 

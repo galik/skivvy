@@ -614,6 +614,7 @@ void ArtibotIrcBotPlugin::event(const message& msg)
 
 	if(msg.text.size() > 8 && msg.text.find("\001ACTION ") == 0)
 	{
+		bug_msg(msg);
 		std::string action;
 		extract_delimited_text(msg.text, "\001ACTION ", "\001", action);
 		bug("ACTION DETECTED: " << action);
@@ -632,9 +633,13 @@ void ArtibotIrcBotPlugin::event(const message& msg)
 		for(pos = 0; (pos = action.find("*", pos)) != str::npos; pos += 2)
 			action.replace(pos, 1, "\\*");
 
+		bug_var(action);
+
 		for(const str& nick: nicks)
 			for(pos = 0; (pos = action.find(nick, pos)) != str::npos; ++pos)
 				action.replace(pos, nick.size(), "*");
+
+		bug_var(action);
 
 		random_acts_mtx.lock();
 		std::ifstream ifs(bot.getf(RANDOM_ACTS_FILE, RANDOM_ACTS_FILE_DEFAULT));
@@ -650,10 +655,14 @@ void ArtibotIrcBotPlugin::event(const message& msg)
 		ofs.close();
 		random_acts_mtx.unlock();
 
-		siz pc = bot.get(RANDOM_ACTS_TRIGER, RANDOM_ACTS_TRIGER_DEFAULT);
-		if(pc < siz(rand_int(0, 100)))
+		if(acts.empty())
 			return;
 
+		siz pc = bot.get(RANDOM_ACTS_TRIGER, RANDOM_ACTS_TRIGER_DEFAULT);
+		if(pc < siz(rand_int(0, 99)))
+			return;
+
+		bug_var(acts.size());
 		auto a = acts.begin();
 		std::advance(a, rand_int(0, acts.size() - 1));
 		if(a != acts.cend())
@@ -663,6 +672,9 @@ void ArtibotIrcBotPlugin::event(const message& msg)
 
 void ArtibotIrcBotPlugin::ai_random_acts(str action, const str& channel)
 {
+	bug_func();
+	bug_var(action);
+	bug_var(channel);
 	str_vec chans(bot.chans.cbegin(), bot.chans.cend());
 
 //	if(!acts.empty()/* && rand_int(0, 1)*/)
@@ -672,15 +684,16 @@ void ArtibotIrcBotPlugin::ai_random_acts(str action, const str& channel)
 			if(nick != bot.nick)
 				nicks.push_back(nick);
 
-		for(size_t pos = 0; (pos = action.find("*", pos)) != str::npos; ++pos)
-			if(!(pos && action[pos - 1] == '\\'))
-			{
-				size_t n = rand_int(0, nicks.size() - 1);
-				action.replace(pos, 1, nicks[n]);
-				nicks.erase(nicks.begin() + n);
-				if(nicks.empty())
-					nicks.assign(bot.nicks[channel].cbegin(), bot.nicks[channel].cend());
-			}
+		if(!nicks.empty()) // TODO PM has no nicks what to  do abotu wildcards?
+			for(size_t pos = 0; (pos = action.find("*", pos)) != str::npos; ++pos)
+				if(!(pos && action[pos - 1] == '\\'))
+				{
+					size_t n = rand_int(0, nicks.size() - 1);
+					action.replace(pos, 1, nicks[n]);
+					nicks.erase(nicks.begin() + n);
+					if(nicks.empty())
+						nicks.assign(bot.nicks[channel].cbegin(), bot.nicks[channel].cend());
+				}
 
 		size_t pos = 0;
 		while((pos = action.find("\\*")) != str::npos)

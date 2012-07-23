@@ -17,18 +17,20 @@ int main()
 {
 	properties p;
 
-	p.set("i1", 4);
-	p.set("i2", 7);
-	p.set("i3", 9);
-	p.set("i4", 2);
-	p.set("i5", 5);
-	p.set("i6", 8);
+	transaction tx = p.get_transaction();
 
-	bug_var(p.get("i1"));
-	bug_var(p.get("i2"));
-	bug_var(p.get("i3"));
-	bug_var(p.get("i4"));
-	bug_var(p.get("i5"));
-	bug_var(p.get("i6"));
+	tx.set("i1", 4);
+	tx.set("i2", 7);
+	tx.set("i3", 9);
+	tx.set("i4", 2);
+	tx.set("i5", 5);
+	tx.set("i6", 8);
+
+	bug_var(tx.get("i1"));
+	bug_var(tx.get("i2"));
+	bug_var(tx.get("i3"));
+	bug_var(tx.get("i4"));
+	bug_var(tx.get("i5"));
+	bug_var(tx.get("i6"));
 }
 

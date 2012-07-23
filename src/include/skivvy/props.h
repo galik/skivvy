@@ -60,6 +60,8 @@ struct serialize
 	}
 };
 
+class transaction;
+
 class properties
 {
 protected:
@@ -76,6 +78,8 @@ private:
 
 public:
 
+	virtual transaction get_transaction();
+
 	virtual str get(const str& s, const str& dflt = "") const
 	{
 		bug_func();
@@ -90,30 +94,11 @@ public:
 		return dflt;
 	}
 
-	template<typename T>
-	T get(const str& s, const T& dflt = T()) const
-	{
-		bug_func();
-		T t;
-		if(std::istringstream(get(s)) >> std::boolalpha >> t)
-			return t;
-		return dflt;
-	}
-
 	virtual void set(const str& s, const str& v)
 	{
 		bug_func();
 		lock_guard lock(mtx);
 		t[s] = v;
-	}
-
-	template<typename T>
-	void set(const str& s, const T& t)
-	{
-		bug_func();
-		std::ostringstream oss;
-		oss << t;
-		set(s, oss.str());
 	}
 
 private:
@@ -137,9 +122,58 @@ private:
 class transaction
 {
 	properties& props;
+
+public:
+	transaction(const transaction& tx): props(tx.props) {}
 	transaction(properties& props): props(props) {}
 	~transaction() { props.commit(); }
+
+	template<typename T>
+	T get(const str& s, const T& dflt = T()) const
+	{
+		bug_func();
+		T t;
+		if(std::istringstream(props.get(s)) >> std::boolalpha >> t)
+			return t;
+		return dflt;
+	}
+
+	template<typename T>
+	bool convert(const str& s, T& t) const
+	{
+		return std::istringstream(s) >> t;
+	}
+
+	template<typename Container>
+	Container get_c(const str& s, const Container& dflt = Container()) const
+	{
+		bug_func();
+		str line;
+		Container c;
+		typename Container::value_type t;
+		std::insert_iterator<Container> ii(c, c.end());
+		std::istringstream iss(props.get(s));
+		while(std::getline(iss, line))
+			if(convert(line, t))
+				ii = t;
+		return c;
+	}
+
+	str get(const str& s, const str& dflt = "") const { return props.get(s, dflt); }
+
+	template<typename T>
+	void set(const str& s, const T& t)
+	{
+		bug_func();
+		std::ostringstream oss;
+		oss << t;
+		props.set(s, oss.str());
+	}
+
+	void set(const str& s, const str& v) { props.set(s, v); }
 };
+
+transaction properties::get_transaction() { return transaction(*this); }
 
 //class transaction
 //{

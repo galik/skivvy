@@ -351,6 +351,7 @@ str BasicIrcBotPlugin::help(const str& cmd) const
 
 bool IrcBotPluginLoader::operator()(const str& file, IrcBot& bot)
 {
+	bug_func();
 	union { void* dl; void* dlsym; IrcBotPluginPtr(*plugin)(IrcBot&); } ptr;
 
 	log("PLUGIN LOAD: " << file);
@@ -361,15 +362,21 @@ bool IrcBotPluginLoader::operator()(const str& file, IrcBot& bot)
 		return 0;
 	}
 
+	bug_var(ptr.dl);
+
 	if(!(ptr.dlsym = dlsym(ptr.dl, "skivvy_ircbot_factory")))
 	{
 		log(dlerror());
 		return 0;
 	}
 
+	bug_var(ptr.dlsym);
+
 	IrcBotPluginPtr plugin;
 	if(!(plugin = ptr.plugin(bot)))
 		return false;
+
+	bug_var(plugin.get());
 
 	bot.del_plugin(plugin->get_name());
 	bot.add_plugin(plugin);
@@ -378,6 +385,7 @@ bool IrcBotPluginLoader::operator()(const str& file, IrcBot& bot)
 
 void IrcBot::del_plugin(const str& name)
 {
+	bug_func();
 //	IrcBotPlugin* pp;
 	for(plugin_vec_iter p =  plugins.begin(); p != plugins.end();)
 	{
@@ -461,6 +469,7 @@ std::istream& operator>>(std::istream& is, IrcBot& bot)
 
 void IrcBot::add_plugin(IrcBotPluginPtr plugin)
 {
+	bug_func();
 	if(plugin)
 	{
 		this->plugins.push_back(plugin);
