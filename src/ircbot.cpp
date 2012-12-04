@@ -2,11 +2,11 @@
  * ircbot.cpp
  *
  *  Created on: 29 Jul 2011
- *      Author: oasookee@googlemail.com
+ *      Author: oaskivvy@gmail.com
  */
 
 /*-----------------------------------------------------------------.
-| Copyright (C) 2011 SooKee oasookee@googlemail.com               |
+| Copyright (C) 2011 SooKee oaskivvy@gmail.com               |
 '------------------------------------------------------------------'
 
 This program is free software; you can redistribute it and/or
@@ -264,6 +264,12 @@ bool RemoteIrcServer::say(const str& to, const str& text)
 	return send(PRIVMSG + " " + to + " :" + text);
 }
 
+// non standard??
+bool RemoteIrcServer::auth(const str& user, const str& pass)
+{
+	return send(AUTH + " " + user + " " + pass);
+}
+
 bool RemoteIrcServer::me(const str& to, const str& text)
 {
 	return say(to, "\001ACTION " + text + "\001");
@@ -351,7 +357,6 @@ str BasicIrcBotPlugin::help(const str& cmd) const
 
 bool IrcBotPluginLoader::operator()(const str& file, IrcBot& bot)
 {
-	bug_func();
 	union { void* dl; void* dlsym; IrcBotPluginPtr(*plugin)(IrcBot&); } ptr;
 
 	log("PLUGIN LOAD: " << file);
@@ -362,21 +367,15 @@ bool IrcBotPluginLoader::operator()(const str& file, IrcBot& bot)
 		return 0;
 	}
 
-	bug_var(ptr.dl);
-
 	if(!(ptr.dlsym = dlsym(ptr.dl, "skivvy_ircbot_factory")))
 	{
 		log(dlerror());
 		return 0;
 	}
 
-	bug_var(ptr.dlsym);
-
 	IrcBotPluginPtr plugin;
 	if(!(plugin = ptr.plugin(bot)))
 		return false;
-
-	bug_var(plugin.get());
 
 	bot.del_plugin(plugin->get_name());
 	bot.add_plugin(plugin);
@@ -385,7 +384,6 @@ bool IrcBotPluginLoader::operator()(const str& file, IrcBot& bot)
 
 void IrcBot::del_plugin(const str& name)
 {
-	bug_func();
 //	IrcBotPlugin* pp;
 	for(plugin_vec_iter p =  plugins.begin(); p != plugins.end();)
 	{
@@ -421,16 +419,18 @@ std::istream& operator>>(std::istream& is, IrcBot& bot)
 	log("Loading properties:");
 	siz pos;
 	str line;
-	bot.props.clear();
+	//bot.props.clear();
 
 	while(std::getline(is, line))
 	{
+		if(line.empty() || line[0] == '#')
+			continue;
+
 		if((pos = line.find("//")) != str::npos)
 			line.erase(pos);
 		trim(line);
 
-		if(line.empty() || line[0] == '#')
-			continue;
+		bug_var(line);
 
 		str key, val;
 		std::istringstream iss(line);
@@ -449,6 +449,26 @@ std::istream& operator>>(std::istream& is, IrcBot& bot)
 		else if(key == "real") bot.info.real = val;
 		else if(key == "join") bot.add_channel(val);
 		else if(key == "ban") bot.banned.insert(val);
+		else if(key == "include")
+		{
+			bug("include:" << val);
+			str file_name;
+			if(val.empty())
+				continue;
+			if(val[0] == '/')
+				file_name = val;
+			else
+			{
+				str file_path = bot.configfile.substr(0, bot.configfile.find_last_of('/'));
+				bug_var(file_path);
+				file_name = file_path + "/" + val;
+				bug_var(file_name);
+			}
+			bug_var(file_name);
+			std::ifstream ifs(file_name);
+			if(!(ifs >> bot))
+				log("Failed to include: " << file_name);
+		}
 		else bot.props[key].push_back(val);
 	}
 	if(is.eof())
@@ -594,41 +614,44 @@ int ls(const str& folder, str_vec &files)
 #define DEFAULT_PLUGIN_DIR "/usr/local/share/skivvy/plugins"
 #endif
 
-void load_plugins(IrcBot& bot)
+void IrcBot::load_plugins()
 {
+	plugin_loaded = std::time(0);
+
 	IrcBotPluginLoader load;
 
 	str_vec plugin_dirs;
-	plugin_dirs.push_back(DEFAULT_PLUGIN_DIR);
 
-	if(bot.has("plugin_dir"))
+	if(have("plugin_dir"))
 	{
-		str_vec dirs = bot.get_vec("plugin_dir");
+		str_vec dirs = get_vec("plugin_dir");
 		plugin_dirs.insert(plugin_dirs.end(), dirs.begin(), dirs.end());
 	}
+	plugin_dirs.push_back(DEFAULT_PLUGIN_DIR);
 
-	str_vec pv = bot.get_vec("plugin");
+	str_vec pv = get_vec("plugin");
+	str_set loaded;
 
-	for(const str& plugin_dir: plugin_dirs)
+	// We need to try exhaustively to load each plugin in turn
+	// in order to respect dependencies.
+
+	for(const str& p: pv)
 	{
-		log("Searching plugin dir: " << plugin_dir);
-
-		str_vec files;
-		if(int e = ls(plugin_dir, files))
-			log(strerror(e));
-//
-//		for(const str& file: files)
-//		{
-//			if(stl::find(pv, file) != pv.end())
-//				if(load(plugin_dir + "/" + file, bot))
-//					pv.erase(stl::find(pv, file));
-//		}
-
-		for(const str& p: pv)
+		for(const str& plugin_dir: plugin_dirs)
 		{
-			if(stl::find(files, p) != files.end())
-				if(!load(plugin_dir + "/" + p, bot))
-					log("Failed to load: " << p);
+			log("Searching plugin dir: " << plugin_dir);
+
+			str_vec files;
+			if(int e = ls(plugin_dir, files))
+				log(strerror(e));
+
+			if(stl::find(files, p) == files.end())
+				continue;
+
+			if(!load(plugin_dir + "/" + p, *this))
+				log("Failed to load: " << p);
+
+			break; // only load one of the given name
 		}
 	}
 }
@@ -696,7 +719,7 @@ bool IrcBot::init(const str& config_file)
 		}
 	}
 
-	load_plugins(*this);
+	load_plugins();
 
 	if(!have(SERVER_HOST))
 	{
@@ -1220,7 +1243,7 @@ void IrcBot::exec(const std::string& cmd, std::ostream* os)
 		}
 		else if(cmd == "/reload")
 		{
-			load_plugins(*this);
+			load_plugins();
 			// Initialise plugins
 			plugin_vec_iter p = plugins.begin();
 			while(p != plugins.end())
@@ -1251,6 +1274,13 @@ void IrcBot::exec(const std::string& cmd, std::ostream* os)
 			str to, s;
 			iss >> to >> std::ws;
 			if(std::getline(iss, s)) irc.say(to, s);
+		}
+		else if(cmd == "/auth")
+		{
+			// TODO: FIXME
+			str user, pass;
+			if(iss >> user >> pass)
+				irc.auth(user, pass);
 		}
 		else if(cmd == "/mode")
 		{

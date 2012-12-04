@@ -2,11 +2,11 @@
  * ircbot-artibot.cpp
  *
  *  Created on: 07 Aug 2011
- *      Author: oasookee@googlemail.com
+ *      Author: oaskivvy@gmail.com
  */
 
 /*-----------------------------------------------------------------.
-| Copyright (C) 2011 SooKee oasookee@googlemail.com               |
+| Copyright (C) 2011 SooKee oaskivvy@gmail.com               |
 '------------------------------------------------------------------'
 
 This program is free software; you can redistribute it and/or
@@ -195,7 +195,7 @@ static str read_wikipedia(str_vec& v)
 	str title;
 	net::socketstream ss;
 
-	str UA = "SkivvyBot/0.1 (+http://sookee.dyndns.org/skivvy) (mailto:oasookee@googlemail.com)";
+	str UA = "SkivvyBot/0.1 (+http://sookee.dyndns.org/skivvy) (mailto:oaskivvy@gmail.com)";
 
 	log("Request random title");
 

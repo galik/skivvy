@@ -2,11 +2,11 @@
  * ircbot-rconics.cpp
  *
  *  Created on: 04 Jun 2012
- *      Author: oasookee@googlemail.com
+ *      Author: oaskivvy@gmail.com
  */
 
 /*-----------------------------------------------------------------.
-| Copyright (C) 2012 SooKee oasookee@googlemail.com               |
+| Copyright (C) 2012 SooKee oaskivvy@gmail.com               |
 '------------------------------------------------------------------'
 
 This program is free software; you can redistribute it and/or
@@ -1153,48 +1153,61 @@ void RConicsIrcBotPlugin::regular_poll()
 	std::ostringstream oss;
 	const rcon_server_map& sm = get_rcon_server_map();
 
-	for(const rcon_server_pair& s: sm)
+	if(do_automsg && polltime(poll::RCONMSG, 60))
 	{
-		log("server: " << s.first);
-//		bug_var(do_automsg);
-		if(do_automsg && polltime(poll::RCONMSG, 60))
+		bug_var(do_automsg);
+		lock_guard lock(automsgs_mtx);
+		bug_var(automsgs.size());
+		for(automsg& amsg: automsgs)
 		{
-			lock_guard lock(automsgs_mtx);
-			bug_var(automsgs.size());
-			for(automsg& amsg: automsgs)
+			if(!amsg.active)
+				continue;
+			if(!sm.count(amsg.server))
 			{
-				if(!amsg.active)
-					continue;
-				if(amsg.server != s.first)
-					continue;
-				if(!amsg.when)
-					amsg.when = std::time(0) - rand_int(0, amsg.repeat);
-				if(amsg.repeat < delay(std::time(0) - amsg.when))
-				{
-//					oss.clear();
-					oss.str("");
-					oss << amsg.method << ' ' << amsg.text;
-					str text = var_sub(oss.str(), amsg.server);
+				log("Server info missing for: " + amsg.server + ".");
+				continue;
+			}
 
-					str ret;
-					if(!text.empty())
-						ret = rcon(text, s.second);
-					amsg.when = std::time(0);
+			if(!amsg.when)
+				amsg.when = std::time(0) - rand_int(0, amsg.repeat);
 
-					// Echo to all subscribing channels
-					lock_guard lock(automsg_subs_mtx);
-					for(const message& msg: automsg_subs)
-						bot.fc_reply(msg, "{" + amsg.server + "} " + oa_to_IRC(trim(ret).c_str()));
-				}
+			bug_var(amsg.when);
+			bug_var(amsg.repeat);
+			bug_var(delay(std::time(0) - amsg.when));
+			if(amsg.repeat < delay(std::time(0) - amsg.when))
+			{
+				oss.str("");
+				oss << amsg.method << ' ' << amsg.text;
+				str text = var_sub(oss.str(), amsg.server);
+
+				str ret;
+				if(!text.empty())
+					ret = rcon(text, sm.at(amsg.server));
+				bug_var(ret);
+				amsg.when = std::time(0);
+
+				// Echo to all subscribing channels
+				lock_guard lock(automsg_subs_mtx);
+				for(const message& msg: automsg_subs[amsg.server])
+					bot.fc_reply(msg, "{" + amsg.server + "} " + oa_to_IRC(trim(ret).c_str()));
 			}
 		}
+	}
 
-		siz ival = bot.get(RCON_STATS_INTERVAL, RCON_STATS_INTERVAL_DEFAULT);
-		//bug_var(do_stats.count(s.first));
-		// every ival minutes
-		if(do_stats.count(s.first) && polltime(poll::STATS, ival * 60) && bot.has_plugin("OA Stats Reporter"))
+	siz ival = bot.get(RCON_STATS_INTERVAL, RCON_STATS_INTERVAL_DEFAULT);
+	//bug_var(do_stats.count(s.first));
+	// every ival minutes
+	if(!do_stats.empty() && polltime(poll::STATS, ival * 60) && bot.has_plugin("OA Stats Reporter"))
+	{
+		bug("Have OA Stats Reporter");
+		for(const str& server: do_stats)
 		{
-			bug("Have OA Stats Reporter");
+			log("\tserver: " << server);
+			if(!sm.count(server))
+			{
+				log("Server info missing for stats: " + server + ".");
+				continue;
+			}
 			static std::mutex mtx;
 			static stats_vector v;
 
@@ -1229,10 +1242,10 @@ void RConicsIrcBotPlugin::regular_poll()
 				oss << " ^61v1 ^7" << int(v[i].pw + 0.5);
 				oss << " ^3All ^7" << v[i].overall;
 				oss << " " << v[i].name;
-				str ret = rcon(oss.str(), s.second);
+				str ret = rcon(oss.str(), sm.at(server));
 
 				for(const message& msg: stats_subs)
-					bot.fc_reply(msg, "{" + s.first + "} " + oa_to_IRC(trim(ret).c_str()));
+					bot.fc_reply(msg, "{" + server + "} " + oa_to_IRC(trim(ret).c_str()));
 
 				bug("STATS ANNOUNCE: " << oss.str());
 				v.erase(v.begin() + i);
@@ -1264,7 +1277,7 @@ void RConicsIrcBotPlugin::regular_poll()
 
 	// Log intel to trap hacker
 	// Get intel
-	rcon_server_map::const_iterator s;
+//	rcon_server_map::const_iterator s;
 	player p;
 	std::istringstream iss;
 	str_vec managed = bot.get_vec(RCON_MANAGED);
@@ -1272,7 +1285,8 @@ void RConicsIrcBotPlugin::regular_poll()
 	{
 		log("server: " << server);
 
-		if((s = sm.find(server)) == sm.cend())
+//		if((s = sm.find(server)) == sm.cend())
+		if(!sm.count(server))
 		{
 			log("Managed server " << server << " has no details.");
 			continue;
@@ -1283,7 +1297,7 @@ void RConicsIrcBotPlugin::regular_poll()
 			curr[server].clear();
 		}
 
-		str res = rcon("!namelog", s->second);
+		str res = rcon("!namelog", sm.at(server));
 
 		if(trim(res).empty())
 			log("No response from rcon !namelog.");
@@ -1295,7 +1309,7 @@ void RConicsIrcBotPlugin::regular_poll()
 		// before attempting the second.
 		bool parsed = false;
 
-		res = rcon("!listplayers", s->second);
+		res = rcon("!listplayers", sm.at(server));
 
 		if(trim(res).empty())
 		{
@@ -1338,7 +1352,7 @@ void RConicsIrcBotPlugin::regular_poll()
 					continue;
 
 				log("AUTO-BAN BY GUID: " << p.guid);
-				res = rcon("!ban " + std::to_string(p.num) + " AUTOBAN", s->second);
+				res = rcon("!ban " + std::to_string(p.num) + " AUTOBAN", sm.at(server));
 				log("RESULT: " << res);
 				if(trim(res).empty())
 					log("No response from rcon status.");
@@ -1352,7 +1366,7 @@ void RConicsIrcBotPlugin::regular_poll()
 			continue;
 		}
 
-		res = rcon("status", s->second);
+		res = rcon("status", sm.at(server));
 		if(trim(res).empty())
 		{
 			log("No response from rcon status.");
@@ -1511,9 +1525,9 @@ void RConicsIrcBotPlugin::regular_poll()
 
 				str cmd = "!ban " + ip	+ " AUTOBAN"; // use ip because #num is buggy
 				log("cmd: " << cmd);
-				res = rcon(cmd, s->second);
+				res = rcon(cmd, sm.at(server));
 				log("!ban  RESULT: " << res);
-				res = rcon("addip " + ip, s->second);
+				res = rcon("addip " + ip, sm.at(server));
 				log("addip RESULT: " << res);
 			}
 			else if(unreasons.empty()) // Do other (slower) checks
@@ -1548,9 +1562,9 @@ void RConicsIrcBotPlugin::regular_poll()
 
 				if(unreasons.empty() && !reasons.empty())
 				{
-					res = rcon("!ban " + std::to_string(p.num)	+ " AUTOBAN", s->second);
+					res = rcon("!ban " + std::to_string(p.num)	+ " AUTOBAN", sm.at(server));
 					log("!ban  RESULT: " << res);
-					res = rcon("addip " + ip, s->second);
+					res = rcon("addip " + ip, sm.at(server));
 					log("addip RESULT: " << res);
 				}
 			}
@@ -1572,7 +1586,7 @@ void RConicsIrcBotPlugin::regular_poll()
 					continue;
 				oss.str("");
 				oss << "!rename " << p.num << ' ' << renames[server][p.name];
-				str ret = rcon(oss.str(), s->second);
+				str ret = rcon(oss.str(), sm.at(server));
 				bug_var(ret);
 				for(const message& msg: renames_subs[server])
 				{
@@ -1605,7 +1619,7 @@ void RConicsIrcBotPlugin::regular_poll()
 				{
 					oss.str("");
 					oss << "!putteam " << p.num << ' ' << srmi->second.team;
-					str ret = rcon(oss.str(), s->second);
+					str ret = rcon(oss.str(), sm.at(server));
 					for(const message& msg: reteams_subs[server])
 					{
 						std::istringstream iss(trim(ret));
@@ -1654,6 +1668,10 @@ bool RConicsIrcBotPlugin::rpc_get_oatop(const str& params, stats_vector& v)
 		log("OA Stats Reporter not found.");
 		return false;
 	}
+
+//	IrcBotPluginHandle<OAStatsIrcBotPlugin> ph
+//		= bot.get_plugin_handle<OAStatsIrcBotPlugin>("OA Stats Reporter");
+	bot.get_plugin_handle<OAStatsIrcBotPlugin>("OA Stats Reporter");
 
 	return plugin->get_oatop(params, v);
 
@@ -2155,23 +2173,23 @@ bool RConicsIrcBotPlugin::rconmsg(const message& msg)
 		if(state == "on")
 		{
 			lock_guard lock(automsg_subs_mtx);
-			if(automsg_subs.find(msg) != automsg_subs.end())
-				bot.fc_reply(msg, "Auto messages are already being echoed to this channel.");
+			if(automsg_subs[server].count(msg))
+				bot.fc_reply(msg, "Auto messages for " + server + " are already being echoed to this channel.");
 			else
 			{
-				automsg_subs.insert(msg);
-				bot.fc_reply(msg, "Auto messages will now be echoed to this channel.");
+				automsg_subs[server].insert(msg);
+				bot.fc_reply(msg, "Auto messages for " + server + " will now be echoed to this channel.");
 			}
 		}
 		else if(state == "off")
 		{
 			lock_guard lock(automsg_subs_mtx);
-			if(automsg_subs.find(msg) == automsg_subs.end())
-				bot.fc_reply(msg, "Auto messages were not being echoed to this channel.");
+			if(automsg_subs[server].count(msg))
+				bot.fc_reply(msg, "Auto messages for " + server + " were not being echoed to this channel.");
 			else
 			{
-				automsg_subs.erase(msg);
-				bot.fc_reply(msg, "Auto messages will no longer be echoed to this channel.");
+				automsg_subs[server].erase(msg);
+				bot.fc_reply(msg, "Auto messages for " + server + " will no longer be echoed to this channel.");
 			}
 		}
 		else

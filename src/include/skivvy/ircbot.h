@@ -6,11 +6,11 @@
  * ircbot.h
  *
  *  Created on: 29 Jul 2011
- *      Author: oasookee@googlemail.com
+ *      Author: oaskivvy@gmail.com
  */
 
 /*-----------------------------------------------------------------.
-| Copyright (C) 2011 SooKee oasookee@googlemail.com               |
+| Copyright (C) 2011 SooKee oaskivvy@gmail.com               |
 '------------------------------------------------------------------'
 
 This program is free software; you can redistribute it and/or
@@ -276,6 +276,9 @@ public:
 	 * @return false on failure.
 	 */
 	bool say(const str& to, const str& text);
+
+	// non standard??
+	bool auth(const str& user, const str& pass);
 
 	/**
 	 * Emote something to either a channel or a specific user.
@@ -872,6 +875,61 @@ public:
 	bool operator()(const str& file, IrcBot& bot);
 };
 
+template<typename Plugin>
+class IrcBotPluginHandle
+{
+	typedef std::auto_ptr<Plugin> PluginPtr;
+	IrcBot& bot;
+	const str name;
+	PluginPtr plugin;// = 0;
+	time_t plugin_load_time = 0;
+
+	static Plugin null_plugin;
+
+public:
+	IrcBotPluginHandle(IrcBot& bot)
+	: bot(bot)
+	{
+	}
+
+	IrcBotPluginHandle(IrcBotPluginHandle<Plugin>&& handle)
+	: bot(handle.bot), name(handle.name), plugin(handle.plugin)
+	, plugin_load_time(handle.plugin_load_time)
+	{
+	}
+
+	IrcBotPluginHandle(IrcBot& bot, const str& name)
+	: bot(bot), name(name)
+	{
+	}
+
+	void ensure_plugin();
+
+	Plugin& operator*()
+	{
+		ensure_plugin();
+
+		if(!plugin)
+		{
+			log("ERROR: Bad IrcBotPluginHandle: " << this);
+			return *null_plugin;
+		}
+		return *plugin;
+	}
+
+	Plugin* operator->()
+	{
+		ensure_plugin();
+
+		if(!plugin)
+		{
+			log("ERROR: Bad IrcBotPluginHandle: " << this);
+			return null_plugin;
+		}
+		return plugin;
+	}
+};
+
 // ==================================================
 // The core Bot
 // ==================================================
@@ -951,10 +1009,14 @@ private:
 	str locate_file(const str& name);
 
 	time_t config_loaded;
+	time_t plugin_loaded;
+
+	void load_plugins();
 
 public:
 	bool restart = false;
 
+	time_t get_plugin_load_time() { return plugin_loaded; }
 	time_t get_config_load_time() { return config_loaded; }
 
 	/**
@@ -1073,6 +1135,18 @@ public:
 		return std::shared_ptr<Plugin>(0);
 	}
 
+//	template<typename Plugin>
+//	IrcBotPluginHandle<Plugin> get_plugin_handle(const str& name)
+//	{
+//		return IrcBotPluginHandle<Plugin>(*this, name);
+//	}
+
+	template<typename Plugin>
+	IrcBotPluginHandle<Plugin> get_plugin_handle(const str& name)
+	{
+		return IrcBotPluginHandle<Plugin>(*this, name);
+	}
+
 	/**
 	 * Add channel to the list of channels
 	 * to be joined at startup.
@@ -1116,6 +1190,17 @@ public:
 	virtual str help(const str& cmd) const;
 	virtual void exit();
 };
+
+template<typename Plugin>
+void IrcBotPluginHandle<Plugin>::ensure_plugin()
+{
+	if(bot.get_plugin_load_time() > plugin_load_time)
+	{
+		IrcBotPluginPtr ptr = bot.get_plugin(name);
+		plugin.reset(dynamic_cast<Plugin*>(ptr.get()));
+		plugin_load_time = std::time(0);
+	}
+}
 
 bool wildmatch(str_citer mi, const str_citer me
 	, str_citer ii, const str_citer ie);

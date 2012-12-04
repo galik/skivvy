@@ -3,7 +3,7 @@
 #define _SOOKEE_SOCKETSTREAM_H
 
 /*-----------------------------------------------------------------.
-| Copyright (C) 2011 SooKee oasookee@googlemail.com               |
+| Copyright (C) 2011 SooKee oaskivvy@gmail.com               |
 '------------------------------------------------------------------'
 
 This code is was created from code (C) Copyright Nicolai M. Josuttis 2001

@@ -2,11 +2,11 @@
  * rcon.h
  *
  *  Created on: 01 June 2012
- *      Author: oasookee@googlemail.com
+ *      Author: oaskivvy@gmail.com
  */
 
 /*-----------------------------------------------------------------.
-| Copyright (C) 2012 SooKee oasookee@googlemail.com               |
+| Copyright (C) 2012 SooKee oaskivvy@gmail.com               |
 '------------------------------------------------------------------'
 
 This program is free software; you can redistribute it and/or

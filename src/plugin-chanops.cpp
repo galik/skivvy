@@ -2,11 +2,11 @@
  * ircbot-chanops.cpp
  *
  *  Created on: 03 Aug 2011
- *      Author: oasookee@googlemail.com
+ *      Author: oaskivvy@gmail.com
  */
 
 /*-----------------------------------------------------------------.
-| Copyright (C) 2011 SooKee oasookee@googlemail.com               |
+| Copyright (C) 2011 SooKee oaskivvy@gmail.com               |
 '------------------------------------------------------------------'
 
 This program is free software; you can redistribute it and/or
@@ -203,6 +203,10 @@ bool ChanopsIrcBotPlugin::login(const message& msg)
 		if(ur.user != user)
 			continue;
 		bug("user match!");
+
+		if(ur.groups.count(G_BANNED))
+			return bot.cmd_error_pm(msg, "ERROR: Banned");
+
 		if(ur.sum != sum)
 			return bot.cmd_error_pm(msg, "ERROR: Bad password");
 
@@ -215,11 +219,24 @@ bool ChanopsIrcBotPlugin::login(const message& msg)
 		users.insert(u);
 
 		bot.fc_reply_pm(msg, "You are now logged in to " + bot.nick);
+
+		apply_acts(u);
+
 		return true;
 	}
 
 	bot.fc_reply_pm(msg, "ERROR: Username not found.");
 	return false;
+}
+
+void ChanopsIrcBotPlugin::apply_acts(const user_t& u)
+{
+	if(u.groups.count(G_BANNED))
+		irc->mode(u.nick, "+b");
+	else if(u.groups.count(G_OPPED))
+		irc->mode(u.nick, "+o");
+	else if(u.groups.count(G_VOICED))
+		irc->mode(u.nick, "+v");
 }
 
 bool ChanopsIrcBotPlugin::list_users(const message& msg)

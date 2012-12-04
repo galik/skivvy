@@ -5,11 +5,11 @@
  * ircbot-chanops.h
  *
  *  Created on: 02 Aug 2011
- *      Author: oasookee@googlemail.com
+ *      Author: oaskivvy@gmail.com
  */
 
 /*-----------------------------------------------------------------.
-| Copyright (C) 2011 SooKee oasookee@googlemail.com               |
+| Copyright (C) 2011 SooKee oaskivvy@gmail.com               |
 '------------------------------------------------------------------'
 
 This program is free software; you can redistribute it and/or
@@ -41,11 +41,17 @@ namespace skivvy { namespace ircbot {
 #define CHANOPS_GROUP(name) \
 static const str G_##name = #name
 
+// command permits
 CHANOPS_GROUP(NONE);
 CHANOPS_GROUP(USER);
 CHANOPS_GROUP(OPER);
 CHANOPS_GROUP(SUPR);
 CHANOPS_GROUP(ROOT);
+
+// action requirements
+CHANOPS_GROUP(VOICED);
+CHANOPS_GROUP(OPPED);
+CHANOPS_GROUP(BANNED);
 
 class ChanopsIrcBotPlugin _final_
 : public BasicIrcBotPlugin
@@ -79,7 +85,9 @@ public:
 
 //		user_t(const user_t& u): prefix(u.prefix) {}
 		user_t(const message& msg, const user_r& ur)
-		: prefix(msg.from), user(ur.user), nick(msg.get_sender()), groups(ur.groups) {}
+		: prefix(msg.from), user(ur.user)
+		, nick(msg.get_sender()), groups(ur.groups)
+		{}
 
 		bool operator<(const user_t& u) const { return prefix < u.prefix; }
 		bool operator==(const user_t& u) const { return prefix == u.prefix; }
@@ -107,7 +115,7 @@ private:
 	bool signup(const message& msg);
 
 	bool login(const message& msg);
-	void apply_acts(const str& id);
+	//void apply_acts(const str& id);
 	void apply_acts(const user_t& u);
 
 	/**

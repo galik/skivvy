@@ -5,11 +5,11 @@
  * ircbot-rconics.h
  *
  *  Created on: 04 Jun 2012
- *      Author: oasookee@googlemail.com
+ *      Author: oaskivvy@gmail.com
  */
 
 /*-----------------------------------------------------------------.
-| Copyright (C) 2012 SooKee oasookee@googlemail.com               |
+| Copyright (C) 2012 SooKee oaskivvy@gmail.com               |
 '------------------------------------------------------------------'
 
 This program is free software; you can redistribute it and/or
@@ -151,9 +151,10 @@ private:
 
 
 	typedef std::set<message, cmp_messages> message_set;
+	typedef std::map<str, message_set> message_set_map;
 
 	bool do_automsg = true;
-	message_set automsg_subs; // automsg subscriptions
+	message_set_map automsg_subs; // automsg subscriptions
 	std::mutex automsg_subs_mtx;
 
 //	bool do_stats = false;

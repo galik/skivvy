@@ -1,6 +1,6 @@
 #pragma once
-#ifndef _SOOKEE_IRC_CONSTANTS_H_
-#define _SOOKEE_IRC_CONSTANTS_H_
+#ifndef _SKIVVY_IRC_CONSTANTS_H_
+#define _SKIVVY_IRC_CONSTANTS_H_
 
 #include <skivvy/types.h>
 
@@ -24,6 +24,7 @@ KEYWORD(PRIVMSG);
 KEYWORD(ACTION);
 KEYWORD(QUERY);
 KEYWORD(MODE);
+KEYWORD(AUTH); // non standard?
 
 
 const str RPL_WELCOME = "001";
@@ -188,6 +189,6 @@ const str ERR_NOSERVICEHOST = "492";
 const str ERR_UMODEUNKNOWNFLAG = "501";
 const str ERR_USERSDONTMATCH = "502";
 
-}} // sookee::irc
+}} // skivvy::irc
 
-#endif // _SOOKEE_IRC_CONSTANTS_H_
+#endif // _SKIVVY_IRC_CONSTANTS_H_
