@@ -119,8 +119,26 @@ artibot.random_acts_trigger: 50 // [0-100]%
 artibot.offender_file: artibot-offenders.txt
 
 # chanops
-chanops.user_file: chanops-users.txt
-chanops.ban_file: chanops-bans.txt
+chanops.user.file: chanops-users.txt
+chanops.ban.file: chanops-bans.txt
+# Greetings (* is replaced by the nick)
+chanops.greet.active: true // true|false
+chanops.greet: Hello *.
+chanops.greet: Hi *, how are you today?
+chanops.greet: Welcome *.
+chanops.greet: Howdy *, fancy meeting you here!
+chanops.greet: Yo! * in da house!
+chanops.greet: Good to see you *.
+chanops.greet: Hello *, so glad you came.
+chanops.greet.delay.min: 3; // seconds
+chanops.greet.delay.max: 16; // seconds
+chanops.ungreet.file: chanops-ungreets.txt // don't greet 
+
+// auto op matches (currently substring)
+chanops.op: ~Zim@
+chanops.op: ~Zim106@
+chanops.op: ~Pixelized@
+chanops.op: ~Skivvy@
 
 # diction
 diction.host: pan.alephnull.com
