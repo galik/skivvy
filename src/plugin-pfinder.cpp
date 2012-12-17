@@ -47,7 +47,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <skivvy/ircbot.h>
 #include <skivvy/logrep.h>
 #include <skivvy/network.h>
-#include <skivvy/rcon.h>
+//#include <skivvy/rcon.h>
 
 namespace skivvy { namespace ircbot {
 
@@ -448,10 +448,15 @@ void PFinderIrcBotPlugin::oaserver(const message& msg)
 		ss << "GET " << "http://dpmaster.deathmask.net/?game=openarena";
 		ss << "\r\n" << std::flush;
 
+//		std::ofstream xx("dpmaster.html");
+
 		std::vector<server> servers;
 		while(std::getline(ss, line))
+		{
+//			xx << line << '\n';
 			if(extract_server(line, s) != str::npos)
 				servers.push_back(s);
+		}
 		write_server_uidfile(servers);
 	}
 

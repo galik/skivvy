@@ -1,5 +1,5 @@
 /*
- * ircbot-chanops.cpp
+ * plugin-chanops.cpp
  *
  *  Created on: 03 Aug 2011
  *      Author: oaskivvy@gmail.com
@@ -32,6 +32,8 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 #include <fstream>
 #include <sstream>
+
+#include <regex.h>
 
 #include <skivvy/logrep.h>
 #include <skivvy/stl.h>
@@ -291,6 +293,7 @@ bool ChanopsIrcBotPlugin::reclaim(const message& msg)
 
 // every function belongs to a group
 
+
 // INTERFACE: BasicIrcBotPlugin
 
 bool ChanopsIrcBotPlugin::initialize()
@@ -351,44 +354,85 @@ void ChanopsIrcBotPlugin::exit()
 
 void ChanopsIrcBotPlugin::event(const message& msg)
 {
-	if(msg.cmd == "JOIN" && bot.get(GREET_JOINERS, GREET_JOINERS_DEFAULT))
+	if(msg.cmd == "JOIN")// && bot.get(GREET_JOINERS, GREET_JOINERS_DEFAULT))
 		join_event(msg);
+}
+
+bool match(const str& s, const str& r)
+{
+//	regex_t reg;
+//	regcomp(&reg, r.c_str(), REG_EXTENDED);
+	return s.find(r) != str::npos;
 }
 
 bool ChanopsIrcBotPlugin::join_event(const message& msg)
 {
 	BUG_COMMAND(msg);
 
-	str_vec ungreets;
-	std::ifstream ifs(bot.getf(UNGREET_FILE, UNGREET_FILE_DEFAULT));
+	bug_var(bot.get(GREET_JOINERS, GREET_JOINERS_DEFAULT));
 
-	str ungreet;
-	while(ifs >> ungreet)
-		ungreets.push_back(ungreet);
-
-	if((ungreets.empty()
-	|| stl::find(ungreets, msg.get_sender()) == ungreets.end())
-	&& msg.get_sender() != bot.nick)
+	if(bot.get(GREET_JOINERS, GREET_JOINERS_DEFAULT))
 	{
-		str_vec greets = bot.get_vec(GREETINGS_VEC);
-		if(!greets.empty())
+		str_vec ungreets;
+		std::ifstream ifs(bot.getf(UNGREET_FILE, UNGREET_FILE_DEFAULT));
+
+		str ungreet;
+		while(ifs >> ungreet)
+			ungreets.push_back(ungreet);
+
+		if((ungreets.empty()
+		|| stl::find(ungreets, msg.get_sender()) == ungreets.end())
+		&& msg.get_sender() != bot.nick)
 		{
-			siz min_delay = bot.get(GREET_MIN_DELAY, GREET_MIN_DELAY_DEFAULT);
-			siz max_delay = bot.get(GREET_MAX_DELAY, GREET_MAX_DELAY_DEFAULT);
-			str greet = greets[rand_int(0, greets.size() - 1)];
-
-			for(siz pos = 0; (pos = greet.find("*")) != str::npos;)
-				greet.replace(pos, 1, msg.get_sender());
-
-			// greet only once
-			ungreets.push_back(msg.get_sender());
-
-			std::async(std::launch::async, [&,msg,greet,min_delay,max_delay]
+			str_vec greets = bot.get_vec(GREETINGS_VEC);
+			if(!greets.empty())
 			{
-				std::this_thread::sleep_for(std::chrono::seconds(rand_int(min_delay, max_delay)));
-				bot.fc_reply(msg, greet); // irc->say(msg.to) ?
-			});
+				siz min_delay = bot.get(GREET_MIN_DELAY, GREET_MIN_DELAY_DEFAULT);
+				siz max_delay = bot.get(GREET_MAX_DELAY, GREET_MAX_DELAY_DEFAULT);
+				str greet = greets[rand_int(0, greets.size() - 1)];
+
+				for(siz pos = 0; (pos = greet.find("*")) != str::npos;)
+					greet.replace(pos, 1, msg.get_sender());
+
+				// greet only once
+				ungreets.push_back(msg.get_sender());
+
+				std::async(std::launch::async, [&,msg,greet,min_delay,max_delay]
+				{
+					std::this_thread::sleep_for(std::chrono::seconds(rand_int(min_delay, max_delay)));
+					bot.fc_reply(msg, greet); // irc->say(msg.to) ?
+				});
+			}
 		}
+	}
+
+	// Auto OP/VOICE/MODE
+
+	str_vec v = bot.get_vec("chanops.op");
+	bug_var(v.size());
+	for(const str& s: v)
+	{
+		bug_var(s);
+		bug_var(msg.from);
+		if(match(msg.from, s))
+		{
+			bug("match:");
+			irc->mode(msg.params, "+o" , msg.get_sender());
+		}
+	}
+
+	v = bot.get_vec("chanops.voice");
+	for(const str& s: v)
+		if(match(msg.from, s))
+			irc->mode(msg.params, "+v", msg.get_sender());
+
+	v = bot.get_vec("chanops.mode");
+	for(const str& s: v)
+	{
+		str from, mode;
+		std::istringstream(s) >> from >> mode;
+		if(match(msg.from, from))
+			irc->mode(msg.params, mode , msg.get_sender());
 	}
 
 	return true;

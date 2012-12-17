@@ -299,6 +299,16 @@ public:
 	/**
 	 * Change mode settings for nick.
 	 *
+	 * @chan the channel the mode is set in
+	 * @mode The mode flags.
+	 * @nick the nick of the user to change mode flags for.
+	 * @return false on failure.
+	 */
+	bool mode(const str& chan, const str& mode, const str& nick);
+
+	/**
+	 * Change mode settings for nick. // CORRECT???
+	 *
 	 * @nick the nick of the user to change mode flags for.
 	 * @mode The mode flags.
 	 * @return false on failure.

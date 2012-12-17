@@ -5,7 +5,7 @@
 
 #include <skivvy/stl.h>
 #include <skivvy/str.h>
-#include <skivvy/rcon.h>
+//#include <skivvy/rcon.h>
 #include <skivvy/types.h>
 #include <skivvy/ircbot.h>
 #include <skivvy/logrep.h>

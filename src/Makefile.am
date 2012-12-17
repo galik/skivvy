@@ -61,7 +61,6 @@ noinst_HEADERS = \
 	$(srcdir)/include/skivvy/cal.h \
 	$(srcdir)/include/skivvy/irc.h \
 	$(srcdir)/include/skivvy/irc-constants.h \
-	$(srcdir)/include/skivvy/rcon.h \
 	$(srcdir)/include/skivvy/stl.h \
 	$(srcdir)/include/skivvy/network.h \
 	$(srcdir)/include/skivvy/server.h \
@@ -70,10 +69,8 @@ noinst_HEADERS = \
 	$(srcdir)/include/skivvy/plugin-compile.h \
 	$(srcdir)/include/skivvy/plugin-diction.h \
 	$(srcdir)/include/skivvy/plugin-example.h \
-	$(srcdir)/include/skivvy/plugin-grabber.h \
 	$(srcdir)/include/skivvy/plugin-oastats.h \
 	$(srcdir)/include/skivvy/plugin-pfinder.h \
-	$(srcdir)/include/skivvy/plugin-rconics.h \
 	$(srcdir)/include/skivvy/plugin-rquotes.h \
 	$(srcdir)/include/skivvy/plugin-rserver.h \
 	$(srcdir)/include/skivvy/plugin-trivial.h
@@ -91,10 +88,8 @@ plugin_LTLIBRARIES =  \
 	skivvy-plugin-compile.la \
 	skivvy-plugin-diction.la \
 	skivvy-plugin-example.la \
-	skivvy-plugin-grabber.la \
 	skivvy-plugin-oastats.la \
 	skivvy-plugin-pfinder.la \
-	skivvy-plugin-rconics.la \
 	skivvy-plugin-rquotes.la \
 	skivvy-plugin-rserver.la \
 	skivvy-plugin-trivial.la
@@ -119,10 +114,8 @@ skivvy_plugin_chanops_la_SOURCES = plugin-chanops.cpp
 skivvy_plugin_compile_la_SOURCES = plugin-compile.cpp
 skivvy_plugin_diction_la_SOURCES = plugin-diction.cpp
 skivvy_plugin_example_la_SOURCES = plugin-example.cpp
-skivvy_plugin_grabber_la_SOURCES = plugin-grabber.cpp
 skivvy_plugin_oastats_la_SOURCES = plugin-oastats.cpp
 skivvy_plugin_pfinder_la_SOURCES = plugin-pfinder.cpp
-skivvy_plugin_rconics_la_SOURCES = plugin-rconics.cpp rcon.cpp
 skivvy_plugin_rquotes_la_SOURCES = plugin-rquotes.cpp
 skivvy_plugin_rserver_la_SOURCES = plugin-rserver.cpp
 skivvy_plugin_trivial_la_SOURCES = plugin-trivial.cpp
@@ -132,10 +125,8 @@ skivvy_plugin_chanops_la_LDFLAGS = -module
 skivvy_plugin_compile_la_LDFLAGS = -module
 skivvy_plugin_diction_la_LDFLAGS = -module
 skivvy_plugin_example_la_LDFLAGS = -module
-skivvy_plugin_grabber_la_LDFLAGS = -module
 skivvy_plugin_oastats_la_LDFLAGS = -module
 skivvy_plugin_pfinder_la_LDFLAGS = -module
-skivvy_plugin_rconics_la_LDFLAGS = -module
 skivvy_plugin_rquotes_la_LDFLAGS = -module
 skivvy_plugin_rserver_la_LDFLAGS = -module
 skivvy_plugin_trivial_la_LDFLAGS = -module

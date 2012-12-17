@@ -83,6 +83,8 @@ std::istream& parsemsg(std::istream& is, message& m)
 	str line;
 	std::getline(is, line);
 
+	// :SooKee!~SooKee@SooKee.users.quakenet.org MODE #skivvy-admin +o Zim-blackberry
+
 	if(!line.empty())
 	{
 		if(line[0] == ':')
@@ -280,6 +282,14 @@ bool RemoteIrcServer::query(const str& nick)
 	return send(QUERY + " " + nick);
 }
 
+// MODE #skivvy-admin +o Zim-blackberry
+
+bool RemoteIrcServer::mode(const str& chan, const str& mode, const str& nick)
+{
+	return send(MODE + " " + chan + " " + mode + " " + nick);
+}
+
+// correct???
 bool RemoteIrcServer::mode(const str& nick, const str& mode)
 {
 	return send(MODE + " " + nick + " " + mode);
@@ -791,6 +801,13 @@ bool IrcBot::init(const str& config_file)
 
 		if(line.empty())
 			continue;
+
+		// RAW plugins ? TODO: implement as a plugin!
+
+		// send: register
+		// recv: name v0.0
+		// recv: !cmd1
+		// recv: !cmd2
 
 		std::istringstream iss(line);
 		parsemsg(iss, msg);
