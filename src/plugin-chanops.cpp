@@ -33,7 +33,8 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <fstream>
 #include <sstream>
 
-#include <regex.h>
+//#include <regex.h>
+//#include <boost/regex.hpp>
 
 #include <skivvy/logrep.h>
 #include <skivvy/stl.h>
@@ -358,13 +359,45 @@ void ChanopsIrcBotPlugin::event(const message& msg)
 		join_event(msg);
 }
 
-bool match(const str& s, const str& r)
-{
-//	regex_t reg;
-//	regcomp(&reg, r.c_str(), REG_EXTENDED);
-	return s.find(r) != str::npos;
-}
+//str get_regerror(int errcode, regex_t *compiled)
+//{
+//	size_t length = regerror(errcode, compiled, NULL, 0);
+//	char *buffer = new char[length];
+//	(void) regerror(errcode, compiled, buffer, length);
+//	str e(buffer);
+//	delete[] buffer;
+//	return e;
+//}
+//
+//bool match(const str& s, const str& r)
+//{
+//	regex_t regex;
+//
+//	if(regcomp(&regex, r.c_str(), REG_EXTENDED | REG_ICASE))
+//	{
+//		log("Could not compile regex: " << r);
+//		return false;
+//	}
+//
+//	int reti = regexec(&regex, s.c_str(), 0, NULL, 0);
+//	regfree(&regex);
+//	if(!reti)
+//		return true;
+//	else if(reti != REG_NOMATCH)
+//		log("regex: " << get_regerror(reti, &regex));
+//
+//	return false;
+//}
 
+//bool preg_match(const str& s, const str& r)
+//{
+//	using namespace boost;
+//
+//	regex reg(r, regex::perl | regex::icase);
+//
+//	return regex_match(s, reg, match_default);
+//}
+//
 bool ChanopsIrcBotPlugin::join_event(const message& msg)
 {
 	BUG_COMMAND(msg);
@@ -408,13 +441,17 @@ bool ChanopsIrcBotPlugin::join_event(const message& msg)
 
 	// Auto OP/VOICE/MODE
 
+	str who, chan;
 	str_vec v = bot.get_vec("chanops.op");
 	bug_var(v.size());
 	for(const str& s: v)
 	{
 		bug_var(s);
 		bug_var(msg.from);
-		if(match(msg.from, s))
+		std::istringstream(s) >> chan >> who;
+		bug_var(chan);
+		bug_var(who);
+		if((chan == "#*" || msg.params == chan) && bot.reg_match(msg.from, who))
 		{
 			bug("match:");
 			irc->mode(msg.params, "+o" , msg.get_sender());
@@ -423,15 +460,18 @@ bool ChanopsIrcBotPlugin::join_event(const message& msg)
 
 	v = bot.get_vec("chanops.voice");
 	for(const str& s: v)
-		if(match(msg.from, s))
+	{
+		std::istringstream(s) >> chan >> who;
+		if((chan == "#*" || msg.params == chan) && bot.reg_match(msg.from, who))
 			irc->mode(msg.params, "+v", msg.get_sender());
+	}
 
 	v = bot.get_vec("chanops.mode");
 	for(const str& s: v)
 	{
-		str from, mode;
-		std::istringstream(s) >> from >> mode;
-		if(match(msg.from, from))
+		str mode;
+		std::istringstream(s) >> chan >> who >> mode;
+		if((chan == "#*" || msg.params == chan) && bot.reg_match(msg.from, who))
 			irc->mode(msg.params, mode , msg.get_sender());
 	}
 

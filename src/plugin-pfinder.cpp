@@ -18,7 +18,6 @@ This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
-
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
@@ -395,7 +394,8 @@ void PFinderIrcBotPlugin::oacvar(const message& msg)
 
 	cvar_t cvar;
 	while(ifs >> cvar)
-		if(lowercase(cvar.name).find(var) != str::npos)
+		if(bot.reg_match(cvar.name, var))
+//		if(lowercase(cvar.name).find(var) != str::npos)
 			cvars.insert(cvar);
 
 	siz max_results = bot.get(CVAR_MAX_RESULTS, CVAR_MAX_RESULTS_DEFAULT);

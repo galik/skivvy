@@ -1045,6 +1045,11 @@ public:
 		return is >> bot;
 	}
 
+	/**
+	 * Match s according to regular expression r.
+	 */
+	bool reg_match(const str& s, const str& r);
+
 	bool is_connected() { return connected; }
 
 	bool has(const str& s)

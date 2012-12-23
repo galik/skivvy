@@ -44,6 +44,8 @@ GEN_FLAGS = -Wl,-E -Wfatal-errors -Wall -Wextra -Winit-self -ansi -pedantic -pip
 	
 AM_CXXFLAGS = $(GEN_FLAGS) $(DEF_FLAGS) -std=gnu++11
 
+#BOOST_LIBS = -lboost_regex-mt
+
 skivvy_HEADERS = \
 	$(srcdir)/include/skivvy/FloodController.h \
 	$(srcdir)/include/skivvy/ios.h \

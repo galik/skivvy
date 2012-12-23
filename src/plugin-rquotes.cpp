@@ -133,7 +133,7 @@ std::string RandomQuoteIrcBotPluginRep::joke()
 
 	lock_guard lock(mtx);
 
-	if(time(0) - prev > 60)
+	if(time(0) - prev > 2)
 	{
 		net::socketstream ss;
 		ss.open("onelinerz.net", 80);

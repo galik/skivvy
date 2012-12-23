@@ -44,7 +44,6 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 #include <cstring>
 #include <cstdlib>
-#include <dirent.h>
 
 #include <skivvy/ios.h>
 #include <skivvy/stl.h>
@@ -54,6 +53,9 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 #include <random>
 #include <functional>
+
+#include <dirent.h>
+#include <regex.h>
 
 namespace skivvy { namespace ircbot {
 
@@ -1008,14 +1010,19 @@ bool IrcBot::init(const str& config_file)
 					if(!have(PROP_PASSWORD) || get(PROP_PASSWORD) == pass)
 					{
 						str key, val;
-						str_vec vals;
 
 						if(!std::getline(iss >> std::ws, key, ':') || trim(key).empty())
 						{
 							fc_reply(msg, "Expected <key>: [<val1> <val2> ...]");
 							continue;
 						}
+
 						bug_var(key);
+
+//						if(!key.empty() && key.top() == "]")
+
+						str_vec vals;
+
 						while(ios::getstring(iss, val))
 						{
 							bug_var(val);
@@ -1024,8 +1031,9 @@ bool IrcBot::init(const str& config_file)
 						if(vals.empty())
 						{
 							// report current values
+							siz i = 0;
 							for(const str& val: props[key])
-								fc_reply(msg, key + ": " + val);
+								fc_reply(msg, key + "[" + std::to_string(i++) + "]: " + val);
 							continue;
 						}
 
@@ -1364,6 +1372,40 @@ void IrcBot::exec(const std::string& cmd, std::ostream* os)
 	}
 	else
 		if(os) (*os) << "ERROR: Commands begin with /.\n";
+}
+
+str get_regerror(int errcode, regex_t *compiled)
+{
+	size_t length = regerror(errcode, compiled, NULL, 0);
+	char *buffer = new char[length];
+	(void) regerror(errcode, compiled, buffer, length);
+	str e(buffer);
+	delete[] buffer;
+	return e;
+}
+
+bool IrcBot::reg_match(const str& s, const str& r)
+{
+	bug_func();
+	bug_var(s);
+	bug_var(r);
+	regex_t regex;
+
+	if(regcomp(&regex, r.c_str(), REG_EXTENDED | REG_ICASE))
+	{
+		log("Could not compile regex: " << r);
+		return false;
+	}
+
+	int reti = regexec(&regex, s.c_str(), 0, NULL, 0);
+	regfree(&regex);
+	if(!reti)
+		return true;
+	else if(reti != REG_NOMATCH)
+		log("regex: " << get_regerror(reti, &regex));
+
+	return false;
+//	return lowercase(s).find(lowercase(r)) != str::npos;
 }
 
 void IrcBot::console()

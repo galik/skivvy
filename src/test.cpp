@@ -12,66 +12,61 @@
 #include <skivvy/network.h>
 #include <skivvy/socketstream.h>
 
+//#include <boost/regex.hpp>
+
 using namespace skivvy;
 using namespace skivvy::types;
 using namespace skivvy::utils;
 using namespace skivvy::string;
 using namespace skivvy::ircbot;
 
-template<typename Plugin>
-class IrcBotPluginHandle
+//bool preg_match(const str& s, const str& r)
+//{
+//	bug_func();
+//	using namespace boost;
+//
+////	regex reg(r, regex::perl | regex::icase);
+//	regex reg("b");//, regex::perl | regex::icase);
+//	bug("reg:");
+////	bool res = regex_match(s, reg);//, match_default);
+//	bool res = regex_match("a", reg, match_default);
+//	bug("res:");
+//	return res;
+//}
+//
+//bool preg_match(const str& s, const str& r, str_vec& matches)
+//{
+//	bug_func();
+//	using namespace boost;
+//
+//	regex e(r, regex::perl | regex::icase);
+//	bug("reg:");
+//	smatch m;
+//	regex_match(s, m, e, match_default);
+//	bug("match:");
+//	matches.assign(m.begin(), m.end());
+//	bug("assign:");
+//	return !matches.empty();
+//}
+
+
+int main(int argc, char* argv[])
 {
-	typedef std::auto_ptr<Plugin> PluginPtr;
-	IrcBot& bot;
-	const str name;
-	PluginPtr plugin;// = 0;
-	time_t plugin_load_time = 0;
-
-	static Plugin null_plugin;
-
-public:
-	IrcBotPluginHandle(IrcBot& bot, const str& name)
-	: bot(bot), name(name)
+	if(argc != 3)
 	{
+		std::cerr << "Requires 2 parameters: <text> <regex>" << '\n';
+		exit(1);
 	}
 
-	void ensure_plugin()
-	{
-		if(bot.get_plugin_load_time() > plugin_load_time)
-		{
-			IrcBotPluginPtr ptr = bot.get_plugin(name);
-			plugin.reset(dynamic_cast<Plugin*>(ptr.get()));
-			plugin_load_time = std::time(0);
-		}
-	}
+	str s(argv[1]);
+	str r(argv[2]);
 
-	Plugin& operator*()
-	{
-		ensure_plugin();
+//	std::cout << "match: " << std::ios::boolalpha << preg_match(s, r) << '\n';
 
-		if(!plugin)
-		{
-			log("ERROR: Bad IrcBotPluginHandle: " << this);
-			return *null_plugin;
-		}
-		return *plugin;
-	}
-
-	Plugin* operator->()
-	{
-		ensure_plugin();
-
-		if(!plugin)
-		{
-			log("ERROR: Bad IrcBotPluginHandle: " << this);
-			return null_plugin;
-		}
-		return plugin;
-	}
-};
-
-int main()
-{
-
+//	str_vec matches;
+//
+//	if(preg_match(s, r, matches))
+//		for(const str& m: matches)
+//			std::cout << "match: " << m << '\n';
 }
 
