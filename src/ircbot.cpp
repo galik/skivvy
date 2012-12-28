@@ -56,6 +56,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 #include <dirent.h>
 #include <regex.h>
+#include <pcrecpp.h>
 
 namespace skivvy { namespace ircbot {
 
@@ -128,7 +129,10 @@ std::ostream& printmsg(std::ostream& os, const message& m)
 	os << "                   to: " << m.to << '\n';
 	os << "                 text: " << m.text << '\n';
 	os << "msg.from_channel()   : " << m.from_channel() << '\n';
-	os << "msg.get_sender()     : " << m.get_sender() << '\n';
+	os << "msg.get_nick()       : " << m.get_nick() << '\n';
+	os << "msg.get_user()       : " << m.get_user() << '\n';
+	os << "msg.get_host()       : " << m.get_host() << '\n';
+	os << "msg.get_userhost()   : " << m.get_userhost() << '\n';
 	os << "msg.get_user_cmd()   : " << m.get_user_cmd() << '\n';
 	os << "msg.get_user_params(): " << m.get_user_params() << '\n';
 	os << "msg.reply_to()       : " << m.reply_to() << '\n';
@@ -155,12 +159,26 @@ std::ostream& operator<<(std::ostream& os, const message& m)
 	return os;
 }
 
-str message::get_sender() const
+// MyNick!~User@server.com
+
+str message::get_nick() const
 {
-	str sender;
-	if(!from.empty())
-		sender = from.substr(0, from.find("!"));
-	return sender;
+	return from.substr(0, from.find("!"));
+}
+
+str message::get_user() const
+{
+	return from.substr(from.find("!") + 1, from.find("@") - from.find("!") - 1);
+}
+
+str message::get_host() const
+{
+	return from.substr(from.find("@") + 1);
+}
+
+str message::get_userhost() const
+{
+	return from.substr(from.find("!") + 1);
 }
 
 str message::get_user_cmd() const
@@ -188,7 +206,7 @@ bool message::from_channel() const
 
 str message::reply_to() const
 {
-	return from_channel() ? to : get_sender();
+	return from_channel() ? to : get_nick();
 }
 
 // TODO: Sort this mess out
@@ -313,7 +331,7 @@ bool RemoteIrcServer::reply(const message& msg, const str& text)
 
 bool RemoteIrcServer::reply_pm(const message& msg, const str& text)
 {
-	return say(msg.get_sender(), text);
+	return say(msg.get_nick(), text);
 }
 
 bool RemoteIrcServer::receive(str& line)
@@ -878,7 +896,7 @@ bool IrcBot::init(const str& config_file)
 		{
 			BUG_MSG(msg, JOIN);
 			// track known nicks
-			const str who = msg.get_sender();
+			const str who = msg.get_nick();
 			str_set& known = nicks[msg.params];
 			if(who != nick && known.find(who) == known.end())
 			{
@@ -899,7 +917,7 @@ bool IrcBot::init(const str& config_file)
 		else if(msg.cmd == NICK)
 		{
 			// If the bot changed its own nick
-			if(msg.get_sender() == nick)
+			if(msg.get_nick() == nick)
 				nick = msg.text;
 		}
 		else if(msg.cmd == PONG)
@@ -1053,7 +1071,7 @@ bool IrcBot::init(const str& config_file)
 				}
 				else if(cmd == "!help")
 				{
-					const str sender = msg.get_sender();
+					const str sender = msg.get_nick();
 					const str params = msg.get_user_params();
 
 					if(!params.empty())
@@ -1083,10 +1101,10 @@ bool IrcBot::init(const str& config_file)
 				else
 				{
 					// TODO: Make this a proper IRC mask
-					if(banned.find(msg.get_sender()) == banned.end())
+					if(banned.find(msg.get_nick()) == banned.end())
 						// TODO: make this async (make plugins thread-safe)
 						execute(cmd, msg);
-					else log("BANNED: " << msg.get_sender());
+					else log("BANNED: " << msg.get_nick());
 				}
 			}
 			else if(!msg.text.empty() && msg.to == nick)
@@ -1146,11 +1164,11 @@ void IrcBot::execute(const str& cmd, const message& msg)
 			// apply channel authorization
 			if(chan_access["*"].count(commands[cmd]->get_name()))
 				commands[cmd]->execute(cmd, msg);
-			else if(chan_access[msg.get_sender()].count(commands[cmd]->get_name()))
+			else if(chan_access[msg.get_nick()].count(commands[cmd]->get_name()))
 				commands[cmd]->execute(cmd, msg);
 			else
 				log("PLUGIN " << commands[cmd]->get_name()
-					<< " NOT AUTHORISED FOR CHANNEL: " << msg.get_sender());
+					<< " NOT AUTHORISED FOR CHANNEL: " << msg.get_nick());
 		}
 		else
 		{
@@ -1161,7 +1179,7 @@ void IrcBot::execute(const str& cmd, const message& msg)
 				commands[cmd]->execute(cmd, msg);
 			else
 				log("PLUGIN " << commands[cmd]->get_name()
-					<< " NOT AUTHORISED FOR PM TO: " << msg.get_sender());
+					<< " NOT AUTHORISED FOR PM TO: " << msg.get_nick());
 		}
 	}
 }
@@ -1406,6 +1424,15 @@ bool IrcBot::reg_match(const str& s, const str& r)
 
 	return false;
 //	return lowercase(s).find(lowercase(r)) != str::npos;
+}
+
+bool IrcBot::preg_match(const str& s, const str& r)
+{
+	bug_func();
+	bug_var(s);
+	bug_var(r);
+
+	return pcrecpp::RE(r).PartialMatch(s);
 }
 
 void IrcBot::console()

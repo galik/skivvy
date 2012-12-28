@@ -414,8 +414,8 @@ bool ChanopsIrcBotPlugin::join_event(const message& msg)
 			ungreets.push_back(ungreet);
 
 		if((ungreets.empty()
-		|| stl::find(ungreets, msg.get_sender()) == ungreets.end())
-		&& msg.get_sender() != bot.nick)
+		|| stl::find(ungreets, msg.get_nick()) == ungreets.end())
+		&& msg.get_nick() != bot.nick)
 		{
 			str_vec greets = bot.get_vec(GREETINGS_VEC);
 			if(!greets.empty())
@@ -425,10 +425,10 @@ bool ChanopsIrcBotPlugin::join_event(const message& msg)
 				str greet = greets[rand_int(0, greets.size() - 1)];
 
 				for(siz pos = 0; (pos = greet.find("*")) != str::npos;)
-					greet.replace(pos, 1, msg.get_sender());
+					greet.replace(pos, 1, msg.get_nick());
 
 				// greet only once
-				ungreets.push_back(msg.get_sender());
+				ungreets.push_back(msg.get_nick());
 
 				std::async(std::launch::async, [&,msg,greet,min_delay,max_delay]
 				{
@@ -451,10 +451,10 @@ bool ChanopsIrcBotPlugin::join_event(const message& msg)
 		std::istringstream(s) >> chan >> who;
 		bug_var(chan);
 		bug_var(who);
-		if((chan == "#*" || msg.params == chan) && bot.reg_match(msg.from, who))
+		if((chan == "#*" || msg.params == chan) && bot.preg_match(msg.from, who))
 		{
 			bug("match:");
-			irc->mode(msg.params, "+o" , msg.get_sender());
+			irc->mode(msg.params, "+o" , msg.get_nick());
 		}
 	}
 
@@ -462,8 +462,8 @@ bool ChanopsIrcBotPlugin::join_event(const message& msg)
 	for(const str& s: v)
 	{
 		std::istringstream(s) >> chan >> who;
-		if((chan == "#*" || msg.params == chan) && bot.reg_match(msg.from, who))
-			irc->mode(msg.params, "+v", msg.get_sender());
+		if((chan == "#*" || msg.params == chan) && bot.preg_match(msg.from, who))
+			irc->mode(msg.params, "+v", msg.get_nick());
 	}
 
 	v = bot.get_vec("chanops.mode");
@@ -471,8 +471,8 @@ bool ChanopsIrcBotPlugin::join_event(const message& msg)
 	{
 		str mode;
 		std::istringstream(s) >> chan >> who >> mode;
-		if((chan == "#*" || msg.params == chan) && bot.reg_match(msg.from, who))
-			irc->mode(msg.params, mode , msg.get_sender());
+		if((chan == "#*" || msg.params == chan) && bot.preg_match(msg.from, who))
+			irc->mode(msg.params, mode , msg.get_nick());
 	}
 
 	return true;

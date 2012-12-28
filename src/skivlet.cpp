@@ -222,10 +222,10 @@ public:
 				// :Skivlet!~Skivlet@cpc21-pool13-2-0-cust125.15-1.cable.virginmedia.com JOIN #teammega
 //				prompt("recv: " << line);
 //				bug_msg(msg);
-				prompt(msg.get_sender() << " has joined " << msg.params);
+				prompt(msg.get_nick() << " has joined " << msg.params);
 			}
 			else if(msg.cmd == "QUIT")
-				prompt(msg.get_sender() << " has quit: " << msg.text);
+				prompt(msg.get_nick() << " has quit: " << msg.text);
 			else if(msg.cmd == "PING")
 				send("PONG " + msg.text);
 			else if(msg.cmd == "332") // RPL_TOPIC
@@ -273,7 +273,7 @@ public:
 			else if(msg.cmd == "NOTICE")
 				prompt("NOTICE: " << msg.text);
 			else if(msg.cmd == "PRIVMSG")
-				prompt(msg.to << ": <" << msg.get_sender() << "> " << msg.text);
+				prompt(msg.to << ": <" << msg.get_nick() << "> " << msg.text);
 			else
 				prompt("recv: " << line);
 		}

@@ -1,6 +1,6 @@
 #pragma once
-#ifndef _SOOKEE_IRCBOT_H_
-#define _SOOKEE_IRCBOT_H_
+#ifndef _SKIVVY_IRCBOT_H_
+#define _SKIVVY_IRCBOT_H_
 
 /*
  * ircbot.h
@@ -96,7 +96,10 @@ struct message
 	 * server qualifier. Eg from "MyNick!~User@server.com it will"
 	 * extract "MyNick" as the 'sender'.
 	 */
-	str get_sender() const;
+	str get_nick() const; // MyNick
+	str get_user() const; // ~User
+	str get_host() const; // server.com
+	str get_userhost() const; // ~User@server.com
 
 	/**
 	 * Extract the user command out from a channel/query message.
@@ -1049,6 +1052,7 @@ public:
 	 * Match s according to regular expression r.
 	 */
 	bool reg_match(const str& s, const str& r);
+	bool preg_match(const str& s, const str& r);
 
 	bool is_connected() { return connected; }
 
@@ -1224,4 +1228,4 @@ bool wildmatch(const str& mask, const str& id);
 
 }} // namespace skivvy { namespace ircbot {
 
-#endif // _SOOKEE_IRCBOT_H_
+#endif // _SKIVVY_IRCBOT_H_

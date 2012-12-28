@@ -600,11 +600,11 @@ void ArtibotIrcBotPlugin::event(const message& msg)
 		for(const str& s: offends)
 			if(msg.from.find(s) != str::npos)
 			{
-				bot.fc_reply(msg, msg.get_sender() + ": I am not speaking to you today.");
+				bot.fc_reply(msg, msg.get_nick() + ": I am not speaking to you today.");
 				return;
 			}
 
-		str response = msg.get_sender() + ": ";
+		str response = msg.get_nick() + ": ";
 		if(bot.get(AI) == AI_MEGAHAL)
 			response += mh(msg);
 		else

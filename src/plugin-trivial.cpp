@@ -399,23 +399,23 @@ void TrivialIrcBotPlugin::event(const message& msg)
 		siz ans;
 		if(accepting_answers && std::istringstream(msg.text) >> ans)
 		{
-			if(stl::find(answered, msg.get_sender()) != answered.end())
+			if(stl::find(answered, msg.get_nick()) != answered.end())
 			{
-				bot.fc_reply(msg, msg.get_sender() + ": You only get one try.");
+				bot.fc_reply(msg, msg.get_nick() + ": You only get one try.");
 			}
 			else if(stl::find(answers, ans) != answers.end())
 			{
 				answer_found = true;
 				accepting_answers = false;
 				bug("event() ANSWER FOUND");
-				++totals[msg.get_sender()];
+				++totals[msg.get_nick()];
 				std::ostringstream oss;
-				oss << msg.get_sender() << " has the right answer!";
-				oss << " Total: " << totals[msg.get_sender()] << " points.";
+				oss << msg.get_nick() << " has the right answer!";
+				oss << " Total: " << totals[msg.get_nick()] << " points.";
 				bot.fc_reply(msg, oss.str());
 //				++current_question;
 			}
-			answered.push_back(msg.get_sender());
+			answered.push_back(msg.get_nick());
 		}
 	}
 }

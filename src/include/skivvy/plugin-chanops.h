@@ -86,7 +86,7 @@ public:
 //		user_t(const user_t& u): prefix(u.prefix) {}
 		user_t(const message& msg, const user_r& ur)
 		: prefix(msg.from), user(ur.user)
-		, nick(msg.get_sender()), groups(ur.groups)
+		, nick(msg.get_nick()), groups(ur.groups)
 		{}
 
 		bool operator<(const user_t& u) const { return prefix < u.prefix; }

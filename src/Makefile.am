@@ -77,7 +77,7 @@ noinst_HEADERS = \
 	$(srcdir)/include/skivvy/plugin-rserver.h \
 	$(srcdir)/include/skivvy/plugin-trivial.h
 
-BOTLIBS = -lskivvy -ldl
+BOTLIBS = -lskivvy -ldl -lpcrecpp
 # -Wl,-E is required for programs that load plugin's
 BOTFLAGS = -Wl,-E
 

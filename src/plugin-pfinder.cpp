@@ -394,7 +394,7 @@ void PFinderIrcBotPlugin::oacvar(const message& msg)
 
 	cvar_t cvar;
 	while(ifs >> cvar)
-		if(bot.reg_match(cvar.name, var))
+		if(bot.preg_match(lowercase(cvar.name), var))
 //		if(lowercase(cvar.name).find(var) != str::npos)
 			cvars.insert(cvar);
 
