@@ -247,7 +247,7 @@ public:
 	 * @channel The channel to join, eg. #stuff
 	 * @return false on failure.
 	 */
-	bool join(const str& channel);
+	bool join(const str& channel, const str& key = "");
 
 	/**
 	 * Part (leave) a channel.
@@ -279,6 +279,8 @@ public:
 	 * @return false on failure.
 	 */
 	bool say(const str& to, const str& text);
+
+	bool kick(const str_vec& chans, const str_vec&users, const str& comment);
 
 	// non standard??
 	bool auth(const str& user, const str& pass);
@@ -1052,7 +1054,7 @@ public:
 	 * Match s according to regular expression r.
 	 */
 	bool reg_match(const str& s, const str& r);
-	bool preg_match(const str& s, const str& r);
+	bool preg_match(const str& s, const str& r, bool full = false);
 
 	bool is_connected() { return connected; }
 

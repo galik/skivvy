@@ -451,7 +451,8 @@ bool ChanopsIrcBotPlugin::join_event(const message& msg)
 		std::istringstream(s) >> chan >> who;
 		bug_var(chan);
 		bug_var(who);
-		if((chan == "#*" || msg.params == chan) && bot.preg_match(msg.from, who))
+		if(bot.preg_match(msg.params, chan, true) && bot.preg_match(msg.from, who))
+//		if((chan == "#*" || msg.params == chan) && bot.preg_match(msg.from, who))
 		{
 			bug("match:");
 			irc->mode(msg.params, "+o" , msg.get_nick());
@@ -462,8 +463,18 @@ bool ChanopsIrcBotPlugin::join_event(const message& msg)
 	for(const str& s: v)
 	{
 		std::istringstream(s) >> chan >> who;
-		if((chan == "#*" || msg.params == chan) && bot.preg_match(msg.from, who))
+		if(bot.preg_match(msg.params, chan, true) && bot.preg_match(msg.from, who))
+//		if((chan == "#*" || msg.params == chan) && bot.preg_match(msg.from, who))
 			irc->mode(msg.params, "+v", msg.get_nick());
+	}
+
+	v = bot.get_vec("chanops.kick");
+	for(const str& s: v)
+	{
+		str why;
+		std::getline(std::istringstream(s) >> chan >> who, why);
+		if(bot.preg_match(msg.params, chan, true) && bot.preg_match(msg.from, who))
+			irc->kick({msg.params}, {msg.get_nick()}, why);
 	}
 
 	v = bot.get_vec("chanops.mode");
@@ -471,7 +482,8 @@ bool ChanopsIrcBotPlugin::join_event(const message& msg)
 	{
 		str mode;
 		std::istringstream(s) >> chan >> who >> mode;
-		if((chan == "#*" || msg.params == chan) && bot.preg_match(msg.from, who))
+		if(bot.preg_match(msg.params, chan, true) && bot.preg_match(msg.from, who))
+//		if((chan == "#*" || msg.params == chan) && bot.preg_match(msg.from, who))
 			irc->mode(msg.params, mode , msg.get_nick());
 	}
 

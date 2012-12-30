@@ -163,21 +163,25 @@ std::ostream& operator<<(std::ostream& os, const message& m)
 
 str message::get_nick() const
 {
+	bug_func();
 	return from.substr(0, from.find("!"));
 }
 
 str message::get_user() const
 {
+	bug_func();
 	return from.substr(from.find("!") + 1, from.find("@") - from.find("!") - 1);
 }
 
 str message::get_host() const
 {
+	bug_func();
 	return from.substr(from.find("@") + 1);
 }
 
 str message::get_userhost() const
 {
+	bug_func();
 	return from.substr(from.find("!") + 1);
 }
 
@@ -260,9 +264,9 @@ bool RemoteIrcServer::user(const str& u, const str m, const str r)
 	return send(USER + " " + u + " " + m + " * :" + r);
 }
 
-bool RemoteIrcServer::join(const str& channel)
+bool RemoteIrcServer::join(const str& channel, const str& key)
 {
-	return send(JOIN + " " + channel);
+	return send(JOIN + " " + channel + " " + key);
 }
 
 bool RemoteIrcServer::part(const str& channel, const str& message)
@@ -284,6 +288,25 @@ bool RemoteIrcServer::pong(const str& info)
 bool RemoteIrcServer::say(const str& to, const str& text)
 {
 	return send(PRIVMSG + " " + to + " :" + text);
+}
+
+// :SooKee!~SooKee@SooKee.users.quakenet.org KICK #skivvy Skivvy :Skivvy
+
+// Parameters: <channel> *( "," <channel> ) <user> *( "," <user> ) [<comment>]
+// KICK KICK #skivvy Skivvy :
+bool RemoteIrcServer::kick(const str_vec& chans, const str_vec&users, const str& comment)
+{
+	str cmd = KICK;
+
+	str sep = " ";
+	for(const str& s: chans)
+		{ cmd += sep + s; sep = ","; }
+
+	sep = " ";
+	for(const str& s: users)
+		{ cmd += sep + s; sep = ","; }
+
+	return send(cmd + " :" + comment);
 }
 
 // non standard??
@@ -1353,11 +1376,11 @@ void IrcBot::exec(const std::string& cmd, std::ostream* os)
 		}
 		else if(cmd == "/join")
 		{
-			str channel;
-			iss >> channel >> std::ws;
+			str channel, key;
+			iss >> channel >> key >> std::ws;
 			if(!trim(channel).empty() && channel[0] == '#')
 			{
-				if(irc.join(channel)) chans.insert(channel);
+				if(irc.join(channel, key)) chans.insert(channel);
 				if(os) (*os) << "OK";
 			}
 			else if(os) (*os) << "ERROR: /join #channel.\n";
@@ -1426,12 +1449,15 @@ bool IrcBot::reg_match(const str& s, const str& r)
 //	return lowercase(s).find(lowercase(r)) != str::npos;
 }
 
-bool IrcBot::preg_match(const str& s, const str& r)
+bool IrcBot::preg_match(const str& s, const str& r, bool full)
 {
 	bug_func();
 	bug_var(s);
 	bug_var(r);
+	bug_var(full);
 
+	if(full)
+		return pcrecpp::RE(r).FullMatch(s);
 	return pcrecpp::RE(r).PartialMatch(s);
 }
 
