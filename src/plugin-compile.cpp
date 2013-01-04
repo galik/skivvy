@@ -41,7 +41,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 namespace skivvy { namespace ircbot {
 
-IRC_BOT_PLUGIN(CompileIrcBotPlugin);
+IRC_BOT_PLUGIN(FactoidIrcBotPlugin);
 PLUGIN_INFO("Compile Code", "0.1");
 
 using namespace skivvy::types;
@@ -82,14 +82,14 @@ const str PREAMBLE =
 
 const str MAIN = "int main()\n";
 
-CompileIrcBotPlugin::CompileIrcBotPlugin(IrcBot& bot)
+FactoidIrcBotPlugin::FactoidIrcBotPlugin(IrcBot& bot)
 : BasicIrcBotPlugin(bot)
 {
 }
 
-CompileIrcBotPlugin::~CompileIrcBotPlugin() {}
+FactoidIrcBotPlugin::~FactoidIrcBotPlugin() {}
 
-void CompileIrcBotPlugin::cpp(const message& msg, bool cpp11)
+void FactoidIrcBotPlugin::faq(const message& msg, bool cpp11)
 {
 	BUG_COMMAND(msg);
 	str text = msg.get_user_params();
@@ -176,19 +176,19 @@ void CompileIrcBotPlugin::cpp(const message& msg, bool cpp11)
 
 // INTERFACE: BasicIrcBotPlugin
 
-bool CompileIrcBotPlugin::initialize()
+bool FactoidIrcBotPlugin::initialize()
 {
 	add
 	({
 		"!c++"
 		, "!c++ { cout << \"Hello IRC\\n\"; } - Compile & run c++ code."
-		, [&](const message& msg){ cpp(msg, false); }
+		, [&](const message& msg){ faq(msg, false); }
 	});
 	add
 	({
 		"!c++11"
 		, "!c++11 { cout << \"Hello IRC\\n\"; } - Compile & run c++11 code."
-		, [&](const message& msg){ cpp(msg, true); }
+		, [&](const message& msg){ faq(msg, true); }
 	});
 //	bot.add_monitor(*this);
 	return true;
@@ -196,17 +196,17 @@ bool CompileIrcBotPlugin::initialize()
 
 // INTERFACE: IrcBotPlugin
 
-str CompileIrcBotPlugin::get_name() const { return NAME; }
-str CompileIrcBotPlugin::get_version() const { return VERSION; }
+str FactoidIrcBotPlugin::get_name() const { return NAME; }
+str FactoidIrcBotPlugin::get_version() const { return VERSION; }
 
-void CompileIrcBotPlugin::exit()
+void FactoidIrcBotPlugin::exit()
 {
 //	bug_func();
 }
 
 // INTERFACE: IrcBotMonitor
 
-void CompileIrcBotPlugin::event(const message& msg)
+void FactoidIrcBotPlugin::event(const message& msg)
 {
 	if(msg.cmd == "PRIVMSG")
 	{

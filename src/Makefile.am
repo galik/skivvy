@@ -71,6 +71,7 @@ noinst_HEADERS = \
 	$(srcdir)/include/skivvy/plugin-compile.h \
 	$(srcdir)/include/skivvy/plugin-diction.h \
 	$(srcdir)/include/skivvy/plugin-example.h \
+	$(srcdir)/include/skivvy/plugin-factoid.h \
 	$(srcdir)/include/skivvy/plugin-oastats.h \
 	$(srcdir)/include/skivvy/plugin-pfinder.h \
 	$(srcdir)/include/skivvy/plugin-rquotes.h \
@@ -90,6 +91,7 @@ plugin_LTLIBRARIES =  \
 	skivvy-plugin-compile.la \
 	skivvy-plugin-diction.la \
 	skivvy-plugin-example.la \
+	skivvy-plugin-factoid.la \
 	skivvy-plugin-oastats.la \
 	skivvy-plugin-pfinder.la \
 	skivvy-plugin-rquotes.la \
@@ -116,6 +118,7 @@ skivvy_plugin_chanops_la_SOURCES = plugin-chanops.cpp
 skivvy_plugin_compile_la_SOURCES = plugin-compile.cpp
 skivvy_plugin_diction_la_SOURCES = plugin-diction.cpp
 skivvy_plugin_example_la_SOURCES = plugin-example.cpp
+skivvy_plugin_factoid_la_SOURCES = plugin-factoid.cpp
 skivvy_plugin_oastats_la_SOURCES = plugin-oastats.cpp
 skivvy_plugin_pfinder_la_SOURCES = plugin-pfinder.cpp
 skivvy_plugin_rquotes_la_SOURCES = plugin-rquotes.cpp
@@ -127,6 +130,7 @@ skivvy_plugin_chanops_la_LDFLAGS = -module
 skivvy_plugin_compile_la_LDFLAGS = -module
 skivvy_plugin_diction_la_LDFLAGS = -module
 skivvy_plugin_example_la_LDFLAGS = -module
+skivvy_plugin_factoid_la_LDFLAGS = -module
 skivvy_plugin_oastats_la_LDFLAGS = -module
 skivvy_plugin_pfinder_la_LDFLAGS = -module
 skivvy_plugin_rquotes_la_LDFLAGS = -module

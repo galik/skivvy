@@ -1,15 +1,15 @@
 #pragma once
-#ifndef _SOOKEE_IRCBOT_COMPILE_H_
-#define _SOOKEE_IRCBOT_COMPILE_H_
+#ifndef _SKIVVY_IRCBOT_FACTOID_H_
+#define _SKIVVY_IRCBOT_FACTOID_H_
 /*
- * ircbot-compile.h
+ * plugin-factoid.h
  *
- *  Created on: 30 Jan 2012
+ *  Created on: 04 Jan 2013
  *      Author: oaskivvy@gmail.com
  */
 
 /*-----------------------------------------------------------------.
-| Copyright (C) 2011 SooKee oaskivvy@gmail.com               |
+| Copyright (C) 2013 SooKee oaskivvy@gmail.com               |
 '------------------------------------------------------------------'
 
 This program is free software; you can redistribute it and/or
@@ -40,14 +40,15 @@ namespace skivvy { namespace ircbot {
 
 class FactoidIrcBotPlugin
 : public BasicIrcBotPlugin
- , public IrcBotMonitor
 {
 public:
 
 private:
 
 	std::mutex mtx;
-	void faq(const message& msg, bool cpp11);
+
+	bool faq(const message& msg);
+	bool give(const message& msg);
 
 public:
 	FactoidIrcBotPlugin(IrcBot& bot);
@@ -62,12 +63,8 @@ public:
 	virtual std::string get_name() const;
 	virtual std::string get_version() const;
 	virtual void exit();
-
-	// INTERFACE: IrcBotMonitor
-
-	virtual void event(const message& msg);
 };
 
 }} // sookee::ircbot
 
-#endif // _SOOKEE_IRCBOT_COMPILE_H_
+#endif // _SKIVVY_IRCBOT_FACTOID_H_
