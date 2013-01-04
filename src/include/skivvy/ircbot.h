@@ -956,7 +956,7 @@ public:
 
 //	typedef std::multimap<str, str> property_mmap;
 	typedef std::map<str, str_vec> property_map;
-	typedef std::pair<str, str> property_pair;
+	typedef std::pair<const str, str_vec> property_pair;
 	typedef property_map::iterator property_iter;
 	typedef property_map::const_iterator property_citer;
 

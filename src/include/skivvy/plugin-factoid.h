@@ -36,7 +36,11 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <deque>
 #include <mutex>
 
+#include <skivvy/store.h>
+
 namespace skivvy { namespace ircbot {
+
+using namespace skivvy::utils;
 
 class FactoidIrcBotPlugin
 : public BasicIrcBotPlugin
@@ -45,9 +49,16 @@ public:
 
 private:
 
-	std::mutex mtx;
+	Store store;
+	std::mutex store_mtx;
 
-	bool faq(const message& msg);
+	bool is_user_valid(const message& msg, const str& svar);
+
+	bool reloadfacts(const message& msg);
+	bool addfact(const message& msg);
+	bool findfact(const message& msg);
+	bool fact(const message& msg, const str& key, const str& prefix = "");
+	bool fact(const message& msg);
 	bool give(const message& msg);
 
 public:

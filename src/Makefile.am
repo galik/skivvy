@@ -47,16 +47,17 @@ AM_CXXFLAGS = $(GEN_FLAGS) $(DEF_FLAGS) -std=gnu++11
 #BOOST_LIBS = -lboost_regex-mt
 
 skivvy_HEADERS = \
+	$(srcdir)/include/skivvy/bits/rpc.tcc \
 	$(srcdir)/include/skivvy/FloodController.h \
 	$(srcdir)/include/skivvy/ios.h \
-	$(srcdir)/include/skivvy/rpc.h \
-	$(srcdir)/include/skivvy/str.h \
-	$(srcdir)/include/skivvy/bits/rpc.tcc \
-	$(srcdir)/include/skivvy/types.h \
 	$(srcdir)/include/skivvy/ircbot.h \
 	$(srcdir)/include/skivvy/logrep.h \
 	$(srcdir)/include/skivvy/props.h \
-	$(srcdir)/include/skivvy/socketstream.h
+	$(srcdir)/include/skivvy/rpc.h \
+	$(srcdir)/include/skivvy/socketstream.h \
+	$(srcdir)/include/skivvy/str.h \
+	$(srcdir)/include/skivvy/store.h \
+	$(srcdir)/include/skivvy/types.h
 
 noinst_HEADERS = \
 	$(srcdir)/mh/megahal.h \
