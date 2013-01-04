@@ -108,7 +108,7 @@ bool FactoidIrcBotPlugin::addfact(const message& msg)
 	if(!bot.extract_params(msg, {&key, &fact}))
 		return false;
 
-	store.add(key, fact);
+	store.add(lowercase(key), fact);
 	bot.fc_reply(msg, get_prefix(msg, IRC_Green) + " Fact added to database.");
 
 	return true;
@@ -119,7 +119,7 @@ bool FactoidIrcBotPlugin::findfact(const message& msg)
 	BUG_COMMAND(msg);
 
 	// !findfact <regex>"
-	str_vec keys = store.find(msg.get_user_params());
+	str_vec keys = store.find(lowercase(msg.get_user_params()));
 
 	if(keys.size() > 20)
 	{
@@ -128,7 +128,7 @@ bool FactoidIrcBotPlugin::findfact(const message& msg)
 	}
 
 	str line, sep;
-	for(const str& key: keys)
+	for(const str& key: keys) // TODO: filter out aliases here ?
 		{ line += sep + key; sep = ", "; }
 	bot.fc_reply(msg, get_prefix(msg, IRC_Dark_Gray) + line);
 
@@ -140,17 +140,58 @@ bool FactoidIrcBotPlugin::fact(const message& msg, const str& key, const str& pr
 	BUG_COMMAND(msg);
 
 	// !fact <key>
-	const str_vec facts = store.get_vec(key);
+	const str_vec facts = store.get_vec(lowercase(key));
 	for(const str& fact: facts)
 	{
-		// follow a fact alias link: <fact2>: = <fact1>
 		if(!fact.empty() && fact[0] == '=')
 		{
+			// follow a fact alias link: <fact2>: = <fact1>
 			str key;
 			std::getline(std::istringstream(fact).ignore() >> std::ws, key);
 			this->fact(msg, key, prefix);
 		}
+		else if(!fact.empty() && fact[0] == '#')
+		{
+			// maps: # [map] // enumerate keys with subject marker [map]
+			str topic;
+			std::istringstream iss(fact);
+			if(iss.ignore() >> std::ws
+			&& std::getline(iss, topic, '[')
+			&& std::getline(iss, topic, ']'))
+				topic = "[" + topic + "]";
+
+			if(topic.empty())
+			{
+				log("factoid: ERROR: bad topic in key enumeration: " << fact);
+				return false;
+			}
+
+			str line, sep;
+			str_vec lines;
+			str_vec keys = store.find(".*");
+			for(const str& key: keys)
+			{
+				if(!store.get(key).find(topic))
+				{
+					line += sep + key;
+					sep = ", ";
+					if(line.size() > 300)
+					{
+						lines.push_back(line);
+						line.clear();
+						sep.clear();
+					}
+				}
+			}
+			if(!line.empty())
+				lines.push_back(line);
+
+			for(const str& line: lines)
+//				bot.fc_reply(msg, get_prefix(msg, IRC_Dark_Gray) + line);
+				bot.fc_reply(msg, prefix + IRC_BOLD + IRC_COLOR + IRC_Dark_Gray + line);
+		}
 		else
+//			bot.fc_reply(msg, get_prefix(msg, IRC_Navy_Blue) + fact);
 			bot.fc_reply(msg, prefix + IRC_BOLD + IRC_COLOR + IRC_Navy_Blue + fact);
 	}
 
