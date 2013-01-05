@@ -163,25 +163,25 @@ std::ostream& operator<<(std::ostream& os, const message& m)
 
 str message::get_nick() const
 {
-	bug_func();
+//	bug_func();
 	return from.substr(0, from.find("!"));
 }
 
 str message::get_user() const
 {
-	bug_func();
+//	bug_func();
 	return from.substr(from.find("!") + 1, from.find("@") - from.find("!") - 1);
 }
 
 str message::get_host() const
 {
-	bug_func();
+//	bug_func();
 	return from.substr(from.find("@") + 1);
 }
 
 str message::get_userhost() const
 {
-	bug_func();
+//	bug_func();
 	return from.substr(from.find("!") + 1);
 }
 

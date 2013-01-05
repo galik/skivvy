@@ -108,7 +108,7 @@ bool FactoidIrcBotPlugin::addfact(const message& msg)
 	if(!bot.extract_params(msg, {&key, &fact}))
 		return false;
 
-	store.add(lowercase(key), fact);
+	store.add(lowercase(key), "[] " + fact);
 	bot.fc_reply(msg, get_prefix(msg, IRC_Green) + " Fact added to database.");
 
 	return true;
@@ -135,6 +135,23 @@ bool FactoidIrcBotPlugin::findfact(const message& msg)
 	return true;
 }
 
+str_vec get_topics_from_fact(const str& fact)
+{
+	str topic;
+	str_vec topics;
+
+	std::istringstream iss(fact);
+	std::getline(iss, topic, '[');
+	std::getline(iss, topic, ']');
+
+	iss.clear();
+	iss.str(topic);
+	while(std::getline(iss, topic, ','))
+		topics.push_back(topic);
+
+	return topics;
+}
+
 bool FactoidIrcBotPlugin::fact(const message& msg, const str& key, const str& prefix)
 {
 	BUG_COMMAND(msg);
@@ -152,26 +169,30 @@ bool FactoidIrcBotPlugin::fact(const message& msg, const str& key, const str& pr
 		}
 		else if(!fact.empty() && fact[0] == '#')
 		{
-			// maps: # [map] // enumerate keys with subject marker [map]
+			// maps: # [map,man] // enumerate keys with topic marker(s) [map(,man)]
 			str topic;
-			std::istringstream iss(fact);
-			if(iss.ignore() >> std::ws
-			&& std::getline(iss, topic, '[')
-			&& std::getline(iss, topic, ']'))
-				topic = "[" + topic + "]";
+			str_vec topics = get_topics_from_fact(fact);
 
-			if(topic.empty())
+			str_set_map keys;
+
+			for(const str_vec_pair& p: store.get_map())
 			{
-				log("factoid: ERROR: bad topic in key enumeration: " << fact);
-				return false;
+				const str& key = p.first;
+				const str_vec& facts = p.second;
+				for(const str& fact: facts)
+					for(const str& t1: get_topics_from_fact(fact))
+						for(const str& t2: topics)
+							if(bot.preg_match(t1, t2))
+								keys[t1].insert(key);
 			}
 
-			str line, sep;
-			str_vec lines;
-			str_vec keys = store.find(".*");
-			for(const str& key: keys)
+			for(const str_set_pair& p: keys)
 			{
-				if(!store.get(key).find(topic))
+				const str& topic = p.first;
+				str line, sep;
+				str_vec lines;
+
+				for(const str& key: p.second)
 				{
 					line += sep + key;
 					sep = ", ";
@@ -182,13 +203,13 @@ bool FactoidIrcBotPlugin::fact(const message& msg, const str& key, const str& pr
 						sep.clear();
 					}
 				}
-			}
-			if(!line.empty())
-				lines.push_back(line);
 
-			for(const str& line: lines)
-//				bot.fc_reply(msg, get_prefix(msg, IRC_Dark_Gray) + line);
-				bot.fc_reply(msg, prefix + IRC_BOLD + IRC_COLOR + IRC_Dark_Gray + line);
+				if(!line.empty())
+					lines.push_back(line);
+
+				for(const str& line: lines)
+					bot.fc_reply(msg, prefix + IRC_BOLD + IRC_COLOR + IRC_Hot_Pink + "[" + topic + "] " + IRC_COLOR + IRC_Dark_Gray + line);
+			}
 		}
 		else
 //			bot.fc_reply(msg, get_prefix(msg, IRC_Navy_Blue) + fact);

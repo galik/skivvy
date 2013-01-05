@@ -47,16 +47,13 @@ using namespace skivvy::types;
 class Store
 {
 public:
-	typedef std::map<str, str_vec> property_map;
-	typedef std::pair<const str, str_vec> property_pair;
+//	typedef std::map<str, str_vec> property_map;
+//	typedef std::pair<const str, str_vec> property_pair;
 
 private:
 	const str file;
-	property_map store;
+	str_vec_map store;
 	std::mutex store_mtx;
-
-public:
-	Store(const str& file): file(file) {}
 
 	bool preg_match(const str& s, const str& r, bool full = false)
 	{
@@ -65,13 +62,21 @@ public:
 		return pcrecpp::RE(r).PartialMatch(s);
 	}
 
+public:
+	Store(const str& file): file(file) {}
+
 	str_vec find(const str& reg)
 	{
 		str_vec res;
-		for(const property_pair& p: store)
+		for(const str_vec_pair& p: store)
 			if(preg_match(p.first, reg))
 				res.push_back(p.first);
 		return res;
+	}
+
+	const str_vec_map& get_map()
+	{
+		return store;
 	}
 
 	void load()
@@ -105,7 +110,7 @@ public:
 
 		ofs.open(file);
 		if(ofs)
-			for(const property_pair& p: store)
+			for(const str_vec_pair& p: store)
 				for(const str& v: p.second)
 					ofs << p.first << ": " << v << '\n';
 		ofs.close();
