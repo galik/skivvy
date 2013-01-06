@@ -36,7 +36,11 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <bitset>
 #include <mutex>
 
+#include <skivvy/store.h>
+
 namespace skivvy { namespace ircbot {
+
+using namespace skivvy::utils;
 
 #define CHANOPS_GROUP(name) \
 static const str G_##name = #name
@@ -68,6 +72,8 @@ public:
 		uint32_t sum; // password sum
 		str_set groups;
 
+		// <user>:<sum>:group1,group2
+
 		friend std::istream& operator>>(std::istream& is, user_r& ur);
 		friend std::ostream& operator<<(std::ostream& os, const user_r& ur);
 	};
@@ -98,6 +104,8 @@ public:
 	typedef user_set::const_iterator user_citer;
 
 private:
+
+	Store store;
 
 	std::mutex users_mtx;
 	user_set users;

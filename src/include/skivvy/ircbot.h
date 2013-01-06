@@ -48,6 +48,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <queue>
 
 #include <dlfcn.h>
+#include <fnmatch.h>
 
 #define _final_
 #define _override_
@@ -132,6 +133,26 @@ struct message
 typedef std::set<message> message_set;
 typedef message_set::iterator message_set_iter;
 typedef message_set::const_iterator message_set_citer;
+
+// Event to be triggered upon an incoming message
+// For example when a task needs to be performed
+// after the server has been queried for information
+// these events can be triggered when that information
+// asymmetrically arrives
+
+struct msgevent
+{
+	time_t when;
+	siz timeout = 30; // 30 seconds
+	std::function<void(const message&)> func;
+	msgevent(): when(std::time(0)) {}
+};
+
+typedef std::multimap<str, msgevent> msgevent_map;
+typedef std::pair<const str, msgevent> msgevent_pair;
+typedef msgevent_map::iterator msgevent_itr;
+typedef msgevent_map::const_iterator msgevent_citr;
+typedef std::pair<msgevent_itr, msgevent_itr> msgevent_range;
 
 struct user_info
 {
@@ -300,6 +321,14 @@ public:
 	 * @return false on failure.
 	 */
 	bool query(const str& nick);
+
+	/**
+	 * Close client session.
+	 * @return false on failure.
+	 */
+	bool quit(const str& reason);
+
+	bool whois(const str& nick);
 
 	/**
 	 * Change mode settings for nick.
@@ -985,6 +1014,11 @@ private:
 	RemoteIrcServer irc;
 	FloodController fc;
 
+	msgevent_map msgevents;
+	std::mutex msgevent_mtx;
+
+	void dispatch_msgevent(const message& msg);
+
 	plugin_vec plugins;
 	monitor_set monitors;
 	listener_set listeners;
@@ -1031,6 +1065,25 @@ private:
 public:
 	bool restart = false;
 
+//	time_t when;
+//	siz timeout = 30; // 30 seconds
+//	std::function<void(const message&)> func;
+
+	void add_msgevent(const str& msg, const std::function<void(const message&)>& func, siz timeout = 30)
+	{
+		msgevent me;
+		me.timeout = timeout;
+		me.func = func;
+		lock_guard lock(msgevent_mtx);
+		msgevents.insert(msgevent_pair(msg, me));
+	}
+
+	void add_msgevent(const str& msg, const msgevent& me)
+	{
+		lock_guard lock(msgevent_mtx);
+		msgevents.insert(msgevent_pair(msg, me));
+	}
+
 	time_t get_plugin_load_time() { return plugin_loaded; }
 	time_t get_config_load_time() { return config_loaded; }
 
@@ -1045,16 +1098,17 @@ public:
 	nicks_map nicks; // last known nicks
 
 	friend std::istream& operator>>(std::istream& is, IrcBot& bot);
-	friend std::istream& operator>>(std::istream&& is, IrcBot& bot)
-	{
-		return is >> bot;
-	}
+	friend std::istream& operator>>(std::istream&& is, IrcBot& bot) { return is >> bot; }
 
 	/**
 	 * Match s according to regular expression r.
 	 */
-	bool reg_match(const str& s, const str& r);
-	bool preg_match(const str& s, const str& r, bool full = false);
+	bool ereg_match(const str& s, const str& r); // extended regex
+	bool preg_match(const str& s, const str& r, bool full = false); // peare regex
+	bool wild_match(const str& s, const str& w, int flags = 0)
+	{
+		return !fnmatch(w.c_str(), s.c_str(), flags | FNM_EXTMATCH);
+	}
 
 	bool is_connected() { return connected; }
 
@@ -1223,10 +1277,10 @@ void IrcBotPluginHandle<Plugin>::ensure_plugin()
 	}
 }
 
-bool wildmatch(str_citer mi, const str_citer me
-	, str_citer ii, const str_citer ie);
-
-bool wildmatch(const str& mask, const str& id);
+//bool wildmatch(str_citer mi, const str_citer me
+//	, str_citer ii, const str_citer ie);
+//
+//bool wildmatch(const str& mask, const str& id);
 
 }} // namespace skivvy { namespace ircbot {
 

@@ -290,6 +290,16 @@ bool RemoteIrcServer::say(const str& to, const str& text)
 	return send(PRIVMSG + " " + to + " :" + text);
 }
 
+bool RemoteIrcServer::whois(const str& n)
+{
+	return send(WHOIS + " " + n);
+}
+
+bool RemoteIrcServer::quit(const str& reason)
+{
+	return send(QUIT + " :" + reason);
+}
+
 // :SooKee!~SooKee@SooKee.users.quakenet.org KICK #skivvy Skivvy :Skivvy
 
 // Parameters: <channel> *( "," <channel> ) <user> *( "," <user> ) [<comment>]
@@ -709,22 +719,7 @@ void IrcBot::load_plugins()
 	}
 }
 
-struct msgevent
-{
-	time_t when;
-	siz timeout = 30; // 30 seconds
-	std::function<void(const message&)> func;
-	msgevent(): when(std::time(0)) {}
-};
-typedef std::multimap<str, msgevent> msgevent_map;
-typedef std::pair<const str, msgevent> msgevent_pair;
-typedef msgevent_map::iterator msgevent_itr;
-typedef msgevent_map::const_iterator msgevent_citr;
-typedef std::pair<msgevent_itr, msgevent_itr> msgevent_range;
-msgevent_map msgevents;
-std::mutex msgevent_mtx;
-
-void dispatch_msgevent(const message& msg)
+void IrcBot::dispatch_msgevent(const message& msg)
 {
 	time_t now = std::time(0);
 	lock_guard lock(msgevent_mtx);
@@ -1147,18 +1142,19 @@ bool IrcBot::init(const str& config_file)
 		p->exit();
 	}
 
-	fc.stop();
-	log("Closing down pinger:");
+//	fc.stop();
+//	log("Closing down pinger:");
 	done = true;
-	if(png.valid())
-		png.get();
+//	if(png.valid())
+//		png.get();
 
 	// Don't close console because thread is blocking.
-	log("Closing down console:");
-	if(con.valid())
-		con.get();
+//	log("Closing down console:");
+//	if(con.valid())
+//		con.get();
 
 	log("ENDED");
+	irc.quit(restart ? "Reeeeeeeeeeeeeeeeeeboot!" : "Going off line...");
 	return true;
 }
 
@@ -1228,29 +1224,29 @@ void IrcBot::exit()
 
 // Free functions
 
-bool wildmatch(str_citer mi, const str_citer me
-	, str_citer ii, const str_citer ie)
-{
-	while(mi != me)
-	{
-		if(*mi == '*')
-		{
-			for(str_citer i = ii; i != ie; ++i)
-				if(wildmatch(mi + 1, me, i, ie))
-					return true;
-			return false;
-		}
-		if(*mi != *ii) return false;
-		++mi;
-		++ii;
-	}
-	return ii == ie;
-}
-
-bool wildmatch(const str& mask, const str& id)
-{
-	return wildmatch(mask.begin(), mask.end(), id.begin(), id.end());
-}
+//bool wildmatch(str_citer mi, const str_citer me
+//	, str_citer ii, const str_citer ie)
+//{
+//	while(mi != me)
+//	{
+//		if(*mi == '*')
+//		{
+//			for(str_citer i = ii; i != ie; ++i)
+//				if(wildmatch(mi + 1, me, i, ie))
+//					return true;
+//			return false;
+//		}
+//		if(*mi != *ii) return false;
+//		++mi;
+//		++ii;
+//	}
+//	return ii == ie;
+//}
+//
+//bool wildmatch(const str& mask, const str& id)
+//{
+//	return wildmatch(mask.begin(), mask.end(), id.begin(), id.end());
+//}
 
 static void prompt(std::ostream& os, size_t delay)
 {
@@ -1299,6 +1295,11 @@ void IrcBot::exec(const std::string& cmd, std::ostream* os)
 				irc.say(c, get(PROP_GOODBYE));
 				irc.part(c);
 			}
+			done = true;
+		}
+		else if(cmd == "/restart")
+		{
+			irc.quit("Reeeebooooot!");
 			done = true;
 		}
 		else if(cmd == "/reconfigure")
@@ -1354,6 +1355,12 @@ void IrcBot::exec(const std::string& cmd, std::ostream* os)
 			iss >> nick >> std::ws;
 			if(std::getline(iss, mode)) irc.mode(nick, mode);
 		}
+		else if(cmd == "/whois")
+		{
+			str nick;
+			iss >> nick;
+			irc.whois(nick);
+		}
 		else if(cmd == "/me")
 		{
 			str channel;
@@ -1364,15 +1371,8 @@ void IrcBot::exec(const std::string& cmd, std::ostream* os)
 				irc.me(channel, line);
 				if(os) (*os) << "OK";
 			}
-			else if(os) (*os) << "ERROR: /me #channel then some dialogue.\n";
-//			str nick, mode;
-//			std::getline(iss >> nick, mode);
-//			if(!trim(nick).empty() && !trim(mode).empty())
-//			{
-//				irc.mode(nick, mode);
-//				if(os) (*os) << "OK";
-//			}
-//			else if(os) (*os) << "ERROR: /mode <nick> <mode>.\n";
+			else if(os)
+				(*os) << "ERROR: /me #channel then some dialogue.\n";
 		}
 		else if(cmd == "/join")
 		{
@@ -1425,7 +1425,7 @@ str get_regerror(int errcode, regex_t *compiled)
 	return e;
 }
 
-bool IrcBot::reg_match(const str& s, const str& r)
+bool IrcBot::ereg_match(const str& s, const str& r)
 {
 	bug_func();
 	bug_var(s);
@@ -1751,185 +1751,4 @@ bool MessageTimer::off(const message& m)
 	return true;
 }
 
-//FloodController::FloodController()
-//: dispatching(false)
-//, priority(0)
-//, max(100)
-//{
-//}
-//
-//FloodController::~FloodController() {}
-//
-//size_t FloodController::get_priority(const std::thread::id& id)
-//{
-//	lock_guard lock(mtx);
-////	std::thread::id id = std::this_thread::get_id();
-//	if(mt_que[id].empty())
-//		return (mt_priority[id] = 0);
-//	return ++mt_priority[id];
-//}
-//
-//void FloodController::dispatcher()
-//{
-//	while(dispatching)
-//	{
-//		std::this_thread::sleep_for(std::chrono::seconds(2));
-//		if(mt_que.empty())
-//			continue;
-//		lock_guard lock(mtx);
-//		if(!(++robin < mt_que.size()))
-//			robin = 0;
-//
-//		mtpq_map_iter i = mt_que.begin();
-//		std::advance(i, robin);
-//		mtpq_map_iter end = i;
-//
-//		while(i != mt_que.end() && i->second.empty())
-//		{
-//			++i;
-//		}
-//
-//		if(i == mt_que.end() || i->second.empty())
-//			continue;
-//
-//		i->second.top().func();
-//		i->second.pop();
-//		robin = std::distance(mt_que.begin(), i);
-//		bug("D: robin:" << robin);
-//	}
-//
-//	for(mtpq_pair& p: mt_que)
-//		while(!p.second.empty())
-//		{
-//			std::this_thread::sleep_for(std::chrono::seconds(2));
-//			p.second.top().func();
-//			p.second.pop();
-//		}
-//
-//	log("Dispatcher ended.");
-//}
-//
-//bool FloodController::send(std::function<bool()> func)
-//{
-////	bug_func();
-//	std::thread::id id = std::this_thread::get_id();
-////	bug("id: " << id);
-//	if(!(mt_que[id].size() < max))
-//		return false;
-//
-//	const size_t priority = get_priority(id);
-////	bug("priority: " << priority);
-//	lock_guard lock(mtx);
-////	bug("pushing item in que: " << id);
-//	mt_que[id].push({priority, func});
-//	//mt_que_iter = mt_que.end();
-//	return true;
-//}
-//
-//void FloodController::start()
-//{
-//	log("Starting up dispatcher.");
-//	if(!dispatching)
-//	{
-//		dispatching = true;
-//		//mt_que_iter = mt_que.end();
-//		fut = std::async(std::launch::async, [&]{ dispatcher(); });
-//	}
-//}
-//
-//void FloodController::stop()
-//{
-//	log("Closing down dispatcher.");
-//	if(!dispatching)
-//		return;
-//	dispatching = false;
-//	if(fut.valid())
-//		fut.get();
-//}
-//
-//// FC 2
-//
-//FloodController2::FloodController2()
-////: dispatching(false)
-//{
-//}
-//
-//FloodController2::~FloodController2() {}
-//
-//bool FloodController2::find_next(str& c)
-//{
-//	if(m.empty())
-//		return false;
-//
-//	const dispatch_map::iterator j = m.find(c);
-//	dispatch_map::iterator i;
-//
-//	for(i = j; i != m.end(); ++i)
-//	{
-//		if(!i->second.empty())
-//		{
-//			c = i->first;
-//			return true;
-//		}
-//	}
-//
-//	for(i = m.begin(); i != j; ++i)
-//	{
-//		if(!i->second.empty())
-//		{
-//			c = i->first;
-//			return true;
-//		}
-//	}
-//
-//	return false;
-//}
-//
-//void FloodController2::dispatcher()
-//{
-//	bug_func();
-//	while(dispatching)
-//	{
-//		std::this_thread::sleep_for(std::chrono::milliseconds(200));
-//		{
-//			lock_guard lock(mtx);
-//			if(!find_next(c))
-//				continue;
-//			m[c].front()();
-//			m[c].pop();
-//		}
-//		std::this_thread::sleep_for(std::chrono::milliseconds(1200));
-//	}
-//
-//	log("Dispatcher ended.");
-//}
-//
-//bool FloodController2::send(const str& channel, std::function<bool()> func)
-//{
-//	lock_guard lock(mtx);
-//	//s.insert(channel);
-//	m[channel].push(func);
-//	return true;
-//}
-//
-//void FloodController2::start()
-//{
-//	log("Starting up dispatcher.");
-//	if(!dispatching)
-//	{
-//		dispatching = true;
-//		fut = std::async(std::launch::async, [&]{ dispatcher(); });
-//	}
-//}
-//
-//void FloodController2::stop()
-//{
-//	log("Closing down dispatcher.");
-//	if(!dispatching)
-//		return;
-//	dispatching = false;
-//	if(fut.valid())
-//		fut.get();
-//}
-
-}} // sookee::ircbot
+}} // skivvy::ircbot

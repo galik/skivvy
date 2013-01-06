@@ -56,7 +56,10 @@ private:
 
 	bool reloadfacts(const message& msg);
 	bool addfact(const message& msg);
-	bool findfact(const message& msg);
+	bool addtopic(const message& msg);
+
+	bool findfact(const message& msg); // !fs
+
 	bool fact(const message& msg, const str& key, const str& prefix = "");
 	bool fact(const message& msg);
 	bool give(const message& msg);

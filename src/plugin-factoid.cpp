@@ -135,10 +135,33 @@ bool FactoidIrcBotPlugin::findfact(const message& msg)
 	return true;
 }
 
-str_vec get_topics_from_fact(const str& fact)
+str_vec chain_list(const str_set& v, const str& sep, siz max = 0)
+{
+	str line, s;
+	str_vec lines;
+
+	for(const str& i: v)
+	{
+		line += s + i;
+		s = sep;
+		if(max && line.size() > max)
+		{
+			lines.push_back(line);
+			line.clear();
+			s.clear();
+		}
+	}
+
+	if(!line.empty())
+		lines.push_back(line);
+
+	return lines;
+}
+
+str_set get_topics_from_fact(const str& fact)
 {
 	str topic;
-	str_vec topics;
+	str_set topics;
 
 	std::istringstream iss(fact);
 	std::getline(iss, topic, '[');
@@ -147,10 +170,95 @@ str_vec get_topics_from_fact(const str& fact)
 	iss.clear();
 	iss.str(topic);
 	while(std::getline(iss, topic, ','))
-		topics.push_back(topic);
+		topics.insert(topic);
 
 	return topics;
 }
+
+bool FactoidIrcBotPlugin::addtopic(const message& msg)
+{
+	BUG_COMMAND(msg);
+
+	// !addtopic <key> <topic>
+	const str prefix = get_prefix(msg, IRC_Lime_Green);
+
+	str key, topic;
+	if(!bot.extract_params(msg, {&key, &topic}))
+		return bot.cmd_error(msg, get_prefix(msg, IRC_Lime_Green) + "Expected !addtopic <key> <topic>");
+
+	bug_var(key);
+	bug_var(topic);
+
+	if(!store.has(key))
+		return bot.cmd_error(msg, get_prefix(msg, IRC_Lime_Green) + "Key: " + key + " not found.", true);
+
+	str fact = store.get(key);
+	bug_var(fact);
+
+	str_set topics = get_topics_from_fact(fact);
+	topics.insert(topic);
+
+	bug_var(topics.size());
+
+	str_vec lines = chain_list(topics, ",");
+
+	bug_var(lines.size());
+
+	if(!lines.empty())
+		topic = "[" + lines[0] + "]";
+
+	bug_var(topic);
+
+	str pre, post;
+
+	std::istringstream iss(fact);
+	std::getline(iss, pre, '[');
+	std::getline(iss, post, ']');
+	std::getline(iss, post);
+
+	bug_var(pre);
+	bug_var(post);
+
+	// key: testtopic
+	// topic: map
+	// fact: #[clan,man]
+	// topics.size(): 3
+	// lines.size(): 1
+	// topic: [clan,man,map]
+	// fact: #[clan,man
+
+	store.set(key, pre + topic + post);
+
+	bot.fc_reply(msg, prefix + "Topic: " + topic + " added to " + key);
+
+	return true;
+}
+
+/*
+-----------------------------------------------------
+                 from: SooKee!~SooKee@SooKee.users.quakenet.org
+                  cmd: PRIVMSG
+               params: #skivvy
+                   to: #skivvy
+                 text: !addtopic testtopic map
+msg.from_channel()   : true
+msg.get_nick()       : SooKee
+msg.get_user()       : ~SooKee
+msg.get_host()       : SooKee.users.quakenet.org
+msg.get_userhost()   : ~SooKee@SooKee.users.quakenet.org
+msg.get_user_cmd()   : !addtopic
+msg.get_user_params(): testtopic map
+msg.reply_to()       : #skivvy
+-----------------------------------------------------
+key: testtopic
+topic: map
+fact: #[clan,man]
+topics.size(): 3
+lines.size(): 1
+topic: [clan,man,map]
+fact: #[clan,man
+
+*/
 
 bool FactoidIrcBotPlugin::fact(const message& msg, const str& key, const str& prefix)
 {
@@ -171,7 +279,7 @@ bool FactoidIrcBotPlugin::fact(const message& msg, const str& key, const str& pr
 		{
 			// maps: # [map,man] // enumerate keys with topic marker(s) [map(,man)]
 			str topic;
-			str_vec topics = get_topics_from_fact(fact);
+			str_set topics = get_topics_from_fact(fact);
 
 			str_set_map keys;
 
@@ -212,7 +320,6 @@ bool FactoidIrcBotPlugin::fact(const message& msg, const str& key, const str& pr
 			}
 		}
 		else
-//			bot.fc_reply(msg, get_prefix(msg, IRC_Navy_Blue) + fact);
 			bot.fc_reply(msg, prefix + IRC_BOLD + IRC_COLOR + IRC_Navy_Blue + fact);
 	}
 
@@ -258,6 +365,12 @@ bool FactoidIrcBotPlugin::initialize()
 	});
 	add
 	({
+		"!addtopic"
+		, "!addtopic <key> <topic> - Add topic to fact."
+		, [&](const message& msg){ addtopic(msg); }
+	});
+	add
+	({
 		"!findfact"
 		, "!findfact <regex> - Get a list of matching fact keys."
 		, [&](const message& msg){ findfact(msg); }
@@ -279,6 +392,7 @@ bool FactoidIrcBotPlugin::initialize()
 		"!reloadfacts"
 		, "!reloadfacts - Reload fact database."
 		, [&](const message& msg){ reloadfacts(msg); }
+		, action::INVISIBLE
 	});
 //	bot.add_monitor(*this);
 	return true;

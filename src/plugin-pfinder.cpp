@@ -386,7 +386,7 @@ void PFinderIrcBotPlugin::oacvar(const message& msg)
 {
 	BUG_COMMAND(msg);
 
-	str var = lowercase(msg.get_user_params());
+	str var = "*" + lowercase(msg.get_user_params()) + "*"; // partial match
 
 	std::ifstream ifs(bot.getf(CVAR_FILE, CVAR_FILE_DEFAULT));
 
@@ -394,8 +394,7 @@ void PFinderIrcBotPlugin::oacvar(const message& msg)
 
 	cvar_t cvar;
 	while(ifs >> cvar)
-		if(bot.preg_match(lowercase(cvar.name), var))
-//		if(lowercase(cvar.name).find(var) != str::npos)
+		if(bot.wild_match(lowercase(cvar.name), var))
 			cvars.insert(cvar);
 
 	siz max_results = bot.get(CVAR_MAX_RESULTS, CVAR_MAX_RESULTS_DEFAULT);
@@ -488,10 +487,11 @@ void PFinderIrcBotPlugin::oaserver(const message& msg)
 		std::getline(ifs, s.gametype);
 		if(!ifs) break;
 
+		siz n = 0;
 		if(!match_uid)
 		{
 			bug("matching: " << match);
-			if(lowercase(match).find(lowercase(param)) != str::npos)
+			if(lowercase(match).find(lowercase(param)) != str::npos && ++n < 12)
 			{
 				std::ostringstream oss;
 				oss << uid << ' ' << print << ' ' << s.gametype;
@@ -509,6 +509,7 @@ void PFinderIrcBotPlugin::oaserver(const message& msg)
 			ss << "\r\n" << std::flush;
 
 			player p;
+			int n = 0;
 			while(std::getline(ss, line))
 				if(extract_player(line, p) != str::npos)
 					bot.fc_reply(msg, IRC_BOLD + html_handle_to_irc(p.handle) + IRC_NORMAL
@@ -884,7 +885,13 @@ bool PFinderIrcBotPlugin::initialize()
 	add
 	({
 		"!oacvar"
-		, "!oacvar <cvar> Match <cvar> as part of an OpenArena cvar, providing info."
+		, "!oacvar DEPRECATED, please use !cvar."
+		, [&](const message& msg){ oacvar(msg); }
+	});
+	add
+	({
+		"!cvar"
+		, "!cvar <cvar> Match <cvar> as part of an OpenArena cvar, providing info."
 		, [&](const message& msg){ oacvar(msg); }
 	});
 	add

@@ -116,6 +116,11 @@ public:
 		ofs.close();
 	}
 
+	bool has(const str& k)
+	{
+		return store.find(k) != store.end();
+	}
+
 	str get_at(const str& k, siz n, const str& dflt = "")
 	{
 		lock_guard lock(store_mtx);
@@ -167,6 +172,7 @@ public:
 		store.clear();
 		save();
 	}
+
 	/**
 	 * Clear entire key.
 	 */
@@ -176,7 +182,6 @@ public:
 		store[k].clear();
 		save();
 	}
-
 
 	/**
 	 * Add v to end of key vector.
@@ -205,7 +210,6 @@ public:
 	 */
 	void set(const str& k, const str& v)
 	{
-		lock_guard lock(store_mtx);
 		set_at(k, 0, v);
 	}
 

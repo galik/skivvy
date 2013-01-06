@@ -6,7 +6,7 @@
  */
 
 /*-----------------------------------------------------------------.
-| Copyright (C) 2011 SooKee oaskivvy@gmail.com               |
+| Copyright (C) 2011 SooKee oaskivvy@gmail.com                     |
 '------------------------------------------------------------------'
 
 This program is free software; you can redistribute it and/or
@@ -33,9 +33,6 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <fstream>
 #include <sstream>
 
-//#include <regex.h>
-//#include <boost/regex.hpp>
-
 #include <skivvy/logrep.h>
 #include <skivvy/stl.h>
 #include <skivvy/str.h>
@@ -50,6 +47,9 @@ using namespace skivvy;
 using namespace skivvy::types;
 using namespace skivvy::utils;
 using namespace skivvy::string;
+
+const str STORE_FILE = "chanops.store.file";
+const str STORE_FILE_DEFAULT = "chanops-store.txt";
 
 static const str BAN_FILE = "chanops.ban.file";
 static const str BAN_FILE_DEFAULT = "chanops-bans.txt";
@@ -79,31 +79,44 @@ static uint32_t checksum(const std::string& pass)
 std::ostream& operator<<(std::ostream& os, const ChanopsIrcBotPlugin::user_r& ur)
 {
 	bug_func();
-	os << ur.user << '\n';
-	os << std::hex << ur.sum << '\n';
-	os << ur.groups.size() << '\n';
+
+	// <user>:<sum>:group1,group2
+
+	os << ur.user <<  ':' << std::hex << ur.sum << ':';
+	str sep;
 	for(const str& g: ur.groups)
-		os << g << '\n';
+		{ os << sep << g; sep = ","; }
+
 	return os;
 }
 std::istream& operator>>(std::istream& is, ChanopsIrcBotPlugin::user_r& ur)
 {
 	bug_func();
-	siz s;
-	str line, g;
-	std::getline(is, ur.user);
-	std::getline(is, line);
-	std::istringstream(line) >> std::hex >> ur.sum;
-	std::getline(is, line);
-	std::istringstream(line) >> s;
-	for(siz i = 0; i < s; ++i)
-		if(std::getline(is, g))
-			ur.groups.insert(g);
+
+	// <user>:<sum>:group1,group2
+
+	std::getline(is, ur.user, ':');
+	(is >> std::hex >> ur.sum).ignore();
+
+	str group;
+	while(std::getline(is, group, ','))
+		ur.groups.insert(group);
+//	siz s;
+//	str line, g;
+//	std::getline(is, ur.user);
+//	std::getline(is, line);
+//	std::istringstream(line) >> std::hex >> ur.sum;
+//	std::getline(is, line);
+//	std::istringstream(line) >> s;
+//	for(siz i = 0; i < s; ++i)
+//		if(std::getline(is, g))
+//			ur.groups.insert(g);
 	return is;
 }
 
 ChanopsIrcBotPlugin::ChanopsIrcBotPlugin(IrcBot& bot)
 : BasicIrcBotPlugin(bot)
+, store(bot.getf(STORE_FILE, STORE_FILE_DEFAULT))
 {
 }
 
@@ -162,21 +175,14 @@ bool ChanopsIrcBotPlugin::signup(const message& msg)
 		return bot.cmd_error_pm(msg, "ERROR: Passwords don't match.");
 
 	user_r ur;
-	std::string line;
-	std::ifstream ifs(bot.getf(USER_FILE, USER_FILE_DEFAULT));
-	while(ifs >> ur)
-	{
-		bug("ur:\n" << ur);
-		if(ur.user == user)
-			return bot.cmd_error_pm(msg, "ERROR: User already registered.");
-	}
+	if(store.has("user." + user))
+		return bot.cmd_error_pm(msg, "ERROR: User already registered.");
 
 	ur.user = user;
 	ur.groups.insert(G_USER);
 	ur.sum = checksum(pass);
-	std::ofstream ofs(bot.getf(USER_FILE, USER_FILE_DEFAULT), std::ios::app);
-	if(!(ofs << ur))
-		return bot.cmd_error_pm(msg, "ERROR: Writing use record to: " + bot.getf(USER_FILE, USER_FILE_DEFAULT));
+
+	store.set("user." + user, ur);
 
 	bot.fc_reply_pm(msg, "Successfully registered.");
 	return true;
@@ -196,40 +202,31 @@ bool ChanopsIrcBotPlugin::login(const message& msg)
 	uint32_t sum = checksum(pass);
 	bug("sum: " << std::hex << sum);
 
+	if(!store.has("user." + user))
+		return bot.cmd_error_pm(msg, "ERROR: Username not found.");
+
 	user_r ur;
-	std::ifstream ifs(bot.getf(USER_FILE, USER_FILE_DEFAULT));
-	while(ifs >> ur)
-	{
-		bug("ur.user: " << ur.user);
-		bug("ur.sum: " << std::hex << ur.sum);
+	ur = store.get("user." + user, ur);
 
-		if(ur.user != user)
-			continue;
-		bug("user match!");
+	if(ur.groups.count(G_BANNED))
+		return bot.cmd_error_pm(msg, "ERROR: Banned");
 
-		if(ur.groups.count(G_BANNED))
-			return bot.cmd_error_pm(msg, "ERROR: Banned");
+	if(ur.sum != sum)
+		return bot.cmd_error_pm(msg, "ERROR: Bad password");
 
-		if(ur.sum != sum)
-			return bot.cmd_error_pm(msg, "ERROR: Bad password");
+	user_t u(msg, ur);
 
-		user_t u(msg, ur);
+	lock_guard lock(users_mtx);
+	if(users.count(u))
+		return bot.cmd_error_pm(msg, "You are already logged in to " + bot.nick);
 
-		lock_guard lock(users_mtx);
-		if(users.count(u))
-			return bot.cmd_error_pm(msg, "You are already logged in to " + bot.nick);
+	users.insert(u);
 
-		users.insert(u);
+	bot.fc_reply_pm(msg, "You are now logged in to " + bot.nick);
 
-		bot.fc_reply_pm(msg, "You are now logged in to " + bot.nick);
+	apply_acts(u);
 
-		apply_acts(u);
-
-		return true;
-	}
-
-	bot.fc_reply_pm(msg, "ERROR: Username not found.");
-	return false;
+	return true;
 }
 
 void ChanopsIrcBotPlugin::apply_acts(const user_t& u)
@@ -267,14 +264,28 @@ bool ChanopsIrcBotPlugin::ban(const message& msg)
 	if(!permit(msg))
 		return false;
 
-	str nick;
-	str channel;
-	if(!bot.extract_params(msg, {&channel, &nick}))
-		return false;
+	if(!msg.from_channel())
+		return bot.cmd_error_pm(msg, "ERROR: !ban can only be used from a channel.");
 
-	bug("nick: " << nick);
+	str channel = msg.to;
 
-	irc->mode(channel, "+b *!*" + nick + "@*");
+	// <nick>|<regex>
+	if(bot.nicks.find(msg.get_nick()) != bot.nicks.end()) // ban by nick
+	{
+		store.set("ban.nick." + channel, msg.get_nick());
+		irc->mode(msg.to, "+b *!*" + msg.get_nick() + "@*");
+		irc->kick({msg.to}, {msg.get_user()}, "Bye bye.");
+	}
+	else // ban by regex on userhost
+	{
+		store.set("ban.preg." + channel, msg.get_user_params());
+		irc->mode(msg.to, "+b *!*" + msg.get_userhost());
+		irc->kick({msg.to}, {msg.get_user()}, "Bye bye.");
+	}
+
+
+	char* a, *b;
+	fnmatch(a, b, 0);
 
 	return true;
 }
@@ -293,7 +304,6 @@ bool ChanopsIrcBotPlugin::reclaim(const message& msg)
 }
 
 // every function belongs to a group
-
 
 // INTERFACE: BasicIrcBotPlugin
 
@@ -325,18 +335,12 @@ bool ChanopsIrcBotPlugin::initialize()
 		, "!users List logged in users."
 		, [&](const message& msg){ list_users(msg); }
 	});
-//	add
-//	({
-//		"!claim"
-//		, "!claim <nick> Keep trying to change nick to one already in use."
-//		, [&](const message& msg){ exec(msg); }
-//	});
-//	add
-//	({
-//		"!reclaim"
-//		, "!claim <nick> Keep trying to change nick to one already in use."
-//		, [&](const message& msg){ exec(msg); }
-//	});
+	add
+	({
+		"!ban"
+		, "!ban <nick>|<regex> - ban either a registered user OR a regex match on userhost."
+		, [&](const message& msg){ ban(msg); }
+	});
 	bot.add_monitor(*this);
 	return true;
 }
@@ -359,50 +363,32 @@ void ChanopsIrcBotPlugin::event(const message& msg)
 		join_event(msg);
 }
 
-//str get_regerror(int errcode, regex_t *compiled)
-//{
-//	size_t length = regerror(errcode, compiled, NULL, 0);
-//	char *buffer = new char[length];
-//	(void) regerror(errcode, compiled, buffer, length);
-//	str e(buffer);
-//	delete[] buffer;
-//	return e;
-//}
-//
-//bool match(const str& s, const str& r)
-//{
-//	regex_t regex;
-//
-//	if(regcomp(&regex, r.c_str(), REG_EXTENDED | REG_ICASE))
-//	{
-//		log("Could not compile regex: " << r);
-//		return false;
-//	}
-//
-//	int reti = regexec(&regex, s.c_str(), 0, NULL, 0);
-//	regfree(&regex);
-//	if(!reti)
-//		return true;
-//	else if(reti != REG_NOMATCH)
-//		log("regex: " << get_regerror(reti, &regex));
-//
-//	return false;
-//}
-
-//bool preg_match(const str& s, const str& r)
-//{
-//	using namespace boost;
-//
-//	regex reg(r, regex::perl | regex::icase);
-//
-//	return regex_match(s, reg, match_default);
-//}
-//
 bool ChanopsIrcBotPlugin::join_event(const message& msg)
 {
 	BUG_COMMAND(msg);
 
 	bug_var(bot.get(GREET_JOINERS, GREET_JOINERS_DEFAULT));
+
+	// bans
+	str_vec nicks = store.get_vec("ban.nick." + msg.to);
+	for(const str& nick: nicks)
+		if(nick == msg.get_nick())
+		{
+			bot.fc_reply(msg, "NICK: " + nick + " is banned from this channel.");
+			irc->mode(msg.to, "+b *!*" + nick + "@*");
+			irc->kick({msg.to}, {msg.get_user()}, "Bye bye.");
+			return true;
+		}
+
+	str_vec pregs = store.get_vec("ban.preg." + msg.to);
+	for(const str& preg: pregs)
+		if(bot.preg_match(msg.get_userhost(), preg))
+		{
+			bot.fc_reply(msg, "USERHOST: " + msg.get_userhost() + " is banned from this channel.");
+			irc->mode(msg.to, "+b *!*" + msg.get_userhost());
+			irc->kick({msg.to}, {msg.get_user()}, "Bye bye.");
+			return true;
+		}
 
 	if(bot.get(GREET_JOINERS, GREET_JOINERS_DEFAULT))
 	{

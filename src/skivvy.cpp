@@ -1,5 +1,5 @@
 /*
- * ircbot.cpp
+ * skivvy.cpp
  *
  *  Created on: 29 Jul 2011
  *      Author: oaskivvy@gmail.com
@@ -28,19 +28,9 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 '-----------------------------------------------------------------*/
 
-#include <skivvy/stl.h>
-#include <skivvy/types.h>
 #include <skivvy/ircbot.h>
 #include <skivvy/logrep.h>
 
-#include <fstream>
-#include <cstring>
-#include <cstdlib>
-#include <dirent.h>
-
-using namespace skivvy;
-using namespace skivvy::types;
-using namespace skivvy::utils;
 using namespace skivvy::ircbot;
 
 int main(int argc, char* argv[])
@@ -49,6 +39,6 @@ int main(int argc, char* argv[])
 	log(bot.get_name() + " v" + bot.get_version());
 	bot.init(argc > 1 ? argv[1] : "");
 	if(bot.restart)
-		std::exit(6);
-	std::exit(0);
+		return 6;
+	return 0;
 }

@@ -1,6 +1,6 @@
 #pragma once
-#ifndef _SOOKEE_IRCBOT_RQUOTE_H_
-#define _SOOKEE_IRCBOT_RQUOTE_H_
+#ifndef _SKIVVY_IRCBOT_RQUOTE_H_
+#define _SKIVVY_IRCBOT_RQUOTE_H_
 /*
  * ircbot-rquote.h
  *
@@ -45,8 +45,6 @@ public:
 	RQuotesIrcBotPlugin(IrcBot& bot);
 	virtual ~RQuotesIrcBotPlugin();
 
-//	void set_delay(size_t maxtime);
-
 	// INTERFACE: IrcBotPlugin
 
 	virtual bool init();
@@ -58,6 +56,6 @@ public:
 	virtual void exit();
 };
 
-}} // sookee::ircbot
+}} // skivvy::ircbot
 
-#endif // _SOOKEE_IRCBOT_RQUOTE_H_
+#endif // _SKIVVY_IRCBOT_RQUOTE_H_
