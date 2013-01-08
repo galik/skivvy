@@ -31,6 +31,8 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 '-----------------------------------------------------------------*/
 
+#include <fstream>
+#include <sstream>
 #include <iostream>
 #include <ctime>
 #include <cmath>
@@ -88,8 +90,28 @@ typedef std::chrono::steady_clock steady_clock;
 typedef steady_clock::period period;
 typedef steady_clock::time_point time_point;
 
+typedef std::stringstream sss;
 typedef std::istringstream siss;
 typedef std::ostringstream soss;
+
+typedef std::fstream sfs;
+typedef std::ifstream sifs;
+typedef std::ofstream sofs;
+
+typedef std::stringstream sss;
+
+inline
+std::istream& sgl(std::istream& is, str& s, char d = '\n')
+{
+	return std::getline(is, s, d);
+}
+
+inline
+std::istream& sgl(std::istream&& is, str& s, char d = '\n')
+{
+	return sgl(is, s, d);
+}
+
 
 struct delay
 {
