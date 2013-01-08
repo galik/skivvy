@@ -41,8 +41,11 @@ DEF_FLAGS = \
 
 GEN_FLAGS = -Wl,-E -Wfatal-errors -Wall -Wextra -Winit-self -ansi -pedantic -pipe -pthread \
 	-I$(top_srcdir)/src/include
+
+LIBXML2_FLAG = $(shell xml2-config --cflags)
+LIBXML2_LIBS = $(shell xml2-config --libs)
 	
-AM_CXXFLAGS = $(GEN_FLAGS) $(DEF_FLAGS) -std=gnu++11
+AM_CXXFLAGS = -std=gnu++11 $(GEN_FLAGS) $(DEF_FLAGS) $(LIBXML2_FLAG)
 
 #BOOST_LIBS = -lboost_regex-mt
 

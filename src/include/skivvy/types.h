@@ -88,6 +88,9 @@ typedef std::chrono::steady_clock steady_clock;
 typedef steady_clock::period period;
 typedef steady_clock::time_point time_point;
 
+typedef std::istringstream siss;
+typedef std::ostringstream soss;
+
 struct delay
 {
 	siz d;

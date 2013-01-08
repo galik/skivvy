@@ -94,7 +94,7 @@ private:
 //	void oarcon(const message& msg);
 //	void oarconmsg(const message& msg);
 
-	void oacvar(const message& msg);
+	void cvar(const message& msg);
 	void oafind(const message& msg);
 	void oalink(const message& msg);
 	void oaunlink(const message& msg);

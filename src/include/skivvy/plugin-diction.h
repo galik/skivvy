@@ -56,6 +56,7 @@ private:
 	void langs(const message& msg);
 	void trans(const message& msg);
 	void ddg_dict(const message& msg);
+	void google_dict(const message& msg);
 	void dict(const message& msg);
 
 public:

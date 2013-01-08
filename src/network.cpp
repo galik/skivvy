@@ -300,12 +300,14 @@ std::istream& read_tag(std::istream& is, std::ostream& os, const str& tag)
 	{
 		if(std::getline(is, s, '>') && s.find(tag) == 0)
 		{
-			if(std::getline(is, s, '<')) os << s;
+			if(std::getline(is, s, '<'))
+				os << s;
 
 			while(std::getline(is, s, '>') && s.find("/" + tag) == str::npos)
 			{
 				os << '<' << s << '>';
-				if(std::getline(is, s, '<')) os << s;
+				if(std::getline(is, s, '<'))
+					os << s;
 			}
 			done = true;
 		}
@@ -335,6 +337,45 @@ std::istream& read_tag_by_att(std::istream& is, std::ostream& os, const str& tag
 		}
 	}
 	return is;
+}
+
+std::istream& read_element(std::istream& is, str& tag)
+{
+	tag.clear();
+	str t;
+	if(is.peek() != '<') // read up to tag.
+	{
+		if(std::getline(is, t, '<')) // between tags
+		{
+			tag += t;
+			is.putback('<');
+		}
+		return is;
+	}
+
+	siz d = 0;
+	while(is)
+	{
+		if(std::getline(is, t, '<')) // between tags
+			tag += t;
+
+		if(std::getline(is, t, '>'))
+		{
+			if(!t.empty() && t[0] != '/' && t[t.size() - 1] != '/') // open tag
+				++d;
+			else if(!t.empty() && t[0] == '/') // close tag
+			{
+				if(--d == 0)
+				{
+					tag += "<" + t + ">";
+					return is;
+				}
+			}
+			tag += "<" + t + ">";
+		}
+	}
+	return is;
+
 }
 
 void html_to_text(std::istream& i, std::ostream& o)

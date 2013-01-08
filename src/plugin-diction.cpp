@@ -307,10 +307,83 @@ void DictionIrcBotPlugin::ddg_dict(const message& msg)
 	}
 }
 
+void DictionIrcBotPlugin::google_dict(const message& msg)
+{
+	BUG_COMMAND(msg);
+
+	const str word = net::urlencode(msg.get_user_params());
+
+	net::socketstream ss;
+	ss.open("www.merriam-webster.com", 80);
+	ss << "GET " << "/dictionary/" << word << " HTTP/1.1\r\n";
+	ss << "Host: www.merriam-webster.com" << "\r\n";
+	ss << "User-Agent: Skivvy: " << VERSION << "\r\n";
+	ss << "Accept: text/html" << "\r\n";
+	ss << "\r\n" << std::flush;
+
+	net::header_map headers;
+	if(!net::read_http_headers(ss, headers))
+	{
+		log("ERROR reading headers.");
+		return;
+	}
+
+	//cookies.clear();
+	if(!net::read_http_cookies(ss, headers, cookies))
+	{
+		log("ERROR reading cookies.");
+		return;
+	}
+
+	str html;
+	if(!net::read_http_response_data(ss, headers, html))
+	{
+		log("ERROR reading response data.");
+		return;
+	}
+
+//	std::ofstream ofs("dump.html");
+//	ofs.write(html.c_str(), html.size());
+//	ofs.close();
+
+	str a;
+	if(extract_delimited_text(html, R"(<a class="snippet")", R"(/a>)", a, 0) != str::npos)
+	{
+		str defn;
+		if(extract_delimited_text(a, R"(>)", R"(<)", defn, 0) == str::npos)
+		{
+			log("DICT: Error parsing definition.");
+			return;
+		}
+		bot.fc_reply(msg, "06dict: " + defn);
+	}
+
+	siz n = 0;
+	std::istringstream div_iss(html);
+	std::ostringstream div_oss;
+	while(n < 5 && net::read_tag_by_att(div_iss, div_oss, "div", "class", "links_zero_click_disambig highlight_2"))
+	{
+		std::istringstream div_iss(div_oss.str());
+		div_oss.clear();
+		div_oss.str("");
+		str option, defn;
+		if(net::read_tag(div_iss, div_oss, "a"))
+		{
+			option = div_oss.str();
+			div_oss.clear();
+			div_oss.str("");
+			if(std::getline(div_iss, defn))
+			{
+				bot.fc_reply(msg, "06dict: " + std::to_string(1 + n++) + ". (" + option + ") " + net::html_to_text(defn));
+			}
+		}
+	}
+}
+
 void DictionIrcBotPlugin::dict(const message& msg)
 {
 	BUG_COMMAND(msg);
-	ddg_dict(msg);
+	google_dict(msg);
 	return;
 	std::string word = msg.get_user_params();
 

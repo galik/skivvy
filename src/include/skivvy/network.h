@@ -101,6 +101,12 @@ std::istream& read_http_response_data(std::istream&is, const header_map& headers
 
 std::istream& read_tag(std::istream& is, std::ostream& os, const str& tag);
 std::istream& read_tag_by_att(std::istream& is, std::ostream& os, const str& tag, const str& att, const str& val);
+/**
+ * Assumes XML (XHTML)
+ * If called on the start of a tag '<' reads whole tag, including sub-tags.
+ * Otherwise reads up to the tag.
+ */
+std::istream& read_element(std::istream& is, str& tag);
 
 str fix_entities(str s);
 str urldecode(std::string s);

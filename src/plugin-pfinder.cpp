@@ -382,11 +382,11 @@ std::vector<str> PFinderIrcBotPlugin::oafind(const str handle)
 
 // Biox1de's spreadheet
 // https://docs.google.com/spreadsheet/ccc?key=0ApzKQFss715hdEFSQjYtemlXaE0yTlNxcGU5c3NsT3c#gid=0
-void PFinderIrcBotPlugin::oacvar(const message& msg)
+void PFinderIrcBotPlugin::cvar(const message& msg)
 {
 	BUG_COMMAND(msg);
 
-	str var = "*" + lowercase(msg.get_user_params()) + "*"; // partial match
+	str var = lowercase(msg.get_user_params());
 
 	std::ifstream ifs(bot.getf(CVAR_FILE, CVAR_FILE_DEFAULT));
 
@@ -394,30 +394,28 @@ void PFinderIrcBotPlugin::oacvar(const message& msg)
 
 	cvar_t cvar;
 	while(ifs >> cvar)
-		if(bot.wild_match(lowercase(cvar.name), var))
+		if(bot.wild_match(lowercase(cvar.name), "*" + var + "*"))
 			cvars.insert(cvar);
 
 	siz max_results = bot.get(CVAR_MAX_RESULTS, CVAR_MAX_RESULTS_DEFAULT);
 
 	if(cvars.empty())
-		bot.fc_reply(msg, var + " did not match any cvar");
-	else if(cvars.size() < max_results)
-		for(const cvar_t& cvar: cvars)
-			bot.fc_reply(msg, cvar.name + ": " + cvar.desc);
+		bot.fc_reply(msg, msg.get_user_params() + " did not match any cvar");
 	else
 	{
-		str response = " matches too many cvars, please be more specific.";
-		cvar_set_citer ci = stl::find_if(cvars, [&](const cvar_t& cvar)
+		siz i = 0;
+		for(const cvar_t& cvar: cvars)
 		{
-			return lowercase(cvar.name) == var;
-		});
-		if(ci != cvars.cend())
-		{
-			bot.fc_reply(msg, ci->name + ": " + ci->desc);
-			str n = std::to_string(cvars.size() - 1);
-			response = " also matches "  + n + " other cvars, you may want to be more specific.";
+			bot.fc_reply(msg, cvar.name + ": " + cvar.desc);
+			if(++i == max_results)
+				break;
 		}
-		bot.fc_reply(msg, var + response);
+
+		if(cvars.size() > i)
+		{
+			str n = std::to_string(cvars.size() - i - 1);
+			bot.fc_reply(msg, var + " also matches "  + n + " other cvars, you may want to be more specific.");
+		}
 	}
 }
 
@@ -491,7 +489,8 @@ void PFinderIrcBotPlugin::oaserver(const message& msg)
 		if(!match_uid)
 		{
 			bug("matching: " << match);
-			if(lowercase(match).find(lowercase(param)) != str::npos && ++n < 12)
+			if(bot.wild_match(lowercase(param), lowercase(match)) && ++n < 12)
+//			if(lowercase(match).find(lowercase(param)) != str::npos && ++n < 12)
 			{
 				std::ostringstream oss;
 				oss << uid << ' ' << print << ' ' << s.gametype;
@@ -509,7 +508,6 @@ void PFinderIrcBotPlugin::oaserver(const message& msg)
 			ss << "\r\n" << std::flush;
 
 			player p;
-			int n = 0;
 			while(std::getline(ss, line))
 				if(extract_player(line, p) != str::npos)
 					bot.fc_reply(msg, IRC_BOLD + html_handle_to_irc(p.handle) + IRC_NORMAL
@@ -886,13 +884,13 @@ bool PFinderIrcBotPlugin::initialize()
 	({
 		"!oacvar"
 		, "!oacvar DEPRECATED, please use !cvar."
-		, [&](const message& msg){ oacvar(msg); }
+		, [&](const message& msg){ cvar(msg); }
 	});
 	add
 	({
 		"!cvar"
 		, "!cvar <cvar> Match <cvar> as part of an OpenArena cvar, providing info."
-		, [&](const message& msg){ oacvar(msg); }
+		, [&](const message& msg){ cvar(msg); }
 	});
 	add
 	({
