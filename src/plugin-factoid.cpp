@@ -200,7 +200,7 @@ bool FactoidIrcBotPlugin::findfact(const message& msg)
 	ios::getstring(iss, key_match);
 	bug_var(key_match);
 
-	str_set keys = store.preg_find(lowercase(key_match));
+	str_set keys = store.get_keys_if_preg(lowercase(key_match));
 
 	if(!groups.empty()) // restrict search to these groups
 	{
@@ -248,11 +248,16 @@ bool FactoidIrcBotPlugin::findgroup(const message& msg)
 	//  !fg <regex>
 
 	str_set groups;
-	str_set keys = index.preg_find("");
+	str_set keys = index.get_keys();
 
 	for(const str& key: keys)
-		if(bot.preg_match(index.get(key), msg.get_user_params()))
-			groups.insert(index.get(key));
+	{
+		siss iss(index.get(key));
+		str group;
+		while(sgl(iss, group, ','))
+			if(bot.preg_match(group, msg.get_user_params()))
+				groups.insert(group);
+	}
 
 
 	if(groups.empty())
@@ -318,6 +323,7 @@ bool FactoidIrcBotPlugin::fact(const message& msg, const str& key, const str& pr
 
 	// !fact <key>
 	const str_vec facts = store.get_vec(lowercase(key));
+	siz c = 0;
 	for(const str& fact: facts)
 	{
 		if(!fact.empty() && fact[0] == '=')
@@ -329,6 +335,7 @@ bool FactoidIrcBotPlugin::fact(const message& msg, const str& key, const str& pr
 		}
 		else if(!fact.empty() && fact[0] == '#')
 		{
+			// TODO: Fix this to use the new groups method
 			// maps: # [map,man] // enumerate keys with topic marker(s) [map(,man)]
 			str topic;
 			str_set topics = get_topics_from_fact(fact);
@@ -372,7 +379,14 @@ bool FactoidIrcBotPlugin::fact(const message& msg, const str& key, const str& pr
 			}
 		}
 		else
-			bot.fc_reply(msg, prefix + IRC_BOLD + IRC_COLOR + IRC_Navy_Blue + fact);
+		{
+			// Max of 2 lines in channel
+			if(c < 2)
+				bot.fc_reply(msg, prefix + IRC_BOLD + IRC_COLOR + IRC_Navy_Blue + fact);
+			else
+				bot.fc_reply_pm(msg, prefix + IRC_BOLD + IRC_COLOR + IRC_Navy_Blue + fact);
+		}
+		++c;
 	}
 
 	return true;
@@ -462,7 +476,7 @@ bool FactoidIrcBotPlugin::initialize()
 		"!reloadfacts"
 		, "!reloadfacts - Reload fact database."
 		, [&](const message& msg){ reloadfacts(msg); }
-		, action::INVISIBLE
+//		, action::INVISIBLE
 	});
 //	bot.add_monitor(*this);
 	return true;

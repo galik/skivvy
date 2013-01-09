@@ -113,7 +113,12 @@ public:
 		set_at(k, 0, v);
 	}
 
-	virtual str_set preg_find(const str& reg) = 0;
+	virtual str_set get_keys_if_preg(const str& reg) = 0;
+
+	/**
+	 * Return a set of all keys
+	 */
+	virtual str_set get_keys() = 0;
 
 	virtual bool has(const str& k) = 0;
 
@@ -195,12 +200,22 @@ public:
 		load();
 	}
 
-	str_set preg_find(const str& reg)
+	str_set get_keys_if_preg(const str& reg)
 	{
 		str_set res;
+		lock_guard lock(mtx);
 		for(const str_vec_pair& p: store)
 			if(preg_match(p.first, reg))
 				res.insert(p.first);
+		return res;
+	}
+
+	str_set get_keys()
+	{
+		str_set res;
+		lock_guard lock(mtx);
+		for(const str_vec_pair& p: store)
+			res.insert(p.first);
 		return res;
 	}
 
@@ -335,14 +350,30 @@ private:
 public:
 	CacheStore(const str& file, siz max = 0):file(file), max(max) {}
 
-	str_set preg_find(const str& reg)
+	str_set get_keys_if_preg(const str& reg)
 	{
 		str_set res;
+		lock_guard lock(mtx);
 
 		ifs.open(file);
 		str line;
 		while(sgl(ifs, line))
 			if(sgl(siss(line), line, ':') && preg_match(line, reg))
+				res.insert(line);
+		ifs.close();
+
+		return res;
+	}
+
+	str_set get_keys()
+	{
+		str_set res;
+		lock_guard lock(mtx);
+
+		ifs.open(file);
+		str line;
+		while(sgl(ifs, line))
+			if(sgl(siss(line), line, ':'))
 				res.insert(line);
 		ifs.close();
 

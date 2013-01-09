@@ -579,7 +579,9 @@ void ArtibotIrcBotPlugin::exit()
 	if(bot.get(AI) == AI_MEGAHAL)
 		mh::megahal_cleanup();
 	bug("Wait on thread death.");
-	if(reader_func.valid()) reader_func.get();
+	if(reader_func.valid())
+		if(reader_func.wait_for(std::chrono::seconds(10)) == std::future_status::ready)
+			reader_func.get();
 }
 
 // INTERFACE: IrcBotMonitor

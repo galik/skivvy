@@ -656,6 +656,7 @@ public:
 class IrcBotPlugin
 {
 public:
+	void* dl = 0;
 	typedef std::vector<str> command_list;
 	virtual ~IrcBotPlugin() {}
 
@@ -1019,6 +1020,7 @@ private:
 
 	void dispatch_msgevent(const message& msg);
 
+	std::mutex plugin_mtx; // use for plugins & monitors
 	plugin_vec plugins;
 	monitor_set monitors;
 	listener_set listeners;

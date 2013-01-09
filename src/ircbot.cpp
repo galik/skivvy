@@ -420,41 +420,75 @@ str BasicIrcBotPlugin::help(const str& cmd) const
 
 bool IrcBotPluginLoader::operator()(const str& file, IrcBot& bot)
 {
-	union { void* dl; void* dlsym; IrcBotPluginPtr(*plugin)(IrcBot&); } ptr;
+//	union { void* dl; void* dlsym; IrcBotPluginPtr(*plugin)(IrcBot&); } ptr;
+	void* dl = 0;
+//	void* skivvy_ircbot_factory = 0;
+	IrcBotPluginPtr(*skivvy_ircbot_factory)(IrcBot&) = 0;
 
 	log("PLUGIN LOAD: " << file);
-//	if(!(ptr.dl = dlopen(file.c_str(), RTLD_NOW|RTLD_GLOBAL)))
-	if(!(ptr.dl = dlopen(file.c_str(), RTLD_LAZY|RTLD_GLOBAL)))
+	if(!(dl = dlopen(file.c_str(), RTLD_NOW|RTLD_GLOBAL)))
+//	if(!(ptr.dl = dlopen(file.c_str(), RTLD_LAZY|RTLD_GLOBAL)))
 	{
 		log(dlerror());
-		return 0;
+		return false;
 	}
 
-	if(!(ptr.dlsym = dlsym(ptr.dl, "skivvy_ircbot_factory")))
+	if(!(skivvy_ircbot_factory = reinterpret_cast<IrcBotPluginPtr(*)(IrcBot&)>(dlsym(dl, "skivvy_ircbot_factory"))))
 	{
 		log(dlerror());
-		return 0;
+		return false;
 	}
 
 	IrcBotPluginPtr plugin;
-	if(!(plugin = ptr.plugin(bot)))
+	if(!(plugin = skivvy_ircbot_factory(bot)))
 		return false;
+	plugin->dl = dl;
 
 	bot.del_plugin(plugin->get_name());
 	bot.add_plugin(plugin);
 	return true;
 }
 
+void IrcBot::add_plugin(IrcBotPluginPtr plugin)
+{
+	bug_func();
+	if(plugin)
+	{
+		this->plugins.push_back(plugin);
+		// give every plugin 'free pass' access to channels
+		chan_access["*"].insert(plugin->get_name());
+	}
+	else
+		log("ERROR: Adding non-plugin.");
+}
+
+bool IrcBot::has_plugin(const str& name, const str&  version)
+{
+	for(const IrcBotPluginPtr& p: plugins)
+		if(p->get_name() == name && p->get_version() >= version)
+			return true;
+	return false;
+}
+
 void IrcBot::del_plugin(const str& name)
 {
+	bug_func();
 //	IrcBotPlugin* pp;
 	for(plugin_vec_iter p =  plugins.begin(); p != plugins.end();)
 	{
 		if((*p)->get_name() == name)
 		{
 //			(*pp)->
+			lock_guard lock(plugin_mtx);
+			if(monitors.erase(dynamic_cast<IrcBotMonitor*>(p->get())))
+				log("Unregistering monitor: " << (*p)->get_name());
+
+			bug("exiting plugin: " << (*p)->get_name());
 			(*p)->exit();
-			//dlclose(p->get()); // TODO add this again
+			bug("dlclose plugin: " << (*p)->get_name());
+//			dlclose(p->get()); // TODO add this again
+			dlclose((*p)->dl); // TODO add this again
+			log("Unregistering plugin : " << (*p)->get_name());
 			p = plugins.erase(p);
 		}
 		else
@@ -549,27 +583,6 @@ std::istream& operator>>(std::istream& is, IrcBot& bot)
 ////    7: nick!*@host.domain
 ////    8: nick!*user@*.domain
 ////    9: nick!*@*.domain
-
-void IrcBot::add_plugin(IrcBotPluginPtr plugin)
-{
-	bug_func();
-	if(plugin)
-	{
-		this->plugins.push_back(plugin);
-		// give every plugin 'free pass' access to channels
-		chan_access["*"].insert(plugin->get_name());
-	}
-	else
-		log("ERROR: Adding non-plugin.");
-}
-
-bool IrcBot::has_plugin(const str& name, const str&  version)
-{
-	for(const IrcBotPluginPtr& p: plugins)
-		if(p->get_name() == name && p->get_version() >= version)
-			return true;
-	return false;
-}
 
 void IrcBot::add_monitor(IrcBotMonitor& m) { monitors.insert(&m); }
 
