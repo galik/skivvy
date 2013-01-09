@@ -50,13 +50,14 @@ public:
 private:
 
 	Store store;
-	std::mutex store_mtx;
+	Store index;
 
 	bool is_user_valid(const message& msg, const str& svar);
 
 	bool reloadfacts(const message& msg);
+	bool addgroup(const message& msg);
 	bool addfact(const message& msg);
-	bool addtopic(const message& msg);
+//	bool addtopic(const message& msg);
 
 	bool findfact(const message& msg); // !fs
 

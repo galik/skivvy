@@ -1492,7 +1492,7 @@ void IrcBot::pinger()
 		{
 			log("Connection attempt: " << attempt);
 			for(time_t now = time(0); !done && time(0) - now < 10;)
-				std::this_thread::sleep_for(std::chrono::seconds(1));
+				std::this_thread::sleep_for(std::chrono::seconds(3));
 		}
 
 		if(!(attempt < retries))

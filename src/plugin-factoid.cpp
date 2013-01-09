@@ -38,6 +38,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 #include <skivvy/logrep.h>
 #include <skivvy/str.h>
+#include <skivvy/ios.h>
 #include <skivvy/irc.h>
 
 namespace skivvy { namespace ircbot {
@@ -53,11 +54,14 @@ using namespace skivvy::string;
 
 const str STORE_FILE = "factoid.store.file";
 const str STORE_FILE_DEFAULT = "factoid-store.txt";
+const str INDEX_FILE = "factoid.index.file";
+const str INDEX_FILE_DEFAULT = "factoid-index.txt";
 const str FACT_USER = "factoid.fact.user";
 
 FactoidIrcBotPlugin::FactoidIrcBotPlugin(IrcBot& bot)
 : BasicIrcBotPlugin(bot)
 , store(bot.getf(STORE_FILE, STORE_FILE_DEFAULT))
+, index(bot.getf(INDEX_FILE, INDEX_FILE_DEFAULT))
 {
 }
 
@@ -96,19 +100,73 @@ bool FactoidIrcBotPlugin::reloadfacts(const message& msg)
 	return true;
 }
 
+bool FactoidIrcBotPlugin::addgroup(const message& msg)
+{
+	BUG_COMMAND(msg);
+
+	// !addgroup <key> <group>,<group>
+	str_set groups;
+	str key, list, group;
+	siss iss(msg.get_user_params());
+
+	ios::getstring(iss, key) >> std::ws;
+
+	while(sgl(iss, group, ','))
+		groups.insert(trim(group));
+
+	iss.clear();
+	iss.str(index.get(lowercase(key)));
+	while(sgl(iss, group, ','))
+		groups.insert(group);
+
+	str sep;
+	list.clear();
+	for(const str& group: groups)
+		{ list += sep + group; sep = ","; }
+
+	index.set(lowercase(key), list);
+	bot.fc_reply(msg, get_prefix(msg, IRC_Green) + " Fact added to group.");
+
+	return true;
+}
+
 bool FactoidIrcBotPlugin::addfact(const message& msg)
 {
 	BUG_COMMAND(msg);
 
+	// !addfact *([topic1,topic2]) <key> <fact>"
+
 	if(!is_user_valid(msg, FACT_USER))
 		return bot.cmd_error(msg, msg.get_nick() + " is not authorised to add facts.");
 
-	// !addfact <key> "<fact>"
-	str key, fact;
-	if(!bot.extract_params(msg, {&key, &fact}))
-		return false;
+	str_vec param(3);
+	siss iss(msg.get_user_params());
+	ios::getstring(iss, param[0]);
+	ios::getstring(iss, param[1]);
+	ios::getstring(iss, param[2]);
 
-	store.add(lowercase(key), "[] " + fact);
+	if(!param[0].empty() && param[0][0] == '[') // group
+	{
+		// add group
+		str_set groups;
+		str list, group;
+		sgl(sgl(siss(param[0]), list, '['), list, ']');
+
+		while(sgl(siss(list), group, ','))
+			groups.insert(trim(group));
+		while(sgl(siss(index.get(lowercase(param[1]))), group, ','))
+			groups.insert(group);
+
+		str sep;
+		list.clear();
+		for(const str& group: groups)
+			{ list += sep + group; sep = ","; }
+
+		index.set(lowercase(param[1]), list);
+		param.erase(param.begin()); // eat the optional parameter
+	}
+
+	store.add(lowercase(param[0]), param[1]);
 	bot.fc_reply(msg, get_prefix(msg, IRC_Green) + " Fact added to database.");
 
 	return true;
@@ -118,7 +176,7 @@ bool FactoidIrcBotPlugin::findfact(const message& msg)
 {
 	BUG_COMMAND(msg);
 
-	// !findfact <regex>"
+	// !findfact *([group1,group2]) <regex>"
 	str_vec keys = store.find(lowercase(msg.get_user_params()));
 
 	if(keys.size() > 20)
@@ -175,64 +233,64 @@ str_set get_topics_from_fact(const str& fact)
 	return topics;
 }
 
-bool FactoidIrcBotPlugin::addtopic(const message& msg)
-{
-	BUG_COMMAND(msg);
-
-	// !addtopic <key> <topic>
-	const str prefix = get_prefix(msg, IRC_Lime_Green);
-
-	str key, topic;
-	if(!bot.extract_params(msg, {&key, &topic}))
-		return bot.cmd_error(msg, get_prefix(msg, IRC_Lime_Green) + "Expected !addtopic <key> <topic>");
-
-	bug_var(key);
-	bug_var(topic);
-
-	if(!store.has(key))
-		return bot.cmd_error(msg, get_prefix(msg, IRC_Lime_Green) + "Key: " + key + " not found.", true);
-
-	str fact = store.get(key);
-	bug_var(fact);
-
-	str_set topics = get_topics_from_fact(fact);
-	topics.insert(topic);
-
-	bug_var(topics.size());
-
-	str_vec lines = chain_list(topics, ",");
-
-	bug_var(lines.size());
-
-	if(!lines.empty())
-		topic = "[" + lines[0] + "]";
-
-	bug_var(topic);
-
-	str pre, post;
-
-	std::istringstream iss(fact);
-	std::getline(iss, pre, '[');
-	std::getline(iss, post, ']');
-	std::getline(iss, post);
-
-	bug_var(pre);
-	bug_var(post);
-
-	// key: testtopic
-	// topic: map
-	// fact: #[clan,man]
-	// topics.size(): 3
-	// lines.size(): 1
-	// topic: [clan,man,map]
-	// fact: #[clan,man
-
-	store.set(key, pre + topic + post);
-
-	bot.fc_reply(msg, prefix + "Topic: " + topic + " added to " + key);
-
-	return true;
-}
+//bool FactoidIrcBotPlugin::addtopic(const message& msg)
+//{
+//	BUG_COMMAND(msg);
+//
+//	// !addtopic <key> <topic>
+//	const str prefix = get_prefix(msg, IRC_Lime_Green);
+//
+//	str key, topic;
+//	if(!bot.extract_params(msg, {&key, &topic}))
+//		return bot.cmd_error(msg, get_prefix(msg, IRC_Lime_Green) + "Expected !addtopic <key> <topic>");
+//
+//	bug_var(key);
+//	bug_var(topic);
+//
+//	if(!store.has(key))
+//		return bot.cmd_error(msg, get_prefix(msg, IRC_Lime_Green) + "Key: " + key + " not found.", true);
+//
+//	str fact = store.get(key);
+//	bug_var(fact);
+//
+//	str_set topics = get_topics_from_fact(fact);
+//	topics.insert(topic);
+//
+//	bug_var(topics.size());
+//
+//	str_vec lines = chain_list(topics, ",");
+//
+//	bug_var(lines.size());
+//
+//	if(!lines.empty())
+//		topic = "[" + lines[0] + "]";
+//
+//	bug_var(topic);
+//
+//	str pre, post;
+//
+//	std::istringstream iss(fact);
+//	std::getline(iss, pre, '[');
+//	std::getline(iss, post, ']');
+//	std::getline(iss, post);
+//
+//	bug_var(pre);
+//	bug_var(post);
+//
+//	// key: testtopic
+//	// topic: map
+//	// fact: #[clan,man]
+//	// topics.size(): 3
+//	// lines.size(): 1
+//	// topic: [clan,man,map]
+//	// fact: #[clan,man
+//
+//	store.set(key, pre + topic + post);
+//
+//	bot.fc_reply(msg, prefix + "Topic: " + topic + " added to " + key);
+//
+//	return true;
+//}
 
 /*
 -----------------------------------------------------
@@ -365,9 +423,9 @@ bool FactoidIrcBotPlugin::initialize()
 	});
 	add
 	({
-		"!addtopic"
-		, "!addtopic <key> <topic> - Add topic to fact."
-		, [&](const message& msg){ addtopic(msg); }
+		"!addgroup"
+		, "!addgroup <key> <group>,<group> - Add key to groups."
+		, [&](const message& msg){ addgroup(msg); }
 	});
 	add
 	({
