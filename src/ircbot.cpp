@@ -1155,14 +1155,20 @@ bool IrcBot::init(const str& config_file)
 		p->exit();
 	}
 
-//	fc.stop();
-//	log("Closing down pinger:");
+	fc.stop();
+	log("Closing down pinger:");
 	done = true;
+	if(png.valid())
+		if(png.wait_for(std::chrono::seconds(10)) == std::future_status::ready)
+			png.get();
 //	if(png.valid())
 //		png.get();
 
 	// Don't close console because thread is blocking.
-//	log("Closing down console:");
+	log("Closing down console:");
+	if(con.valid())
+		if(con.wait_for(std::chrono::seconds(10)) == std::future_status::ready)
+			con.get();
 //	if(con.valid())
 //		con.get();
 
@@ -1628,7 +1634,10 @@ bool RandomTimer::turn_off()
 		users.clear();
 	}
 	if(fut.valid())
-		fut.get();
+		if(fut.wait_for(std::chrono::seconds(10)) == std::future_status::ready)
+			fut.get();
+//	if(fut.valid())
+//		fut.get();
 
 	return true;
 }

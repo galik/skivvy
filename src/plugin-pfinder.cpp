@@ -918,7 +918,11 @@ void PFinderIrcBotPlugin::exit()
 {
 //	bug_func();
 	done = true;
-	if(fut.valid())	fut.get();
+	if(fut.valid())
+		if(fut.wait_for(std::chrono::seconds(10)) == std::future_status::ready)
+			fut.get();
+//	if(fut.valid())
+//		fut.get();
 }
 
 //bool lookup_players(const str& search, std::vector<str>& handles);

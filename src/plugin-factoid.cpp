@@ -234,7 +234,7 @@ bool FactoidIrcBotPlugin::findfact(const message& msg)
 		str line, sep;
 		siz c = 20;
 		for(const str& key: keys) // TODO: filter out aliases here ?
-			{ line += sep + key; sep = ", "; if(!--c) break; }
+			{ line += sep + "'" + key + "'"; sep = ", "; if(!--c) break; }
 		bot.fc_reply(msg, get_prefix(msg, IRC_Dark_Gray) + line);
 	}
 
