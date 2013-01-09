@@ -49,8 +49,8 @@ public:
 
 private:
 
-	Store store;
-	Store index;
+	BackupStore store;
+	BackupStore index;
 
 	bool is_user_valid(const message& msg, const str& svar);
 
@@ -60,6 +60,7 @@ private:
 //	bool addtopic(const message& msg);
 
 	bool findfact(const message& msg); // !fs
+	bool findgroup(const message& msg); // !fs
 
 	bool fact(const message& msg, const str& key, const str& prefix = "");
 	bool fact(const message& msg);

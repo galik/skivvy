@@ -105,7 +105,7 @@ public:
 
 private:
 
-	Store store;
+	BackupStore store;
 
 	std::mutex users_mtx;
 	user_set users;

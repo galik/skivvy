@@ -94,7 +94,7 @@ bool FactoidIrcBotPlugin::reloadfacts(const message& msg)
 	if(!is_user_valid(msg, FACT_USER))
 		return bot.cmd_error(msg, msg.get_nick() + " is not authorised to reload facts.");
 
-	store.load();
+	store.reload();
 	bot.fc_reply(msg, get_prefix(msg, IRC_Red) + " Fact database reloaded.");
 
 	return true;
@@ -177,18 +177,97 @@ bool FactoidIrcBotPlugin::findfact(const message& msg)
 	BUG_COMMAND(msg);
 
 	// !findfact *([group1,group2]) <regex>"
-	str_vec keys = store.find(lowercase(msg.get_user_params()));
 
-	if(keys.size() > 20)
+
+	siss iss(msg.get_user_params());
+
+	str_set groups;
+	if(iss.peek() == '[') // groups
 	{
-		bot.fc_reply(msg, get_prefix(msg, IRC_Dark_Gray) + "Too many results, printing the first 20.");
-		keys.resize(10);
+		str list; // groups
+		sgl(sgl(iss, list, '['), list, ']');
+//		sgl(sgl(iss, list, '['), list, ']');
+		siss iss(list);
+		str group;
+		while(sgl(iss, group, ','))
+		{
+			bug_var(group);
+			groups.insert(trim(group));
+		}
 	}
 
-	str line, sep;
-	for(const str& key: keys) // TODO: filter out aliases here ?
-		{ line += sep + key; sep = ", "; }
-	bot.fc_reply(msg, get_prefix(msg, IRC_Dark_Gray) + line);
+	str key_match;
+	ios::getstring(iss, key_match);
+	bug_var(key_match);
+
+	str_set keys = store.preg_find(lowercase(key_match));
+
+	if(!groups.empty()) // restrict search to these groups
+	{
+		for(auto ki = keys.cbegin(); ki != keys.cend();)
+//		for(const str& key: keys)
+		{
+			siss iss(index.get(*ki));
+			str group;
+			siz c = 0;
+			while(sgl(iss, group, ','))
+			{
+				bug_var(group);
+				if(groups.find(group) != groups.end())
+					++c;
+			}
+			bug_var(c);
+			if(c)
+				++ki;
+			else
+				ki = keys.erase(ki);
+		}
+	}
+
+	if(keys.empty())
+		bot.fc_reply(msg, get_prefix(msg, IRC_Dark_Gray) + "No results.");
+	else
+	{
+		if(keys.size() > 20)
+			bot.fc_reply(msg, get_prefix(msg, IRC_Dark_Gray) + "Too many results, printing the first 20.");
+
+		str line, sep;
+		siz c = 20;
+		for(const str& key: keys) // TODO: filter out aliases here ?
+			{ line += sep + key; sep = ", "; if(!--c) break; }
+		bot.fc_reply(msg, get_prefix(msg, IRC_Dark_Gray) + line);
+	}
+
+	return true;
+}
+
+bool FactoidIrcBotPlugin::findgroup(const message& msg)
+{
+	BUG_COMMAND(msg);
+
+	//  !fg <regex>
+
+	str_set groups;
+	str_set keys = index.preg_find("");
+
+	for(const str& key: keys)
+		if(bot.preg_match(index.get(key), msg.get_user_params()))
+			groups.insert(index.get(key));
+
+
+	if(groups.empty())
+		bot.fc_reply(msg, get_prefix(msg, IRC_Dark_Gray) + "No results.");
+	else
+	{
+		if(groups.size() > 20)
+			bot.fc_reply(msg, get_prefix(msg, IRC_Dark_Gray) + "Too many results, printing the first 20.");
+
+		str line, sep;
+		siz c = 20;
+		for(const str& group: groups)
+			{ line += sep + group; sep = ", "; if(!--c) break; }
+		bot.fc_reply(msg, get_prefix(msg, IRC_Dark_Gray) + line);
+	}
 
 	return true;
 }
@@ -232,91 +311,6 @@ str_set get_topics_from_fact(const str& fact)
 
 	return topics;
 }
-
-//bool FactoidIrcBotPlugin::addtopic(const message& msg)
-//{
-//	BUG_COMMAND(msg);
-//
-//	// !addtopic <key> <topic>
-//	const str prefix = get_prefix(msg, IRC_Lime_Green);
-//
-//	str key, topic;
-//	if(!bot.extract_params(msg, {&key, &topic}))
-//		return bot.cmd_error(msg, get_prefix(msg, IRC_Lime_Green) + "Expected !addtopic <key> <topic>");
-//
-//	bug_var(key);
-//	bug_var(topic);
-//
-//	if(!store.has(key))
-//		return bot.cmd_error(msg, get_prefix(msg, IRC_Lime_Green) + "Key: " + key + " not found.", true);
-//
-//	str fact = store.get(key);
-//	bug_var(fact);
-//
-//	str_set topics = get_topics_from_fact(fact);
-//	topics.insert(topic);
-//
-//	bug_var(topics.size());
-//
-//	str_vec lines = chain_list(topics, ",");
-//
-//	bug_var(lines.size());
-//
-//	if(!lines.empty())
-//		topic = "[" + lines[0] + "]";
-//
-//	bug_var(topic);
-//
-//	str pre, post;
-//
-//	std::istringstream iss(fact);
-//	std::getline(iss, pre, '[');
-//	std::getline(iss, post, ']');
-//	std::getline(iss, post);
-//
-//	bug_var(pre);
-//	bug_var(post);
-//
-//	// key: testtopic
-//	// topic: map
-//	// fact: #[clan,man]
-//	// topics.size(): 3
-//	// lines.size(): 1
-//	// topic: [clan,man,map]
-//	// fact: #[clan,man
-//
-//	store.set(key, pre + topic + post);
-//
-//	bot.fc_reply(msg, prefix + "Topic: " + topic + " added to " + key);
-//
-//	return true;
-//}
-
-/*
------------------------------------------------------
-                 from: SooKee!~SooKee@SooKee.users.quakenet.org
-                  cmd: PRIVMSG
-               params: #skivvy
-                   to: #skivvy
-                 text: !addtopic testtopic map
-msg.from_channel()   : true
-msg.get_nick()       : SooKee
-msg.get_user()       : ~SooKee
-msg.get_host()       : SooKee.users.quakenet.org
-msg.get_userhost()   : ~SooKee@SooKee.users.quakenet.org
-msg.get_user_cmd()   : !addtopic
-msg.get_user_params(): testtopic map
-msg.reply_to()       : #skivvy
------------------------------------------------------
-key: testtopic
-topic: map
-fact: #[clan,man]
-topics.size(): 3
-lines.size(): 1
-topic: [clan,man,map]
-fact: #[clan,man
-
-*/
 
 bool FactoidIrcBotPlugin::fact(const message& msg, const str& key, const str& prefix)
 {
@@ -430,8 +424,26 @@ bool FactoidIrcBotPlugin::initialize()
 	add
 	({
 		"!findfact"
-		, "!findfact <regex> - Get a list of matching fact keys."
+		, "!findfact *([<group1>,<group2>]) <regex> - Get a list of matching fact keys."
 		, [&](const message& msg){ findfact(msg); }
+	});
+	add
+	({
+		"!ff"
+		, "!ff - alias for !findfact."
+		, [&](const message& msg){ findfact(msg); }
+	});
+	add
+	({
+		"!findgroup"
+		, "!findgroup *([<group1>,<group2>]) <regex> - Get a list of matching fact keys."
+		, [&](const message& msg){ findgroup(msg); }
+	});
+	add
+	({
+		"!fg"
+		, "!fg - alias for !findgroup."
+		, [&](const message& msg){ findgroup(msg); }
 	});
 	add
 	({

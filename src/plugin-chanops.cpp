@@ -282,11 +282,6 @@ bool ChanopsIrcBotPlugin::ban(const message& msg)
 		irc->mode(msg.to, "+b *!*" + msg.get_userhost());
 		irc->kick({msg.to}, {msg.get_user()}, "Bye bye.");
 	}
-
-
-	char* a, *b;
-	fnmatch(a, b, 0);
-
 	return true;
 }
 

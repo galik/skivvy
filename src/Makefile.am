@@ -116,6 +116,7 @@ libskivvy_la_SOURCES = \
 	props.cpp \
 	rpc.cpp \
 	server.cpp \
+	store.cpp \
 	str.cpp \
 	types.cpp
 
