@@ -354,8 +354,68 @@ void ChanopsIrcBotPlugin::exit()
 
 void ChanopsIrcBotPlugin::event(const message& msg)
 {
-	if(msg.cmd == "JOIN")// && bot.get(GREET_JOINERS, GREET_JOINERS_DEFAULT))
+	if(msg.cmd == "JOIN")
 		join_event(msg);
+	else if(msg.cmd == "MODE")
+		join_event(msg);
+}
+
+bool ChanopsIrcBotPlugin::mode_event(const message& msg)
+{
+	BUG_COMMAND(msg);
+	// -----------------------------------------------------
+	//                  from: SooKee!~SooKee@SooKee.users.quakenet.org
+	//                   cmd: MODE
+	//                params: #skivvy-test +b *!*Skivvy0x@*.users.quakenet.org
+	//                    to: #skivvy-test
+	//                  text: End of /NAMES list.
+	// msg.from_channel()   : true
+	// msg.get_nick()       : SooKee
+	// msg.get_user()       : ~SooKee
+	// msg.get_host()       : SooKee.users.quakenet.org
+	// msg.get_userhost()   : ~SooKee@SooKee.users.quakenet.org
+	// msg.get_user_cmd()   : End
+	// msg.get_user_params(): of /NAMES list.
+	// msg.reply_to()       : #skivvy-test
+	// -----------------------------------------------------
+
+	// :SooKee!~SooKee@SooKee.users.quakenet.org MODE #skivvy-test +b *!*Skivvy@*.users.quakenet.org
+
+	str chan, flag, user;
+
+	if(!(siss(msg.params) >> chan >> flag >> user))
+	{
+		log("BAD message");
+		return false;
+	}
+
+	bug_var(chan);
+	bug_var(flag);
+	bug_var(user);
+
+	str_vec v = bot.get_vec("chanops.protect");
+	bug_var(v.size());
+	for(const str& s: v)
+	{
+		bug_var(s);
+		str chan_preg, who;
+		std::istringstream(s) >> chan_preg >> who;
+		bug_var(chan_preg);
+		bug_var(who);
+		if(bot.preg_match(msg.to, chan_preg, true) && bot.wild_match(who, user))
+		{
+			bug("match:");
+			if(flag == "+b")
+				flag = "-b";
+			else if(flag == "-o")
+				flag = "+b";
+			else if(flag == "-v")
+				flag = "+v";
+			irc->mode(chan, flag , who);
+		}
+	}
+
+
 }
 
 bool ChanopsIrcBotPlugin::join_event(const message& msg)

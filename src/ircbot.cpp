@@ -1319,6 +1319,7 @@ void IrcBot::exec(const std::string& cmd, std::ostream* os)
 		else if(cmd == "/restart")
 		{
 			irc.quit("Reeeebooooot!");
+			restart = true;
 			done = true;
 		}
 		else if(cmd == "/reconfigure")
@@ -1470,10 +1471,10 @@ bool IrcBot::ereg_match(const str& s, const str& r)
 
 bool IrcBot::preg_match(const str& s, const str& r, bool full)
 {
-	bug_func();
-	bug_var(s);
-	bug_var(r);
-	bug_var(full);
+//	bug_func();
+//	bug_var(s);
+//	bug_var(r);
+//	bug_var(full);
 
 	if(full)
 		return pcrecpp::RE(r).FullMatch(s);

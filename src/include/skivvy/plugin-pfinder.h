@@ -33,7 +33,11 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 #include <skivvy/ircbot.h>
 
+#include <skivvy/network.h>
+
 namespace skivvy { namespace ircbot {
+
+str html_handle_to_irc(str html);
 
 /**
  *
@@ -53,6 +57,7 @@ private:
 
 	struct server
 	{
+		siz uid;
 		str address;
 		str players;
 		str map;
@@ -60,6 +65,48 @@ private:
 		str name;
 
 		bool operator<(const server& s) const { return name < s.name; }
+	};
+
+	struct scache
+	{
+		// TODO: add "last seen" stamp
+		siz uid;
+		str name;
+		str match;
+		str print;
+		str address;
+		str gametype;
+
+		scache& operator=(const server& s)
+		{
+			name = s.name;
+			match = net::html_to_text(s.name);
+			print = html_handle_to_irc(s.name);
+			address = s.address;
+			gametype = s.gametype;
+			return *this;
+		}
+
+		friend std::ostream& operator<<(std::ostream& os, const scache& s)
+		{
+			os << s.uid << '\n';
+			os << s.name << '\n';
+			os << s.match << '\n';
+			os << s.print << '\n';
+			os << s.address << '\n';
+			os << s.gametype;
+			return os;
+		}
+		friend std::istream& operator>>(std::istream& is, scache& s)
+		{
+			is >> s.uid >> std::ws;
+			sgl(is, s.name);
+			sgl(is, s.match);
+			sgl(is, s.print);
+			sgl(is, s.address);
+			sgl(is, s.gametype);
+			return is;
+		}
 	};
 
 	// RPC Services
@@ -80,12 +127,11 @@ private:
 	 * and case insensitive substring matching otherwise
 	 **/
 	bool match_player(bool substitution, const str& name1, const str& name2);
-	str html_handle_to_irc(str html) const;
 
 	// utilities
 
 	bool server_uidfile_is_old() const;
-	void write_server_uidfile(std::vector<server>& servers) const;
+	void write_server_uidfile(std::map<str, scache>& servers, siz uid) const;
 	str::size_type extract_server(const str& line, server& s, str::size_type pos = 0) const;
 	str::size_type extract_player(const str& line, player& p, str::size_type pos = 0) const;
 

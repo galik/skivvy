@@ -37,7 +37,7 @@ using namespace skivvy::ircbot;
 #include <execinfo.h>
 #include <signal.h>
 #include <stdlib.h>
-
+#include <cxxabi.h>
 
 void handler(int sig)
 {
@@ -49,7 +49,19 @@ void handler(int sig)
 
 	// print out all the frames to stderr
 	fprintf(stderr, "Error: signal %d:\n", sig);
-	backtrace_symbols_fd(array, size, 2);
+	//backtrace_symbols_fd(array, size, 2);
+	char** trace = backtrace_symbols(array, size);
+
+	str obj, func;
+	for(siz i = 0; i < size; ++i)
+	{
+		// /home/gareth/dev/cpp/skivvy/build/src/.libs/libskivvy.so.0(_ZN6skivvy6ircbot11RandomTimer5timerEv+0x85)[0x4e2ead]
+		sgl(sgl(siss(trace[i]), obj, '('), func, ')');
+		std::cerr << trace[i] << '\n';
+		std::cerr << "function: " << func << '\n';
+	}
+	free(trace);
+
 	exit(1);
 }
 
@@ -58,10 +70,18 @@ int main(int argc, char* argv[])
 {
 	signal(SIGSEGV, handler);   // install our handler
 
-	IrcBot bot;
-	log(bot.get_name() + " v" + bot.get_version());
-	bot.init(argc > 1 ? argv[1] : "");
-	if(bot.restart)
-		return 6;
+	try
+	{
+		IrcBot bot;
+		log(bot.get_name() + " v" + bot.get_version());
+		bot.init(argc > 1 ? argv[1] : "");
+		if(bot.restart)
+			return 6;
+	}
+	catch(std::exception& e)
+	{
+		std::cerr << e.what() << '\n';
+		kill(0, SIGSEGV);
+	}
 	return 0;
 }

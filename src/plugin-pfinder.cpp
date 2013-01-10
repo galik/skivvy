@@ -152,7 +152,7 @@ static std::map<str, str> subs =
 	, {"<font color=\"\">", IRC_COLOR + IRC_Black + BACK}
 };
 
-str PFinderIrcBotPlugin::html_handle_to_irc(str html) const
+str html_handle_to_irc(str html)
 {
 	size_t pos = 0;
 	for(std::pair<const str, str>& p: subs)
@@ -265,26 +265,24 @@ bool PFinderIrcBotPlugin::server_uidfile_is_old() const
 	return false;
 }
 
-void PFinderIrcBotPlugin::write_server_uidfile(std::vector<server>& servers) const
+void PFinderIrcBotPlugin::write_server_uidfile(std::map<str, scache>& servers, siz uid) const
 {
 	lock_guard lock(uidfile_mtx);
 	std::ofstream ofs(bot.getf(SERVER_UID_FILE, SERVER_UID_FILE_DEFAULT));
 	if(!ofs)
-		return;
-	ofs << time(0) << '\n';
-	stl::sort(servers);
-	size_t i = 1;
-	for(const server& s: servers)
 	{
-		str match = net::html_to_text(s.name);
-		str print = html_handle_to_irc(s.name);
-		ofs << i << '\n';
-		ofs << match << '\n';
-		ofs << print << '\n';
-		ofs << s.address << '\n';
-		ofs << s.gametype << '\n';
-		++i;
+		log("Unable to open server uid file: " << bot.getf(SERVER_UID_FILE, SERVER_UID_FILE_DEFAULT));
+		return;
 	}
+
+	// header
+	ofs << time(0) << '\n';
+	ofs << uid << '\n';
+
+//	stl::sort(servers);
+//	size_t i = 1;
+	for(const std::pair<const str, scache>& p: servers)
+		ofs << p.second << '\n';
 }
 
 str::size_type PFinderIrcBotPlugin::extract_server(const str& line, server& s, str::size_type pos) const
@@ -337,7 +335,21 @@ std::vector<str> PFinderIrcBotPlugin::oafind(const str handle)
 	bool do_players = false;
 	std::ostringstream oss;
 
-	std::vector<server> servers; // rebuild server uid file
+	//std::vector<server> servers; // rebuild server uid file
+	const str uidfile = bot.getf(SERVER_UID_FILE, SERVER_UID_FILE_DEFAULT);
+	siz uid = 0;
+	std::map<str, scache> servers;
+	{
+		lock_guard lock(uidfile_mtx);
+		std::ifstream ifs(uidfile);
+
+		scache s;
+		std::time_t time;
+		// skip time
+		ifs >> time >> uid >> std::ws;
+		while(ifs >> s)
+			servers[s.name] = s;
+	}
 
 	while(std::getline(ss, line))
 	{
@@ -365,9 +377,16 @@ std::vector<str> PFinderIrcBotPlugin::oafind(const str handle)
 		else
 		{
 			// Record the last found server in s
-
-			if(extract_server(line, s) != str::npos)
-				servers.push_back(s);
+			server srv;
+			if(extract_server(line, srv) != str::npos)
+			{
+				s = srv;
+				if(servers.count(s.name))
+					s.uid = servers[s.name].uid;
+				else
+					s.uid = ++uid;
+				servers[s.name] = s;
+			}
 			else if(line.find(R"(<div id="ping">PING</div>)") != npos
 			&& line.find(R"(<div id="frags">FRAGS</div>)") != npos
 			&& line.find(R"(<div id="handle">NAME</div>)") != npos)
@@ -376,7 +395,7 @@ std::vector<str> PFinderIrcBotPlugin::oafind(const str handle)
 	}
 
 	// refresh server UID file
-	write_server_uidfile(servers);
+	write_server_uidfile(servers, uid);
 	return found;
 }
 
@@ -432,12 +451,28 @@ void PFinderIrcBotPlugin::oaserver(const message& msg)
 	const str EDIV = R"(</div>)";
 	str uidfile = bot.getf(SERVER_UID_FILE, SERVER_UID_FILE_DEFAULT);
 
-	server s;
+	scache s;
+	siz uid = 0;
 	str line;
+	std::time_t time;
 
 	if(server_uidfile_is_old())
 	{
 		bot.fc_reply(msg, "Building server list.");
+
+		std::map<str, scache> servers;
+		{
+			lock_guard lock(uidfile_mtx);
+			std::ifstream ifs(uidfile);
+
+			// skip time
+			ifs >> time >> uid >> std::ws;
+			while(ifs >> s)
+			{
+				bug("reloading: " << s.name);
+				servers[s.name] = s;
+			}
+		}
 
 		// basic HTTP GET
 		net::socketstream ss;
@@ -447,14 +482,22 @@ void PFinderIrcBotPlugin::oaserver(const message& msg)
 
 //		std::ofstream xx("dpmaster.html");
 
-		std::vector<server> servers;
+		//std::vector<server> servers;
 		while(std::getline(ss, line))
 		{
 //			xx << line << '\n';
-			if(extract_server(line, s) != str::npos)
-				servers.push_back(s);
+			server srv;
+			if(extract_server(line, srv) != str::npos)
+			{
+				s = srv;
+				if(servers.count(s.name))
+					s.uid = servers[s.name].uid;
+				else
+					s.uid = ++uid;
+				servers[s.name] = s;
+			}
 		}
-		write_server_uidfile(servers);
+		write_server_uidfile(servers, uid);
 	}
 
 	std::ifstream ifs(uidfile);
@@ -464,42 +507,36 @@ void PFinderIrcBotPlugin::oaserver(const message& msg)
 		return;
 	}
 
-	std::vector<str> found;
+	str_vec found;
 
 	siz match_uid = 0;
 	std::istringstream(param) >> match_uid;
 	bug("match_uid: " << match_uid);
 
-	std::getline(ifs, line); // skip time stamp
+	// header
+	ifs >> time >> std::ws;//std::getline(ifs, time); // skip time stamp
+	ifs >> uid >> std::ws;//std::getline(ifs, uid); // skip uid
 
-	while(ifs)
+	bug_var(time);
+	bug_var(uid);
+	bug_var(ifs);
+
+	while(ifs >> s)
 	{
-		siz uid;
-		str match;
-		str print;
-		ifs >> uid >> std::ws;
-//		std::getline(ifs, s.name);
-		std::getline(ifs, match);
-		std::getline(ifs, print);
-		std::getline(ifs, s.address);
-		std::getline(ifs, s.gametype);
-		if(!ifs) break;
-
 		siz n = 0;
 		if(!match_uid)
 		{
-			bug("matching: " << match);
-			if(bot.wild_match(lowercase(param), lowercase(match)) && ++n < 12)
-//			if(lowercase(match).find(lowercase(param)) != str::npos && ++n < 12)
+			bug("matching: " << s.match);
+			if(bot.wild_match(lowercase(s.match), "*" + lowercase(param) + "*") && ++n < 12)
 			{
 				std::ostringstream oss;
-				oss << uid << ' ' << print << ' ' << s.gametype;
+				oss << s.uid << ' ' << s.print << ' ' << s.gametype;
 				bot.fc_reply(msg, oss.str());
 			}
 		}
-		else if(uid == match_uid)
+		else if(s.uid == match_uid)
 		{
-			bot.fc_reply(msg, IRC_BOLD + print + IRC_NORMAL);
+			bot.fc_reply(msg, IRC_BOLD + s.print + IRC_NORMAL);
 
 			// basic HTTP GET
 			net::socketstream ss;
@@ -507,11 +544,19 @@ void PFinderIrcBotPlugin::oaserver(const message& msg)
 			ss << "GET " << "http://dpmaster.deathmask.net/?game=openarena&server=" << s.address;
 			ss << "\r\n" << std::flush;
 
+			bool ignore = true;
 			player p;
-			while(std::getline(ss, line))
+			siz ping = 0;
+			while(sgl(ss, line))
 				if(extract_player(line, p) != str::npos)
-					bot.fc_reply(msg, IRC_BOLD + html_handle_to_irc(p.handle) + IRC_NORMAL
-						+ " " + p.frags);
+				{
+					ping = 0;
+					siss(p.ping) >> ping;
+					if(!ignore && ping) // ignore heading & bots (zero ping)
+						bot.fc_reply(msg, IRC_BOLD + html_handle_to_irc(p.handle) + IRC_NORMAL
+							+ " " + p.frags + " frags");
+					ignore = false;
+				}
 			return;
 		}
 	}
@@ -849,6 +894,12 @@ bool PFinderIrcBotPlugin::initialize()
 {
 //	read_automsgs();
 	// TODO: oawhois (GUID database)
+	add
+	({
+		"!frags"
+		, "!frags - Message the frag roster to see who wants to play."
+		, [&](const message& msg){ oafind(msg); }
+	});
 	add
 	({
 		"!oafind"

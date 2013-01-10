@@ -132,6 +132,7 @@ private:
 	bool list_users(const message& msg);
 	bool ban(const message& msg);
 	bool join_event(const message& msg);
+	bool mode_event(const message& msg);
 
 //	RandomTimer rt;
 
