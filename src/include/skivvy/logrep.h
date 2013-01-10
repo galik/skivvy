@@ -82,9 +82,18 @@ str obj_name(void* id);
 
 struct __scope__bomb__
 {
+	static size_t indent;
 	const char* name;
-	__scope__bomb__(const char* name): name(name) { bug("---> " << name << ' ' << THREAD << OBJECT); }
-	~__scope__bomb__() { bug("<--- " << name << ' ' << THREAD << OBJECT); }
+	__scope__bomb__(const char* name): name(name)
+	{
+		++indent;
+		bug(std::string(indent, '-') + "> " << name << ' ' << THREAD << OBJECT);
+	}
+	~__scope__bomb__()
+	{
+		bug("<" << std::string(indent, '-') << name << ' ' << THREAD << OBJECT);
+		--indent;
+	}
 };
 
 #define QUOTE(s) #s

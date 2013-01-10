@@ -41,6 +41,8 @@ namespace skivvy { namespace utils {
 using namespace skivvy::types;
 using namespace skivvy::string;
 
+size_t __scope__bomb__::indent = 0;
+
 void wait_on(std::function<bool()> test, time_t timeout, time_t rate)
 {
 	time_t now = std::time(0);

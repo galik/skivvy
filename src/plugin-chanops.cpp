@@ -357,7 +357,7 @@ void ChanopsIrcBotPlugin::event(const message& msg)
 	if(msg.cmd == "JOIN")
 		join_event(msg);
 	else if(msg.cmd == "MODE")
-		join_event(msg);
+		mode_event(msg);
 }
 
 bool ChanopsIrcBotPlugin::mode_event(const message& msg)
@@ -420,9 +420,9 @@ bool ChanopsIrcBotPlugin::mode_event(const message& msg)
 
 bool ChanopsIrcBotPlugin::join_event(const message& msg)
 {
-	BUG_COMMAND(msg);
+//	BUG_COMMAND(msg);
 
-	bug_var(bot.get(GREET_JOINERS, GREET_JOINERS_DEFAULT));
+//	bug_var(bot.get(GREET_JOINERS, GREET_JOINERS_DEFAULT));
 
 	// bans
 	str_vec nicks = store.get_vec("ban.nick." + msg.to);
@@ -484,14 +484,14 @@ bool ChanopsIrcBotPlugin::join_event(const message& msg)
 
 	str who, chan;
 	str_vec v = bot.get_vec("chanops.op");
-	bug_var(v.size());
+//	bug_var(v.size());
 	for(const str& s: v)
 	{
-		bug_var(s);
-		bug_var(msg.from);
+//		bug_var(s);
+//		bug_var(msg.from);
 		std::istringstream(s) >> chan >> who;
-		bug_var(chan);
-		bug_var(who);
+//		bug_var(chan);
+//		bug_var(who);
 		if(bot.preg_match(msg.params, chan, true) && bot.preg_match(msg.from, who))
 //		if((chan == "#*" || msg.params == chan) && bot.preg_match(msg.from, who))
 		{
@@ -505,7 +505,6 @@ bool ChanopsIrcBotPlugin::join_event(const message& msg)
 	{
 		std::istringstream(s) >> chan >> who;
 		if(bot.preg_match(msg.params, chan, true) && bot.preg_match(msg.from, who))
-//		if((chan == "#*" || msg.params == chan) && bot.preg_match(msg.from, who))
 			irc->mode(msg.params, "+v", msg.get_nick());
 	}
 
@@ -524,7 +523,6 @@ bool ChanopsIrcBotPlugin::join_event(const message& msg)
 		str mode;
 		std::istringstream(s) >> chan >> who >> mode;
 		if(bot.preg_match(msg.params, chan, true) && bot.preg_match(msg.from, who))
-//		if((chan == "#*" || msg.params == chan) && bot.preg_match(msg.from, who))
 			irc->mode(msg.params, mode , msg.get_nick());
 	}
 

@@ -33,11 +33,21 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 using namespace skivvy::ircbot;
 
-#include <stdio.h>
+#include <cstdio>
 #include <execinfo.h>
 #include <signal.h>
-#include <stdlib.h>
+#include <cstdlib>
 #include <cxxabi.h>
+
+#include <memory>
+
+struct malloc_deleter
+{
+	template <class T>
+	void operator()(T* p) { std::free(p); }
+};
+
+typedef std::unique_ptr<char, malloc_deleter> cstring;
 
 void handler(int sig)
 {
@@ -52,13 +62,17 @@ void handler(int sig)
 	//backtrace_symbols_fd(array, size, 2);
 	char** trace = backtrace_symbols(array, size);
 
+	int status;
 	str obj, func;
 	for(siz i = 0; i < size; ++i)
 	{
 		// /home/gareth/dev/cpp/skivvy/build/src/.libs/libskivvy.so.0(_ZN6skivvy6ircbot11RandomTimer5timerEv+0x85)[0x4e2ead]
-		sgl(sgl(siss(trace[i]), obj, '('), func, ')');
-		std::cerr << trace[i] << '\n';
-		std::cerr << "function: " << func << '\n';
+		sgl(sgl(siss(trace[i]), obj, '('), func, '+');
+
+		cstring func_name(abi::__cxa_demangle(func.c_str(), 0, 0, &status));
+		std::cerr << "function: " << func_name.get() << '\n';
+		std::cerr << "info    : " << trace[i] << '\n';
+		std::cerr << '\n';
 	}
 	free(trace);
 
@@ -70,18 +84,18 @@ int main(int argc, char* argv[])
 {
 	signal(SIGSEGV, handler);   // install our handler
 
-	try
-	{
+//	try
+//	{
 		IrcBot bot;
 		log(bot.get_name() + " v" + bot.get_version());
 		bot.init(argc > 1 ? argv[1] : "");
 		if(bot.restart)
 			return 6;
-	}
-	catch(std::exception& e)
-	{
-		std::cerr << e.what() << '\n';
-		kill(0, SIGSEGV);
-	}
+//	}
+//	catch(std::exception& e)
+//	{
+//		std::cerr << e.what() << '\n';
+//		handler(0);
+//	}
 	return 0;
 }

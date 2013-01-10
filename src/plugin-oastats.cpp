@@ -68,7 +68,6 @@ OAStatsIrcBotPlugin::OAStatsIrcBotPlugin(IrcBot& bot)
 
 OAStatsIrcBotPlugin::~OAStatsIrcBotPlugin()
 {
-	timer.turn_off();
 }
 
 static str get_url(const str& type = "n", cal::year_t year = cal::get_year(), cal::month_t month = cal::get_month())

@@ -1679,8 +1679,11 @@ bool RandomTimer::off(const void* user)
 		if(users.empty())
 			end = true;
 	}
-	if(end)
-		fut.get();
+	if(fut.valid())
+		if(fut.wait_for(std::chrono::seconds(10)) == std::future_status::ready)
+			fut.get();
+//	if(end)
+//		fut.get();
 
 	return true;
 }

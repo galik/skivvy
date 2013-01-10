@@ -223,8 +223,6 @@ RandomQuoteIrcBotPluginRep::RandomQuoteIrcBotPluginRep(IrcBot& bot)
 
 RandomQuoteIrcBotPluginRep::~RandomQuoteIrcBotPluginRep()
 {
-	joke_timer.turn_off();
-	quote_timer.turn_off();
 }
 
 void RandomQuoteIrcBotPluginRep::instant_quote(const message& msg)
