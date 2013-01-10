@@ -44,6 +44,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 #include <skivvy/str.h>
 #include <skivvy/logrep.h>
+#include <skivvy/types.h>
 #include <skivvy/socketstream.h>
 
 namespace skivvy { namespace ircbot {
@@ -55,6 +56,11 @@ using namespace skivvy::types;
 using namespace skivvy::utils;
 using namespace skivvy::string;
 
+const str RSERVER_PORT = "rserver.port";
+const RServerIrcBotPlugin::port RSERVER_PORT_DEFAULT = 7334L;
+const str RSERVER_HOST = "rserver.host";
+const str RSERVER_HOST_DEFAULT = "0.0.0.0";
+
 RServerIrcBotPlugin::RServerIrcBotPlugin(IrcBot& bot)
 : BasicIrcBotPlugin(bot), ss(::socket(PF_INET, SOCK_STREAM, 0))
 {
@@ -63,8 +69,10 @@ RServerIrcBotPlugin::RServerIrcBotPlugin(IrcBot& bot)
 
 RServerIrcBotPlugin::~RServerIrcBotPlugin() {}
 
-bool RServerIrcBotPlugin::bind(port p, const std::string& iface)
+bool RServerIrcBotPlugin::bind()//port p, const std::string& iface)
 {
+	port p = bot.get(RSERVER_PORT, RSERVER_PORT_DEFAULT);
+	str iface = bog.get(RSERVER_HOST, RSERVER_HOST_DEFAULT);
 	sockaddr_in addr;
 	std::memset(&addr, 0, sizeof(addr));
 	addr.sin_family = AF_INET;
@@ -163,6 +171,9 @@ void RServerIrcBotPlugin::exit()
 	close(ss);
 	// TODO: find a way to get past block...
 	//if(con.valid()) con.get();
+	if(con.valid())
+		if(con.wait_for(std::chrono::seconds(10)) == std::future_status::ready)
+			con.get();
 }
 
 }} // sookee::ircbot

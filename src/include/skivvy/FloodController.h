@@ -68,6 +68,9 @@ private:
 	str_vec keys;
 	siz idx;
 
+	siz time_between_checks = 300; // miliseconds
+	siz time_between_events = 1600; // miliseconds
+
 	std::future<void> fut;
 	bool dispatching = false;
 
@@ -82,6 +85,17 @@ public:
 	void clear(const str& channel);
 	void start();
 	void stop();
+
+	void set_time_between_checks(siz milliseconds)
+	{
+		if(milliseconds < 500)
+			time_between_checks = milliseconds;
+	}
+	void set_time_between_events(siz milliseconds)
+	{
+		if(milliseconds >= 1600)
+			time_between_events = milliseconds;
+	}
 };
 
 //typedef FloodController FloodController2;

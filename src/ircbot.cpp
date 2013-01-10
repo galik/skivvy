@@ -742,9 +742,19 @@ void IrcBot::dispatch_msgevent(const message& msg)
 			mi->second.func(msg);
 }
 
+const str FLOOD_TIME_BETWEEN_POLLS = "flood.poll.time";
+const siz FLOOD_TIME_BETWEEN_POLLS_DEFAULT = 300;
+const str FLOOD_TIME_BETWEEN_EVENTS = "flood.event.time";
+const siz FLOOD_TIME_BETWEEN_EVENTS_DEFAULT = 1600;
+
 bool IrcBot::init(const str& config_file)
 {
 	std::srand(std::time(0));
+
+	if(have(FLOOD_TIME_BETWEEN_POLLS))
+		fc.set_time_between_checks(get(FLOOD_TIME_BETWEEN_POLLS, FLOOD_TIME_BETWEEN_POLLS_DEFAULT));
+	if(have(FLOOD_TIME_BETWEEN_EVENTS))
+		fc.set_time_between_checks(get(FLOOD_TIME_BETWEEN_EVENTS, FLOOD_TIME_BETWEEN_EVENTS_DEFAULT));
 
 	// =====================================
 	// CONFIGURE BOT

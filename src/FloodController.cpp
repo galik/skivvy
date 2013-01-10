@@ -74,7 +74,8 @@ void FloodController::dispatcher()
 	bug_func();
 	while(dispatching)
 	{
-		std::this_thread::sleep_for(std::chrono::milliseconds(200));
+//		std::this_thread::sleep_for(std::chrono::milliseconds(200));
+		std::this_thread::sleep_for(std::chrono::milliseconds(time_between_checks));
 		{
 			lock_guard lock(mtx);
 			if(++idx >= keys.size())
@@ -95,7 +96,8 @@ void FloodController::dispatcher()
 			m[keys[idx]].front()();
 			m[keys[idx]].pop();
 		}
-		std::this_thread::sleep_for(std::chrono::milliseconds(1200));
+//		std::this_thread::sleep_for(std::chrono::milliseconds(1200));
+		std::this_thread::sleep_for(std::chrono::milliseconds(time_between_events - time_between_checks));
 	}
 
 	log("Dispatcher ended.");

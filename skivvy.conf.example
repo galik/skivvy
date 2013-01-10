@@ -33,6 +33,10 @@ server_port: 6667
 server_pass: <password> (usually blank)
 server_retries: 30
 
+# Flood Control
+flood.poll.time:  300 // milliseconds
+flood.event.time: 1600 // milliseconds
+
 # Alternate names
 nick: Skivvy
 nick: Skavvy
@@ -165,6 +169,10 @@ pfinder.cvar_file: pfinder-cvars.txt
 pfinder.cvar_max_results: 8
 pfinder.tell_file: pfinder-tells.txt";
 
+# rserver
+
+rserver.port: 7334
+rserver.host: 0.0.0.0 // bind to all interfaces
 
 # trivial
 trivial.quiz.file: trivial-quiz.txt

@@ -53,8 +53,8 @@ private:
 	std::future<void> con;
 	bool done;
 
-	bool bind(port p, const std::string& iface = "0.0.0.0");
-	bool listen(port p);
+	bool bind();//port p, const std::string& iface = "0.0.0.0");
+	bool listen();//port p);
 	void process(socket cs);
 
 	void on(const message& msg);
