@@ -1317,6 +1317,11 @@ void IrcBot::exec(const std::string& cmd, std::ostream* os)
 			if(iss >> nick)
 				irc.nick(nick);
 		}
+		else if(cmd == "/botnick")
+		{
+			if(os)
+				(*os) << nick << std::flush;
+		}
 		else if(cmd == "/die")
 		{
 			for(const str& c: chans)
@@ -1370,7 +1375,8 @@ void IrcBot::exec(const std::string& cmd, std::ostream* os)
 		{
 			str to, s;
 			iss >> to >> std::ws;
-			if(std::getline(iss, s)) irc.say(to, s);
+			if(std::getline(iss, s))
+				irc.say(to, s);
 		}
 		else if(cmd == "/auth")
 		{
@@ -1383,7 +1389,8 @@ void IrcBot::exec(const std::string& cmd, std::ostream* os)
 		{
 			str nick, mode;
 			iss >> nick >> std::ws;
-			if(std::getline(iss, mode)) irc.mode(nick, mode);
+			if(std::getline(iss, mode))
+				irc.mode(nick, mode);
 		}
 		else if(cmd == "/whois")
 		{
@@ -1399,7 +1406,8 @@ void IrcBot::exec(const std::string& cmd, std::ostream* os)
 			{
 				std::getline(iss, line);
 				irc.me(channel, line);
-				if(os) (*os) << "OK";
+				if(os)
+					(*os) << "OK";
 			}
 			else if(os)
 				(*os) << "ERROR: /me #channel then some dialogue.\n";
@@ -1411,9 +1419,11 @@ void IrcBot::exec(const std::string& cmd, std::ostream* os)
 			if(!trim(channel).empty() && channel[0] == '#')
 			{
 				if(irc.join(channel, key)) chans.insert(channel);
-				if(os) (*os) << "OK";
+				if(os)
+					(*os) << "OK";
 			}
-			else if(os) (*os) << "ERROR: /join #channel.\n";
+			else if(os)
+				(*os) << "ERROR: /join #channel.\n";
 		}
 		else if(cmd == "/part")
 		{
@@ -1425,24 +1435,29 @@ void IrcBot::exec(const std::string& cmd, std::ostream* os)
 				if(chans.erase(channel)) irc.part(channel, trim(line));
 				if(os) (*os) << "OK";
 			}
-			else if(os) (*os) << "ERROR: /part #channel [message].\n";
+			else if(os)
+				(*os) << "ERROR: /part #channel [message].\n";
 		}
 		else if(cmd == "/ping")
 		{
 			str dest;
 			std::getline(iss, dest);
 			if(!irc.ping(dest)) { if(os) (*os) << "OK"; }
-			else if(os) (*os) << "ERROR: Ping failure.\n";
+			else if(os)
+				(*os) << "ERROR: Ping failure.\n";
 		}
 		else if(cmd == "/reconnect")
 		{
 			if(irc.connect(host, port)) { if(os) (*os) << "OK"; }
-			else if(os) (*os) << "ERROR: Unable to reconnect.\n";
+			else if(os)
+				(*os) << "ERROR: Unable to reconnect.\n";
 		}
-		else if(os) (*os) << "ERROR: Unknown command.\n";
+		else if(os)
+			(*os) << "ERROR: Unknown command.\n";
 	}
 	else
-		if(os) (*os) << "ERROR: Commands begin with /.\n";
+		if(os)
+			(*os) << "ERROR: Commands begin with /.\n";
 }
 
 str get_regerror(int errcode, regex_t *compiled)
@@ -1455,7 +1470,7 @@ str get_regerror(int errcode, regex_t *compiled)
 	return e;
 }
 
-bool IrcBot::ereg_match(const str& s, const str& r)
+bool IrcBot::ereg_match(const str& r, const str& s)
 {
 	bug_func();
 	bug_var(s);
@@ -1479,7 +1494,7 @@ bool IrcBot::ereg_match(const str& s, const str& r)
 //	return lowercase(s).find(lowercase(r)) != str::npos;
 }
 
-bool IrcBot::preg_match(const str& s, const str& r, bool full)
+bool IrcBot::preg_match(const str& r, const str& s, bool full)
 {
 //	bug_func();
 //	bug_var(s);
@@ -1489,6 +1504,11 @@ bool IrcBot::preg_match(const str& s, const str& r, bool full)
 	if(full)
 		return pcrecpp::RE(r).FullMatch(s);
 	return pcrecpp::RE(r).PartialMatch(s);
+}
+
+bool IrcBot::wild_match(const str& w, const str& s, int flags)
+{
+	return !fnmatch(w.c_str(), s.c_str(), flags | FNM_EXTMATCH);
 }
 
 void IrcBot::console()

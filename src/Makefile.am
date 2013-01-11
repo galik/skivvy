@@ -76,11 +76,11 @@ noinst_HEADERS = \
 	$(srcdir)/include/skivvy/plugin-factoid.h \
 	$(srcdir)/include/skivvy/plugin-oastats.h \
 	$(srcdir)/include/skivvy/plugin-pfinder.h \
-	$(srcdir)/include/skivvy/plugin-rquotes.h
+	$(srcdir)/include/skivvy/plugin-rquotes.h \
+	$(srcdir)/include/skivvy/plugin-rserver.h
 
 #	$(srcdir)/include/skivvy/plugin-compile.h \
 #	$(srcdir)/include/skivvy/plugin-example.h \
-#	$(srcdir)/include/skivvy/plugin-rserver.h \
 #	$(srcdir)/include/skivvy/plugin-trivial.h
 
 
@@ -98,11 +98,11 @@ plugin_LTLIBRARIES =  \
 	skivvy-plugin-factoid.la \
 	skivvy-plugin-oastats.la \
 	skivvy-plugin-pfinder.la \
-	skivvy-plugin-rquotes.la
+	skivvy-plugin-rquotes.la \
+	skivvy-plugin-rserver.la
 
 #	skivvy-plugin-compile.la \
 #	skivvy-plugin-example.la \
-#	skivvy-plugin-rserver.la \
 #	skivvy-plugin-trivial.la
 
 # IrcBot framework
@@ -130,7 +130,7 @@ skivvy_plugin_factoid_la_SOURCES = plugin-factoid.cpp
 skivvy_plugin_oastats_la_SOURCES = plugin-oastats.cpp
 skivvy_plugin_pfinder_la_SOURCES = plugin-pfinder.cpp
 skivvy_plugin_rquotes_la_SOURCES = plugin-rquotes.cpp
-#skivvy_plugin_rserver_la_SOURCES = plugin-rserver.cpp
+skivvy_plugin_rserver_la_SOURCES = plugin-rserver.cpp
 #skivvy_plugin_trivial_la_SOURCES = plugin-trivial.cpp
 
 skivvy_plugin_artibot_la_LDFLAGS = -module
@@ -142,7 +142,7 @@ skivvy_plugin_factoid_la_LDFLAGS = -module
 skivvy_plugin_oastats_la_LDFLAGS = -module
 skivvy_plugin_pfinder_la_LDFLAGS = -module
 skivvy_plugin_rquotes_la_LDFLAGS = -module
-#skivvy_plugin_rserver_la_LDFLAGS = -module
+skivvy_plugin_rserver_la_LDFLAGS = -module
 #skivvy_plugin_trivial_la_LDFLAGS = -module
 
 # Development utils
@@ -170,11 +170,11 @@ skivvy_plugin_rquotes_la_LDFLAGS = -module
 #skivlet_LDFLAGS =
 
 # Skivvy IrcBot
-#bin_PROGRAMS = skivvy skivvy-client
-bin_PROGRAMS = skivvy
+bin_PROGRAMS = skivvy skivvy-client
+#bin_PROGRAMS = skivvy
 
-#skivvy_client_SOURCES = skivvy-client.cpp
-#skivvy_client_LDADD = $(BOTLIBS)
+skivvy_client_SOURCES = skivvy-client.cpp
+skivvy_client_LDADD = $(BOTLIBS) -lreadline
 
 skivvy_SOURCES = skivvy.cpp
 skivvy_LDADD = $(BOTLIBS)

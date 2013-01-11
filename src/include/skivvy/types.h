@@ -37,6 +37,8 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <ctime>
 #include <cmath>
 #include <algorithm>
+#include <memory>
+#include <cstdlib>
 
 #include <map>
 #include <set>
@@ -157,6 +159,14 @@ struct delay
 		return d.parse(is);
 	}
 };
+
+struct malloc_deleter
+{
+	template <class T>
+	void operator()(T* p) { std::free(p); }
+};
+
+typedef std::unique_ptr<char, malloc_deleter> cstring_uptr;
 
 }} // sookee::types
 

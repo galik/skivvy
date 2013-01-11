@@ -45,8 +45,8 @@ class RServerIrcBotPlugin
 : public BasicIrcBotPlugin
 {
 	typedef int socket;
-	typedef long port;
 public:
+	typedef long port;
 
 private:
 	socket ss; // server socket

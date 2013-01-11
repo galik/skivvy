@@ -71,19 +71,21 @@ RServerIrcBotPlugin::~RServerIrcBotPlugin() {}
 
 bool RServerIrcBotPlugin::bind()//port p, const std::string& iface)
 {
+	bug_func();
 	port p = bot.get(RSERVER_PORT, RSERVER_PORT_DEFAULT);
-	str iface = bog.get(RSERVER_HOST, RSERVER_HOST_DEFAULT);
+	str host = bot.get(RSERVER_HOST, RSERVER_HOST_DEFAULT);
 	sockaddr_in addr;
 	std::memset(&addr, 0, sizeof(addr));
 	addr.sin_family = AF_INET;
 	addr.sin_port = htons(p);
-	addr.sin_addr.s_addr = inet_addr(iface.c_str());
+	addr.sin_addr.s_addr = inet_addr(host.c_str());
 	return ::bind(ss, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) != -1;
 }
 
-bool RServerIrcBotPlugin::listen(port p)
+bool RServerIrcBotPlugin::listen()//port p)
 {
-	if(!bind(p))
+	bug_func();
+	if(!bind())
 	{
 		log("ERROR: " << std::strerror(errno));
 		return false;
@@ -128,11 +130,12 @@ void RServerIrcBotPlugin::process(socket cs)
 	// receive null terminated string
 	std::string cmd;
 	char c;
-	while(ss.get(c) && c) cmd.append(1, c);
+	while(ss.get(c) && c)
+		cmd.append(1, c);
 	bug("cmd: " << cmd);
 	if(!trim(cmd).empty())
 	{
-		std::ostringstream oss;
+		soss oss;
 		bot.exec(cmd, &oss);
 		ss << oss.str() << '\0' << std::flush;
 	}
@@ -140,23 +143,18 @@ void RServerIrcBotPlugin::process(socket cs)
 
 void RServerIrcBotPlugin::on(const message& msg)
 {
-	bug("-----------------------------------------------------");
-	bug(get_name() << ": " << "on()");
-	bug("-----------------------------------------------------");
-	bug_msg(msg);
+	BUG_COMMAND(msg);
 }
 
 void RServerIrcBotPlugin::off(const message& msg)
 {
-	bug("-----------------------------------------------------");
-	bug(get_name() << ": " << "off()");
-	bug("-----------------------------------------------------");
-	bug_msg(msg);
+	BUG_COMMAND(msg);
 }
 
 bool RServerIrcBotPlugin::initialize()
 {
-	con = std::async(std::launch::async, [&]{ listen(7334); });
+	bug_func();
+	con = std::async(std::launch::async, [&]{ listen(); });
 	return true;
 }
 

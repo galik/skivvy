@@ -71,7 +71,7 @@ bool FactoidIrcBotPlugin::is_user_valid(const message& msg, const str& svar)
 {
 	bug_func();
 	for(const str& r: bot.get_vec(svar))
-		if(bot.preg_match(msg.get_userhost(), r))
+		if(bot.preg_match(r, msg.get_userhost()))
 			return true;
 	return false;
 }
@@ -241,6 +241,19 @@ bool FactoidIrcBotPlugin::findfact(const message& msg)
 	return true;
 }
 
+// item1, item2 , item3,item4 -> str_vec{item1,item2,item3,item4}
+str_vec split_list(const str& list, char delim = ',')
+{
+	str_vec split;
+
+	siss iss (list);
+	str item;
+	while(sgl(iss, item, delim))
+		split.push_back(trim(item));
+
+	return split;
+}
+
 bool FactoidIrcBotPlugin::findgroup(const message& msg)
 {
 	BUG_COMMAND(msg);
@@ -255,7 +268,7 @@ bool FactoidIrcBotPlugin::findgroup(const message& msg)
 		siss iss(index.get(key));
 		str group;
 		while(sgl(iss, group, ','))
-			if(bot.preg_match(group, msg.get_user_params()))
+			if(bot.preg_match(msg.get_user_params(), group))
 				groups.insert(group);
 	}
 
@@ -332,51 +345,6 @@ bool FactoidIrcBotPlugin::fact(const message& msg, const str& key, const str& pr
 			str key;
 			std::getline(std::istringstream(fact).ignore() >> std::ws, key);
 			this->fact(msg, key, prefix);
-		}
-		else if(!fact.empty() && fact[0] == '#')
-		{
-			// TODO: Fix this to use the new groups method
-			// maps: # [map,man] // enumerate keys with topic marker(s) [map(,man)]
-			str topic;
-			str_set topics = get_topics_from_fact(fact);
-
-			str_set_map keys;
-
-			for(const str_vec_pair& p: store.get_map())
-			{
-				const str& key = p.first;
-				const str_vec& facts = p.second;
-				for(const str& fact: facts)
-					for(const str& t1: get_topics_from_fact(fact))
-						for(const str& t2: topics)
-							if(bot.preg_match(t1, t2))
-								keys[t1].insert(key);
-			}
-
-			for(const str_set_pair& p: keys)
-			{
-				const str& topic = p.first;
-				str line, sep;
-				str_vec lines;
-
-				for(const str& key: p.second)
-				{
-					line += sep + key;
-					sep = ", ";
-					if(line.size() > 300)
-					{
-						lines.push_back(line);
-						line.clear();
-						sep.clear();
-					}
-				}
-
-				if(!line.empty())
-					lines.push_back(line);
-
-				for(const str& line: lines)
-					bot.fc_reply(msg, prefix + IRC_BOLD + IRC_COLOR + IRC_Hot_Pink + "[" + topic + "] " + IRC_COLOR + IRC_Dark_Gray + line);
-			}
 		}
 		else
 		{

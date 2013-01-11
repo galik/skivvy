@@ -47,7 +47,7 @@ using namespace skivvy::types;
 class Store
 {
 protected:
-	str_vec_map store;
+//	str_vec_map store;
 
 	bool preg_match(const str& s, const str& r, bool full = false)
 	{
@@ -57,11 +57,11 @@ protected:
 	}
 
 public:
-	const str_vec_map& get_map()
-	{
-		return store;
-	}
-
+//	const str_vec_map& get_map()
+//	{
+//		return store;
+//	}
+//
 	str get(const str& k, const str& dflt = "")
 	{
 		return get_at(k, 0, dflt);
@@ -147,8 +147,16 @@ public:
 	virtual void set_at(const str& k, siz n, const str& v) = 0;
 };
 
-class BackupStore
+class MappedStore
 : public Store
+{
+protected:
+	str_vec_map store;
+
+};
+
+class BackupStore
+: public MappedStore
 {
 private:
 	std::mutex mtx;
@@ -286,7 +294,7 @@ public:
 };
 
 class CacheStore
-: public Store
+: public MappedStore
 {
 private:
 	std::mutex mtx;
@@ -455,6 +463,167 @@ public:
 	}
 };
 
+
+class FileStore
+: public Store
+{
+private:
+	std::mutex mtx;
+	const str file;
+
+	static sifs ifs;
+	static sofs ofs;
+	static sss ss;
+	static str line, k, v;
+
+	str_vec load(const str& key)
+	{
+		str_vec store;
+
+		ifs.open(file);
+
+		while(sgl(ifs, line))
+		{
+			ss.clear();
+			ss.str(line);
+			k.clear();
+			v.clear();
+			if(sgl(sgl(ss, k, ':') >> std::ws, v))
+				if(k == key)
+					store.push_back(v);
+		}
+		ifs.close();
+		return store;
+	}
+
+	void save(const str& key, const str_vec& store)
+	{
+		ifs.open(file);
+
+		ss.clear();
+		ss.str("");
+
+		str line;
+		while(sgl(ifs, line))
+			if(sgl(siss(line), line, ':') && line != key)
+				ss << line << '\n';
+
+		ifs.close();
+		ofs.open(file);
+
+		while(sgl(ss, line))
+			ofs << line << '\n';
+
+		for(const str& line: store)
+			ofs << key << ": " << line << '\n';
+
+		ofs.close();
+	}
+
+
+public:
+	FileStore(const str& file):file(file) {}
+
+	str_set get_keys_if_preg(const str& reg)
+	{
+		str_set res;
+		lock_guard lock(mtx);
+
+		ifs.open(file);
+		while(sgl(ifs, line))
+			if(sgl(siss(line), line, ':') && preg_match(line, reg))
+				res.insert(line);
+		ifs.close();
+
+		return res;
+	}
+
+	str_set get_keys()
+	{
+		str_set res;
+		lock_guard lock(mtx);
+
+		ifs.open(file);
+		str line;
+		while(sgl(ifs, line))
+			if(sgl(siss(line), line, ':'))
+				res.insert(line);
+		ifs.close();
+
+		return res;
+	}
+
+	bool has(const str& k)
+	{
+		bool res = false;
+		lock_guard lock(mtx);
+		ifs.open(file);
+		while(sgl(ifs, line))
+			if(!res && sgl(siss(line), line, ':') && line == k)
+				res = true;
+		ifs.close();
+		return res;
+	}
+
+	str get_at(const str& k, siz n, const str& dflt = "")
+	{
+		lock_guard lock(mtx);
+		str_vec store = load(k);
+		if(store.size() < n + 1)
+			return dflt;
+		return store[n];
+	}
+
+	str_vec get_vec(const str& k)
+	{
+		lock_guard lock(mtx);
+		return load(k);
+	}
+
+	/**
+	 * Clear entire store.
+	 */
+	void clear()
+	{
+		lock_guard lock(mtx);
+		ofs.open(file, std::ios::trunc);
+		ofs.close();
+	}
+
+	/**
+	 * Clear entire key.
+	 */
+	void clear(const str& k)
+	{
+		lock_guard lock(mtx);
+		str_vec store;
+		save(k, store);
+	}
+
+	/**
+	 * Add v to end of key vector.
+	 */
+	void add(const str& k, const str& v)
+	{
+		lock_guard lock(mtx);
+		str_vec store = load(k);
+		store.push_back(v);
+		save(k, store);
+	}
+
+	/**
+	 * Set nth element of key vector.
+	 */
+	void set_at(const str& k, siz n, const str& v)
+	{
+		lock_guard lock(mtx);
+		str_vec store = load(k);
+		if(store.size() < n + 1)
+			store.resize(n + 1);
+		store[n] = v;
+		save(k, store);
+	}
+};
 }} // skivvy::utils
 
 #endif // _SKIVVY_STORE_H_

@@ -41,14 +41,6 @@ using namespace skivvy::ircbot;
 
 #include <memory>
 
-struct malloc_deleter
-{
-	template <class T>
-	void operator()(T* p) { std::free(p); }
-};
-
-typedef std::unique_ptr<char, malloc_deleter> cstring;
-
 void handler(int sig)
 {
 	void *array[10];
@@ -69,7 +61,7 @@ void handler(int sig)
 		// /home/gareth/dev/cpp/skivvy/build/src/.libs/libskivvy.so.0(_ZN6skivvy6ircbot11RandomTimer5timerEv+0x85)[0x4e2ead]
 		sgl(sgl(siss(trace[i]), obj, '('), func, '+');
 
-		cstring func_name(abi::__cxa_demangle(func.c_str(), 0, 0, &status));
+		cstring_uptr func_name(abi::__cxa_demangle(func.c_str(), 0, 0, &status));
 		std::cerr << "function: " << func_name.get() << '\n';
 		std::cerr << "info    : " << trace[i] << '\n';
 		std::cerr << '\n';

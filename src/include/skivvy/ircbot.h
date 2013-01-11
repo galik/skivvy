@@ -1105,12 +1105,9 @@ public:
 	/**
 	 * Match s according to regular expression r.
 	 */
-	bool ereg_match(const str& s, const str& r); // extended regex
-	bool preg_match(const str& s, const str& r, bool full = false); // peare regex
-	bool wild_match(const str& s, const str& w, int flags = 0)
-	{
-		return !fnmatch(w.c_str(), s.c_str(), flags | FNM_EXTMATCH);
-	}
+	bool ereg_match(const str& r, const str& s); // extended regex
+	bool preg_match(const str& r, const str& s, bool full = false); // peare regex
+	bool wild_match(const str& w, const str& s, int flags = 0);
 
 	bool is_connected() { return connected; }
 

@@ -402,7 +402,7 @@ bool ChanopsIrcBotPlugin::mode_event(const message& msg)
 		std::istringstream(s) >> chan_preg >> who;
 		bug_var(chan_preg);
 		bug_var(who);
-		if(bot.preg_match(msg.to, chan_preg, true) && bot.wild_match(who, user))
+		if(bot.preg_match(chan_preg, msg.to, true) && bot.wild_match(user, who))
 		{
 			bug("match:");
 			if(flag == "+b")
@@ -437,7 +437,7 @@ bool ChanopsIrcBotPlugin::join_event(const message& msg)
 
 	str_vec pregs = store.get_vec("ban.preg." + msg.to);
 	for(const str& preg: pregs)
-		if(bot.preg_match(msg.get_userhost(), preg))
+		if(bot.preg_match(preg, msg.get_userhost()))
 		{
 			bot.fc_reply(msg, "USERHOST: " + msg.get_userhost() + " is banned from this channel.");
 			irc->mode(msg.to, "+b *!*" + msg.get_userhost());
@@ -492,7 +492,7 @@ bool ChanopsIrcBotPlugin::join_event(const message& msg)
 		std::istringstream(s) >> chan >> who;
 //		bug_var(chan);
 //		bug_var(who);
-		if(bot.preg_match(msg.params, chan, true) && bot.preg_match(msg.from, who))
+		if(bot.preg_match(chan, msg.params, true) && bot.preg_match(who, msg.from))
 //		if((chan == "#*" || msg.params == chan) && bot.preg_match(msg.from, who))
 		{
 			bug("match:");
@@ -504,7 +504,7 @@ bool ChanopsIrcBotPlugin::join_event(const message& msg)
 	for(const str& s: v)
 	{
 		std::istringstream(s) >> chan >> who;
-		if(bot.preg_match(msg.params, chan, true) && bot.preg_match(msg.from, who))
+		if(bot.preg_match(chan, msg.params, true) && bot.preg_match(who, msg.from))
 			irc->mode(msg.params, "+v", msg.get_nick());
 	}
 
@@ -513,7 +513,7 @@ bool ChanopsIrcBotPlugin::join_event(const message& msg)
 	{
 		str why;
 		std::getline(std::istringstream(s) >> chan >> who, why);
-		if(bot.preg_match(msg.params, chan, true) && bot.preg_match(msg.from, who))
+		if(bot.preg_match(chan, msg.params, true) && bot.preg_match(who, msg.from))
 			irc->kick({msg.params}, {msg.get_nick()}, why);
 	}
 
@@ -522,7 +522,7 @@ bool ChanopsIrcBotPlugin::join_event(const message& msg)
 	{
 		str mode;
 		std::istringstream(s) >> chan >> who >> mode;
-		if(bot.preg_match(msg.params, chan, true) && bot.preg_match(msg.from, who))
+		if(bot.preg_match(chan, msg.params, true) && bot.preg_match(who, msg.from))
 			irc->mode(msg.params, mode , msg.get_nick());
 	}
 

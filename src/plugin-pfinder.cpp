@@ -413,7 +413,7 @@ void PFinderIrcBotPlugin::cvar(const message& msg)
 
 	cvar_t cvar;
 	while(ifs >> cvar)
-		if(bot.wild_match(lowercase(cvar.name), "*" + var + "*"))
+		if(bot.wild_match("*" + var + "*", lowercase(cvar.name)))
 			cvars.insert(cvar);
 
 	siz max_results = bot.get(CVAR_MAX_RESULTS, CVAR_MAX_RESULTS_DEFAULT);
@@ -527,7 +527,7 @@ void PFinderIrcBotPlugin::oaserver(const message& msg)
 		if(!match_uid)
 		{
 			bug("matching: " << s.match);
-			if(bot.wild_match(lowercase(s.match), "*" + lowercase(param) + "*") && ++n < 12)
+			if(bot.wild_match("*" + lowercase(param) + "*", lowercase(s.match)) && ++n < 12)
 			{
 				std::ostringstream oss;
 				oss << s.uid << ' ' << s.print << ' ' << s.gametype;
