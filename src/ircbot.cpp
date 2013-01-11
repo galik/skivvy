@@ -418,8 +418,9 @@ str BasicIrcBotPlugin::help(const str& cmd) const
 	return actions.at(cmd).help;
 }
 
-bool IrcBotPluginLoader::operator()(const str& file, IrcBot& bot)
+IrcBotPluginPtr IrcBotPluginLoader::operator()(const str& file, IrcBot& bot)
 {
+	IrcBotPluginPtr plugin;
 //	union { void* dl; void* dlsym; IrcBotPluginPtr(*plugin)(IrcBot&); } ptr;
 	void* dl = 0;
 //	void* skivvy_ircbot_factory = 0;
@@ -430,23 +431,22 @@ bool IrcBotPluginLoader::operator()(const str& file, IrcBot& bot)
 //	if(!(ptr.dl = dlopen(file.c_str(), RTLD_LAZY|RTLD_GLOBAL)))
 	{
 		log(dlerror());
-		return false;
+		return plugin;
 	}
 
 	if(!(skivvy_ircbot_factory = reinterpret_cast<IrcBotPluginPtr(*)(IrcBot&)>(dlsym(dl, "skivvy_ircbot_factory"))))
 	{
 		log(dlerror());
-		return false;
+		return plugin;
 	}
 
-	IrcBotPluginPtr plugin;
 	if(!(plugin = skivvy_ircbot_factory(bot)))
-		return false;
+		return plugin;
 	plugin->dl = dl;
-
+	// ("#channel"|"*"|"PM") -> { "plugin#1", "plugin#2" }
 	bot.del_plugin(plugin->get_name());
 	bot.add_plugin(plugin);
-	return true;
+	return plugin;
 }
 
 void IrcBot::add_plugin(IrcBotPluginPtr plugin)
@@ -456,7 +456,7 @@ void IrcBot::add_plugin(IrcBotPluginPtr plugin)
 	{
 		this->plugins.push_back(plugin);
 		// give every plugin 'free pass' access to channels
-		chan_access["*"].insert(plugin->get_name());
+		//chan_access["*"].insert(plugin->get_name());
 	}
 	else
 		log("ERROR: Adding non-plugin.");
@@ -692,6 +692,7 @@ int ls(const str& folder, str_vec &files)
 
 void IrcBot::load_plugins()
 {
+	bug_func();
 	plugin_loaded = std::time(0);
 
 	IrcBotPluginLoader load;
@@ -711,21 +712,51 @@ void IrcBot::load_plugins()
 	// We need to try exhaustively to load each plugin in turn
 	// in order to respect dependencies.
 
-	for(const str& p: pv)
+	for(const str& line: pv)
 	{
+		bug_var(line);
+		str p, access;
+		sgl(sgl(siss(line), p, '['), access, ']');
+		trim(p);
+		bug_var(p);
+		bug_var(access);
 		for(const str& plugin_dir: plugin_dirs)
 		{
 			log("Searching plugin dir: " << plugin_dir);
 
 			str_vec files;
 			if(int e = ls(plugin_dir, files))
+			{
 				log(strerror(e));
+				continue;
+			}
 
 			if(stl::find(files, p) == files.end())
 				continue;
 
-			if(!load(plugin_dir + "/" + p, *this))
+			IrcBotPluginPtr plugin;
+			if(!(plugin = load(plugin_dir + "/" + p, *this)))
+			{
 				log("Failed to load: " << p);
+				continue;
+			}
+
+			// // ("#channel"|"*"|"PM") -> {{ {"plugin#1", "prefix1"}, {"plugin#2", "prefix2"} }
+			// access = [#skivvy,#clanchan(sk)]
+			str chan;
+			siss iss(access);
+			while(sgl(iss, chan, ','))
+			{
+				trim(chan);
+				bug_var(chan);
+				str skip, prefix;
+				sgl(sgl(siss(chan), skip, '('), prefix, ')');
+				bug_var(prefix);
+				chan_prefix cpf;
+				cpf.plugin = plugin->get_name();
+				cpf.prefix = prefix;
+				chan_access[chan].insert(cpf);
+			}
 
 			break; // only load one of the given name
 		}
@@ -837,13 +868,13 @@ bool IrcBot::init(const str& config_file)
 	}
 
 	// start pinger
-	std::future<void> png = std::async(std::launch::async, [&]{ pinger(); });
+	png = std::async(std::launch::async, [&]{ pinger(); });
 
 	while(!done && !connected)
 		std::this_thread::sleep_for(std::chrono::seconds(1));
 
 	// start console
-	std::future<void> con = std::async(std::launch::async, [&]{ console(); });
+	con = std::async(std::launch::async, [&]{ console(); });
 
 	str line;
 	message msg;
@@ -1158,32 +1189,6 @@ bool IrcBot::init(const str& config_file)
 		}
 	}
 
-	log("Closing down plugins:");
-	for(IrcBotPluginPtr p: plugins)
-	{
-		log("\t" << p->get_name());
-		p->exit();
-	}
-
-	fc.stop();
-	log("Closing down pinger:");
-	done = true;
-	if(png.valid())
-		if(png.wait_for(std::chrono::seconds(10)) == std::future_status::ready)
-			png.get();
-//	if(png.valid())
-//		png.get();
-
-	// Don't close console because thread is blocking.
-	log("Closing down console:");
-	if(con.valid())
-		if(con.wait_for(std::chrono::seconds(10)) == std::future_status::ready)
-			con.get();
-//	if(con.valid())
-//		con.get();
-
-	log("ENDED");
-	irc.quit(restart ? "Reeeeeeeeeeeeeeeeeeboot!" : "Going off line...");
 	return true;
 }
 
@@ -1196,8 +1201,46 @@ str_vec IrcBot::list() const
 	return v;
 }
 
+bool IrcBot::has_access(const str& cmd, const str& chan)
+{
+	std::function<bool(const chan_prefix&)> chan_prefix_pred_eq = [&](const chan_prefix& cp)
+	{
+		return cp.plugin == commands[cmd]->get_name();
+	};
+
+	if(stl::find_if(chan_access[chan], chan_prefix_pred_eq) != chan_access[chan].end())
+		return true;
+	return false;
+}
+
+bool IrcBot::allow_cmd_access(const str& cmd, const message& msg)
+{
+	// "*" -> free pass list
+	// "PM" -> PM list
+
+	std::function<bool(const chan_prefix&)> chan_prefix_pred_eq = [&](const chan_prefix& cp)
+	{
+		return cp.plugin == commands[cmd]->get_name();
+	};
+
+	if(has_access(cmd, "*"))
+		return true;
+
+	if(msg.from_channel())
+		if(has_access(cmd, msg.to))
+			return true;
+
+	if(has_access(cmd, "PM"))
+		return true;
+
+	return false;
+}
+
 void IrcBot::execute(const str& cmd, const message& msg)
 {
+	bug_func();
+	bug_var(cmd);
+	bug_msg(msg);
 	if(commands.find(cmd) == commands.end())
 	{
 		log("IrcBot::execute(): Unknown command: " << cmd);
@@ -1205,30 +1248,14 @@ void IrcBot::execute(const str& cmd, const message& msg)
 	}
 	if(commands[cmd])
 	{
-		// "*" -> free pass list
-		// "PM" -> PM list
-		if(msg.from_channel())
-		{
-			// apply channel authorization
-			if(chan_access["*"].count(commands[cmd]->get_name()))
-				commands[cmd]->execute(cmd, msg);
-			else if(chan_access[msg.get_nick()].count(commands[cmd]->get_name()))
-				commands[cmd]->execute(cmd, msg);
-			else
-				log("PLUGIN " << commands[cmd]->get_name()
-					<< " NOT AUTHORISED FOR CHANNEL: " << msg.get_nick());
-		}
+		if(allow_cmd_access(cmd, msg))
+			commands[cmd]->execute(cmd, msg);
+		else if(msg.from_channel())
+			log("PLUGIN " << commands[cmd]->get_name()
+				<< " NOT AUTHORISED FOR CHANNEL: " << msg.to);
 		else
-		{
-			// apply PM authorization
-			if(chan_access["*"].count(commands[cmd]->get_name()))
-				commands[cmd]->execute(cmd, msg);
-			else if(chan_access["PM"].count(commands[cmd]->get_name()))
-				commands[cmd]->execute(cmd, msg);
-			else
-				log("PLUGIN " << commands[cmd]->get_name()
-					<< " NOT AUTHORISED FOR PM TO: " << msg.get_nick());
-		}
+			log("PLUGIN " << commands[cmd]->get_name()
+				<< " NOT AUTHORISED FOR PM TO: " << msg.get_nick());
 	}
 }
 
@@ -1244,38 +1271,29 @@ str IrcBot::help(const str& cmd) const
 }
 void IrcBot::exit()
 {
-//	dispatch = false;
-//	for(IrcBotPlugin* p: plugins)
-//		p->exit();
-//	if(disp_fut.valid())
-//		disp_fut.get();
+	log("Closing down plugins:");
+	for(IrcBotPluginPtr p: plugins)
+	{
+		log("\t" << p->get_name());
+		p->exit();
+	}
+
+	fc.stop();
+
+	log("Closing down pinger:");
+	done = true;
+	if(png.valid())
+		if(png.wait_for(std::chrono::seconds(10)) == std::future_status::ready)
+			png.get();
+
+	log("Closing down console:");
+	if(con.valid())
+		if(con.wait_for(std::chrono::seconds(10)) == std::future_status::ready)
+			con.get();
+
+	irc.quit(restart ? "Reeeeeeeeeeeeeeeeeeboot!" : "Going off line...");
+	log("ENDED");
 }
-
-// Free functions
-
-//bool wildmatch(str_citer mi, const str_citer me
-//	, str_citer ii, const str_citer ie)
-//{
-//	while(mi != me)
-//	{
-//		if(*mi == '*')
-//		{
-//			for(str_citer i = ii; i != ie; ++i)
-//				if(wildmatch(mi + 1, me, i, ie))
-//					return true;
-//			return false;
-//		}
-//		if(*mi != *ii) return false;
-//		++mi;
-//		++ii;
-//	}
-//	return ii == ie;
-//}
-//
-//bool wildmatch(const str& mask, const str& id)
-//{
-//	return wildmatch(mask.begin(), mask.end(), id.begin(), id.end());
-//}
 
 static void prompt(std::ostream& os, size_t delay)
 {
@@ -1699,15 +1717,14 @@ bool RandomTimer::off(const void* user)
 	if(!users.count(user))
 		return false;
 
-	bool end = false;
 	{
 		lock_guard lock(mtx);
 		if(!users.count(user))
 			return false;
 
 		users.erase(user);
-		if(users.empty())
-			end = true;
+		if(!users.empty())
+			return true;
 	}
 	if(fut.valid())
 		if(fut.wait_for(std::chrono::seconds(10)) == std::future_status::ready)

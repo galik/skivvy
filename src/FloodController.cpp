@@ -149,9 +149,6 @@ void FloodController::stop()
 	if(fut.valid())
 		if(fut.wait_for(std::chrono::seconds(10)) == std::future_status::ready)
 			fut.get();
-
-//	if(fut.valid())
-//		fut.get();
 }
 
 }} // sookee::ircbot

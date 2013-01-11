@@ -35,22 +35,11 @@ int main()
 {
 	std::cout << "Skivvy Client:" << '\n';
 
-//	snprintf(shell_prompt, sizeof(shell_prompt), "%s:%s $ ", getenv("USER"), getcwd(NULL, 1024));
+	using_history();
+
+	read_history((str(getenv("HOME")) + "/.skivvy/.history").c_str());
 
 	str name;
-
-//	net::socketstream ss;
-//	if(!ss.open("localhost", 7334))
-//	{
-//		std::cout << "error: " << std::strerror(errno);
-//		exit(1);
-//	}
-//	else
-//	{
-//		(ss << "/botnick").put('\0') << std::flush;
-//		if(!std::getline(ss, name, '\0'))
-//			name = "Skivvy";
-//	}
 
 	str shell_prompt = "unknown: ";
 
@@ -62,39 +51,19 @@ int main()
 
 	input.reset(readline(shell_prompt.c_str()));
 
-	while(input.get())
+	while(input.get() && trim(line = input.get()) != "exit")
 	{
-		line = input.get();
-		if(!trim(line).empty())
+		if(!line.empty())
 		{
 			add_history(line.c_str());
-			if(send(line, line))
+			write_history((str(getenv("HOME")) + "/.skivvy/.history").c_str());
+
+			if(send(line, line) && !trim(line).empty())
 				std::cout << line << '\n';
+
 			if(send("/botnick", name))
 				shell_prompt = name + ": ";
 		}
 		input.reset(readline(shell_prompt.c_str()));
 	}
-
-//
-//	std::string line;
-//	std::cout << "> ";
-//	while(std::getline(std::cin, line))
-//	{
-//		if(!trim(line).empty())
-//		{
-//			net::socketstream ss;
-//			if(!ss.open("localhost", 7334))
-//			{
-//				std::cout << "error: " << std::strerror(errno);
-//			}
-//			else
-//			{
-//				(ss << line).put('\0') << std::flush;
-//				if(std::getline(ss, line, '\0'))
-//					std::cout << line << '\n';
-//			}
-//		}
-//		std::cout << "> ";
-//	}
 }

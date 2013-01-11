@@ -43,11 +43,11 @@ using namespace skivvy::ircbot;
 
 void handler(int sig)
 {
-	void *array[10];
+	void *array[100];
 	size_t size;
 
 	// get void*'s for all entries on the stack
-	size = backtrace(array, 10);
+	size = backtrace(array, 100);
 
 	// print out all the frames to stderr
 	fprintf(stderr, "Error: signal %d:\n", sig);
@@ -76,18 +76,11 @@ int main(int argc, char* argv[])
 {
 	signal(SIGSEGV, handler);   // install our handler
 
-//	try
-//	{
-		IrcBot bot;
-		log(bot.get_name() + " v" + bot.get_version());
-		bot.init(argc > 1 ? argv[1] : "");
-		if(bot.restart)
-			return 6;
-//	}
-//	catch(std::exception& e)
-//	{
-//		std::cerr << e.what() << '\n';
-//		handler(0);
-//	}
+	IrcBot bot;
+	log(bot.get_name() + " v" + bot.get_version());
+	bot.init(argc > 1 ? argv[1] : "");
+	bot.exit();
+	if(bot.restart)
+		return 6;
 	return 0;
 }

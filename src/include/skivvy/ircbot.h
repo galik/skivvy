@@ -917,7 +917,7 @@ IrcBotPluginPtr skivvy_ircbot_factory(IrcBot& bot) \
 class IrcBotPluginLoader
 {
 public:
-	bool operator()(const str& file, IrcBot& bot);
+	IrcBotPluginPtr operator()(const str& file, IrcBot& bot);
 };
 
 template<typename Plugin>
@@ -1030,7 +1030,20 @@ private:
 	ban_set banned;
 	property_map props;
 
-	str_str_set_map chan_access; // ("#channel"|"*"|"PM") -> { "plugin#1", "plugin#2" }
+	struct chan_prefix
+	{
+		str plugin;
+		str prefix;
+
+		bool operator<(const chan_prefix& cp) const { return plugin < cp.plugin; }
+		bool operator==(const chan_prefix& cp) const { return plugin == cp.plugin; }
+	};
+
+	typedef std::set<chan_prefix> chan_prefix_set;
+	typedef std::map<str, chan_prefix_set> chan_access_map;
+	typedef std::pair<const str, chan_prefix_set> chan_access_pair;
+
+	chan_access_map chan_access; // ("#channel"|"*"|"PM") -> { {"plugin#1", "prefix1"}, {"plugin#2", "prefix2"} }
 
 	bool done;
 	bool debug;
@@ -1038,19 +1051,17 @@ private:
 	bool connected;
 	bool registered;
 
-	//std::thread console_thread;
+	std::future<void> con;
 	std::istream* is;
 	std::ostream* os;
 	void console();
 
+	std::future<void> png;
 	std::mutex pinger_info_mtx;
 	std::string pinger_info;
 	void pinger();
 
 	size_t nick_number;
-
-	// non blocking getline()
-	//std::istream& getline_nb(std::istream& is, std::string& s);
 
 	const std::time_t uptime;
 
@@ -1063,6 +1074,10 @@ private:
 	time_t plugin_loaded;
 
 	void load_plugins();
+
+	bool has_access(const str& cmd, const str& chan);
+
+	bool allow_cmd_access(const str& cmd, const message& msg);
 
 public:
 	bool restart = false;
