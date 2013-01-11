@@ -119,6 +119,8 @@ libskivvy_la_SOURCES = \
 	store.cpp \
 	str.cpp \
 	types.cpp
+	
+libskivvy_la_LIBADD = -lreadline
 
 # IrcBot plugins
 skivvy_plugin_artibot_la_SOURCES = plugin-artibot.cpp mh/megahal.cpp
@@ -177,7 +179,7 @@ skivvy_client_SOURCES = skivvy-client.cpp
 skivvy_client_LDADD = $(BOTLIBS) -lreadline
 
 skivvy_SOURCES = skivvy.cpp
-skivvy_LDADD = $(BOTLIBS)
+skivvy_LDADD = $(BOTLIBS) -lreadline
 skivvy_LDFLAGS = $(BOTFLAGS)
 
 docs_DATA = $(top_srcdir)/docs/manual.text

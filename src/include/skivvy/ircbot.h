@@ -1001,7 +1001,7 @@ public:
 	typedef std::set<IrcBotChoiceListener*> listener_set;
 	typedef std::map<str, IrcBotRPCService*> service_map;
 	typedef std::set<str> channel_set;
-	typedef std::set<str> ban_set;
+//	typedef std::set<str> ban_set;
 	typedef std::map<str, IrcBotPluginPtr> command_map;
 	typedef std::pair<str, IrcBotPluginPtr> command_map_pair;
 
@@ -1027,7 +1027,7 @@ private:
 	service_map services;
 	command_map commands;
 //	command_map channels; //
-	ban_set banned;
+//	ban_set banned;
 	property_map props;
 
 	struct chan_prefix

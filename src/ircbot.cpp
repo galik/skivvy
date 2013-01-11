@@ -57,6 +57,8 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <dirent.h>
 #include <regex.h>
 #include <pcrecpp.h>
+#include <readline/readline.h>
+#include <readline/history.h>
 
 namespace skivvy { namespace ircbot {
 
@@ -78,10 +80,11 @@ static const str PROP_GOODBYE = "goodbye";
 static const str PROP_ON_CONNECT = "on_connect";
 static const str PROP_SERVER_PASSWORD = "server_password";
 static const str PROP_SERVER_RETRIES = "server_retries";
+static const str PROP_JOIN = "join";
 
 
 // :port80a.se.quakenet.org 353 Skivvy = #oa-ictf :Skivvy @SooKee pet @Q
-std::istream& parsemsg(std::istream& is, message& m)
+std::istream& parsemsg(std::istream&& is, message& m)
 {
 	str line;
 	std::getline(is, line);
@@ -544,8 +547,8 @@ std::istream& operator>>(std::istream& is, IrcBot& bot)
 		else if(key == "user") bot.info.user = val;
 		else if(key == "mode") bot.info.mode = val;
 		else if(key == "real") bot.info.real = val;
-		else if(key == "join") bot.add_channel(val);
-		else if(key == "ban") bot.banned.insert(val);
+//		else if(key == "join") bot.add_channel(val);
+//		else if(key == "ban") bot.banned.insert(val); // TODO: don't cache this value
 		else if(key == "include")
 		{
 			bug("include:" << val);
@@ -654,7 +657,10 @@ void IrcBot::official_join(const str& channel)
 {
 	std::this_thread::sleep_for(std::chrono::seconds(2));
 
-	irc.join(channel);
+	if(!irc.join(channel))
+		return;
+
+	chans.insert(channel);
 	irc.say(channel, get_name() + " v" + get_version());
 
 	str_vec welcomes = get_vec(PROP_WELCOME);
@@ -751,6 +757,7 @@ void IrcBot::load_plugins()
 				bug_var(chan);
 				str skip, prefix;
 				sgl(sgl(siss(chan), skip, '('), prefix, ')');
+				trim(prefix);
 				bug_var(prefix);
 				chan_prefix cpf;
 				cpf.plugin = plugin->get_name();
@@ -901,8 +908,8 @@ bool IrcBot::init(const str& config_file)
 		// recv: !cmd1
 		// recv: !cmd2
 
-		std::istringstream iss(line);
-		parsemsg(iss, msg);
+//		siss iss(line);
+		parsemsg(siss(line), msg);
 
 		dispatch_msgevent(msg);
 
@@ -929,7 +936,8 @@ bool IrcBot::init(const str& config_file)
 			this->nick = msg.to;
 			for(str prop: get_vec(PROP_ON_CONNECT))
 				exec(replace(prop, "$me", nick));
-			for(const str& channel: chans)
+//			for(const str& channel: chans)
+			for(const str& channel: get_vec(PROP_JOIN))
 				official_join(channel);
 			registered = true;
 		}
@@ -1172,11 +1180,13 @@ bool IrcBot::init(const str& config_file)
 				}
 				else
 				{
-					// TODO: Make this a proper IRC mask
-					if(banned.find(msg.get_nick()) == banned.end())
-						// TODO: make this async (make plugins thread-safe)
-						execute(cmd, msg);
-					else log("BANNED: " << msg.get_nick());
+					for(const str& ban: get_vec("ban"))
+						if(wild_match(ban, msg.get_userhost()))
+						{
+							log("BANNED: " << msg.get_nick());
+							continue;
+						}
+					std::async(std::launch::async, [&]{ execute(cmd, msg); });
 				}
 			}
 			else if(!msg.text.empty() && msg.to == nick)
@@ -1351,9 +1361,13 @@ void IrcBot::exec(const std::string& cmd, std::ostream* os)
 		}
 		else if(cmd == "/restart")
 		{
-			irc.quit("Reeeebooooot!");
-			restart = true;
+			for(const str& c: chans)
+			{
+				irc.say(c, get(PROP_GOODBYE));
+				irc.part(c);
+			}
 			done = true;
+			restart = true;
 		}
 		else if(cmd == "/reconfigure")
 		{
@@ -1436,7 +1450,8 @@ void IrcBot::exec(const std::string& cmd, std::ostream* os)
 			iss >> channel >> key >> std::ws;
 			if(!trim(channel).empty() && channel[0] == '#')
 			{
-				if(irc.join(channel, key)) chans.insert(channel);
+				if(irc.join(channel, key))
+					chans.insert(channel);
 				if(os)
 					(*os) << "OK";
 			}
@@ -1546,6 +1561,36 @@ void IrcBot::console()
 	}
 	log("Console ended:");
 }
+
+//void IrcBot::console()
+//{
+//	std::istream& is = this->is ? *this->is : std::cin;
+//	std::ostream& os = this->os ? *this->os : std::cout;
+//
+//	log("Console started:");
+//	str line;
+//	cstring_uptr input;
+//
+//	using_history();
+//	read_history((str(getenv("HOME")) + "/.skivvy/.history").c_str());
+//
+//	input.reset(readline((nick + ": ").c_str()));
+//
+//	while(!done)
+//	{
+//		trim(line = input.get());
+//		if(!line.empty())
+//		{
+//			add_history(line.c_str());
+//			write_history((str(getenv("HOME")) + "/.skivvy/.history").c_str());
+//
+//			exec(line, &os);
+//			os  << '\n';
+//		}
+//		input.reset(readline((nick + ": ").c_str()));
+//	}
+//	log("Console ended:");
+//}
 
 void IrcBot::pinger()
 {
