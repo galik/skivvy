@@ -1025,7 +1025,10 @@ private:
 	monitor_set monitors;
 	listener_set listeners;
 	service_map services;
-	command_map commands;
+
+	command_map commands; // str -> IrcBotPluginPtr
+	// str -> { str -> IrcBotPluginPtr } // channel -> ( cmd -> plugin }
+
 //	command_map channels; //
 //	ban_set banned;
 	property_map props;
