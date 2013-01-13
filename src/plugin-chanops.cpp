@@ -37,6 +37,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <skivvy/stl.h>
 #include <skivvy/str.h>
 #include <skivvy/ios.h>
+#include <skivvy/irc-constants.h>
 
 namespace skivvy { namespace ircbot {
 
@@ -44,6 +45,7 @@ IRC_BOT_PLUGIN(ChanopsIrcBotPlugin);
 PLUGIN_INFO("Channel Operations", "0.1");
 
 using namespace skivvy;
+using namespace skivvy::irc;
 using namespace skivvy::types;
 using namespace skivvy::utils;
 using namespace skivvy::string;
@@ -53,17 +55,26 @@ const str STORE_FILE_DEFAULT = "chanops-store.txt";
 
 static const str BAN_FILE = "chanops.ban.file";
 static const str BAN_FILE_DEFAULT = "chanops-bans.txt";
+
 static const str USER_FILE = "chanops.user.file";
 static const str USER_FILE_DEFAULT = "chanops-users.txt";
+
 const str GREET_JOINERS = "chanops.greet.active";
 const bool GREET_JOINERS_DEFAULT = false;
+
 const str UNGREET_FILE = "chanops.ungreet.file";
 const str UNGREET_FILE_DEFAULT = "chanops-ungreets.txt";
+
 const str GREETINGS_VEC = "chanops.greet";
 const str GREET_MIN_DELAY = "chanops.greet.delay.min";
 const siz GREET_MIN_DELAY_DEFAULT = 1;
 const str GREET_MAX_DELAY = "chanops.greet.delay.max";
 const siz GREET_MAX_DELAY_DEFAULT = 6;
+
+const str CHANOPS_TAKEOVER_DEOP = "chanops.takeover.deop";
+const str CHANOPS_TAKEOVER_BAN = "chanops.takeover.ban";
+const str CHANOPS_TAKEOVER_KEY = "chanops.takeover.key";
+
 
 static uint32_t checksum(const std::string& pass)
 {
@@ -273,13 +284,13 @@ bool ChanopsIrcBotPlugin::ban(const message& msg)
 	if(bot.nicks.find(msg.get_nick()) != bot.nicks.end()) // ban by nick
 	{
 		store.set("ban.nick." + channel, msg.get_nick());
-		irc->mode(msg.to, "+b *!*" + msg.get_nick() + "@*");
+		irc->mode(msg.to, " +b *!*" + msg.get_nick() + "@*");
 		irc->kick({msg.to}, {msg.get_user()}, "Bye bye.");
 	}
 	else // ban by regex on userhost
 	{
 		store.set("ban.preg." + channel, msg.get_user_params());
-		irc->mode(msg.to, "+b *!*" + msg.get_userhost());
+		irc->mode(msg.to, " +b *!*" + msg.get_userhost());
 		irc->kick({msg.to}, {msg.get_user()}, "Bye bye.");
 	}
 	return true;
@@ -354,10 +365,101 @@ void ChanopsIrcBotPlugin::exit()
 
 void ChanopsIrcBotPlugin::event(const message& msg)
 {
-	if(msg.cmd == "JOIN")
+//	BUG_COMMAND(msg);
+	if(msg.cmd == RPL_NAMREPLY)
+		name_event(msg);
+	else if(msg.cmd == NICK)
+		nick_event(msg);
+	else if(msg.cmd == RPL_WHOISUSER)
+		whoisuser_event(msg);
+	else if(msg.cmd == "JOIN")
 		join_event(msg);
 	else if(msg.cmd == "MODE")
 		mode_event(msg);
+}
+
+
+bool ChanopsIrcBotPlugin::nick_event(const message& msg)
+{
+	BUG_COMMAND(msg);
+	return true;
+}
+
+bool ChanopsIrcBotPlugin::whoisuser_event(const message& msg)
+{
+	BUG_COMMAND(msg);
+	// -----------------------------------------------------
+	//                  from: dreamhack.se.quakenet.org
+	//                   cmd: 311
+	//                params: Skivvy00 SooKee ~SooKee SooKee.users.quakenet.org *
+	//                    to: Skivvy00
+	//                  text: SooKee
+	// msg.from_channel()   : false
+	// msg.get_nick()       : dreamhack.se.quakenet.org
+	// msg.get_user()       : dreamhack.se.quakenet.org
+	// msg.get_host()       : dreamhack.se.quakenet.org
+	// msg.get_userhost()   : dreamhack.se.quakenet.org
+	// msg.get_user_cmd()   : SooKee
+	// msg.get_user_params():
+	// msg.reply_to()       : dreamhack.se.quakenet.org
+	// -----------------------------------------------------
+
+	str skip, nick, userhost;
+
+	lock_guard lock(nicks_mtx);
+	if(siss(msg.params) >> skip >> nick >> userhost)
+		nicks[nick] = userhost;
+
+	return true;
+}
+
+bool ChanopsIrcBotPlugin::name_event(const message& msg)
+{
+	BUG_COMMAND(msg);
+	// :dreamhack.se.quakenet.org 353 Skivvy = #openarena :Skivvy +SooKee +I4C @OAbot +Light3r +pet
+
+	str skip, chan;
+	siss iss(msg.params);
+	sgl(iss, skip, '#') >> chan;
+	chan.insert(0, "#");
+	bug_var(chan);
+
+	str tb_chan = bot.get("chanops.takover.chan");
+
+	// get nicks of everyome in the take-back channel.
+//	if(chan == tb_chan) // take back channel?
+	{
+		str nick;
+
+		iss.clear();
+		iss.str(msg.text);
+		iss >> nick; // ignogre my nick
+
+		bug_var(nick);
+
+		while(iss >> nick)
+		{
+			if(!nick.empty())
+			{
+				lock_guard lock(nicks_mtx);
+				if(nick[0] == '@' && nick != "Q" && nick != "@" + bot.nick)
+					tb_ops.insert(nick.substr(1));
+
+				irc->whois(nick); // initiate request, see whois_event() for response
+				nicks[nick[0] == '+' || nick[0] == '@' ? nick.substr(1) : nick];
+			}
+		}
+	}
+
+	// WHOIS
+	// RPL_WHOISUSER     :quakenet.org 311 Skivvy SooKee ~SooKee SooKee.users.quakenet.org * :SooKee
+	// RPL_WHOISCHANNELS :quakenet.org 319 Skivvy SooKee :@#skivvy @#openarenahelp +#openarena @#omfg
+	// RPL_WHOISSERVER   :quakenet.org 312 Skivvy SooKee *.quakenet.org :QuakeNet IRC Server
+	// UD                :quakenet.org 330 Skivvy SooKee SooKee :is authed as
+	// RPL_ENDOFWHOIS    :quakenet.org 318 Skivvy SooKee :End of /WHOIS list.
+
+
+	return true;
 }
 
 bool ChanopsIrcBotPlugin::mode_event(const message& msg)
@@ -389,6 +491,87 @@ bool ChanopsIrcBotPlugin::mode_event(const message& msg)
 		return false;
 	}
 
+	//     from: Q!TheQBot@CServe.quakenet.org
+	//      cmd: MODE
+	//   params: #skivvy-admin +o Skivvy00
+	//       to: #skivvy-admin
+	//     text: End of /NAMES list.
+	// msg.from_channel()   : true
+	// msg.get_nick()       : Q
+	// msg.get_user()       : TheQBot
+	// msg.get_host()       : CServe.quakenet.org
+	// msg.get_userhost()   : TheQBot@CServe.quakenet.org
+	// msg.get_user_cmd()   : End
+	// msg.get_user_params(): of /NAMES list.
+	// msg.reply_to()       : #skivvy-admin
+	// -----------------------------------------------------
+
+	str tb_chan = bot.get("chanops.takover.chan");
+
+	if(chan == tb_chan) // take back channel?
+	{
+		// did I just get ops?
+		if(msg.from == "Q!TheQBot@CServe.quakenet.org" && msg.params == tb_chan + " +o " + bot.nick)
+		{
+			lock_guard lock(nicks_mtx);
+
+			// kick all ops
+			str sep, kick_nicks;
+			for(const str& nick: tb_ops)
+				{ kick_nicks += sep + nick; sep = ","; }
+
+			const str TAKEOVER_KICK_MSG;
+			const str TAKEOVER_KICK_MSG_DEFAULT = "Reclaiming channel.";
+			if(!kick_nicks.empty())
+				irc->kick({chan}, {kick_nicks}, bot.get(TAKEOVER_KICK_MSG, TAKEOVER_KICK_MSG_DEFAULT));
+
+			// ban who you need to ban
+			for(const str& mask: bot.get_vec(CHANOPS_TAKEOVER_BAN))
+				irc->mode(chan, " +b " + mask);
+
+			// ban all ops nicks
+			for(const str& nick: tb_ops)
+				irc->mode(chan, " +b " + nick + "!*@*");
+
+			// open channel
+			irc->mode(chan, " -i");
+			irc->mode(chan, " -p");
+
+			if(bot.has(CHANOPS_TAKEOVER_KEY))
+				irc->mode(chan, " -k " + bot.get(CHANOPS_TAKEOVER_KEY));
+		}
+		// Now set up a thread banning ops more thoroughly as their
+		// whois data arrives
+
+		std::async(std::launch::async, [&]()
+		{
+			time_t start = std::time(0);
+			while(std::time(0) - start < 10 && !tb_ops.empty())
+			{
+				lock_guard lock(nicks_mtx);
+				for(str_set_citer oi = tb_ops.begin(); oi != tb_ops.end();)
+				{
+					if(!nicks[*oi].empty())
+					{
+						bug_var(nicks[*oi]);
+						str mask = "*!*@*";
+						siz pos = nicks[*oi].rfind(".");
+						bug_var(pos);
+						pos = nicks[*oi].rfind(".", --pos);
+						bug_var(pos);
+						mask += nicks[*oi].substr(0, pos);
+						bug_var(mask);
+						irc->mode(chan, " +b " + mask);
+						oi = tb_ops.erase(oi);
+					}
+					else
+						++oi;
+				}
+
+			}
+		});
+	}
+
 	bug_var(chan);
 	bug_var(flag);
 	bug_var(user);
@@ -415,7 +598,7 @@ bool ChanopsIrcBotPlugin::mode_event(const message& msg)
 		}
 	}
 
-
+	return true;
 }
 
 bool ChanopsIrcBotPlugin::join_event(const message& msg)

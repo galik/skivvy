@@ -909,6 +909,7 @@ bool IrcBot::init(const str& config_file)
 		// recv: !cmd2
 
 //		siss iss(line);
+		msg.clear();
 		parsemsg(siss(line), msg);
 
 		dispatch_msgevent(msg);
@@ -934,9 +935,9 @@ bool IrcBot::init(const str& config_file)
 		{
 			BUG_MSG(msg, RPL_WELCOME);
 			this->nick = msg.to;
+
 			for(str prop: get_vec(PROP_ON_CONNECT))
 				exec(replace(prop, "$me", nick));
-//			for(const str& channel: chans)
 			for(const str& channel: get_vec(PROP_JOIN))
 				official_join(channel);
 			registered = true;

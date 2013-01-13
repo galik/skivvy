@@ -101,6 +101,14 @@ typename Container::iterator erase_if(Container& c, Pred pred)
 	return c.erase(std::remove_if(c.begin(), c.end(), pred), c.end());
 }
 
+template<typename Container> inline
+void copy(const Container& c1, Container& c2)
+{
+	std::copy(c1.begin(), c1.end(), c2.begin());
+}
+
+
+
 }} // sookee::stl
 
 #endif /* _SKIVVY_STL_H_ */

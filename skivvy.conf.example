@@ -144,6 +144,23 @@ chanops.op: ~Zim106@
 chanops.op: ~Pixelized@
 chanops.op: ~Skivvy@
 
+// To recover a channel if this bot has auto-op
+chanops.takover.chan: #openarenahelp
+
+// who to deop first
+chanops.takover.deop: Hit|er
+chanops.takover.deop: Jewjitsu
+
+// then the bans
+chanops.takover.ban: *!*@*.secureserver.net
+chanops.takover.ban: *!*@*.fuse.net
+chanops.takover.ban: *!*dots@*
+chanops.takover.ban: *!*Omicr0n@*
+
+// if we know the channel key
+chanops.takeover.key: !W%*#&$%#$*&*#%
+
+
 # diction
 diction.host: pan.alephnull.com
 diction.port: 2628

@@ -35,6 +35,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 #include <bitset>
 #include <mutex>
+#include <map>
 
 #include <skivvy/store.h>
 
@@ -61,6 +62,17 @@ class ChanopsIrcBotPlugin _final_
 : public BasicIrcBotPlugin
 , public IrcBotMonitor
 {
+private:
+	typedef std::map<str, str> nick_map;
+	typedef std::pair<const str, str> nick_pair;
+
+	std::mutex nicks_mtx;
+	nick_map nicks;
+
+	// tack back server stuff
+	str_set tb_ops;
+
+
 public:
 
 	/*
@@ -131,8 +143,11 @@ private:
 	 */
 	bool list_users(const message& msg);
 	bool ban(const message& msg);
+	bool name_event(const message& msg);
 	bool join_event(const message& msg);
 	bool mode_event(const message& msg);
+	bool nick_event(const message& msg);
+	bool whoisuser_event(const message& msg);
 
 //	RandomTimer rt;
 

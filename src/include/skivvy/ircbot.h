@@ -71,6 +71,15 @@ struct message
 	str to; // "#oa-ictf" | Nick;
 	str text; // "evening all";
 
+	void clear()
+	{
+		from.clear();
+		cmd.clear();
+		params.clear();
+		to.clear();
+		text.clear();
+	}
+
 	/**
 	 * Parse an incoming line from the IRC server and break it down into
 	 * its relevant parts.

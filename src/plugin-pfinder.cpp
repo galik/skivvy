@@ -719,9 +719,50 @@ void PFinderIrcBotPlugin::oaunlink(const message& msg)
 	str group;
 	siz_vec items;
 
-	if(params >> group)
-		while(params >> n)
-			items.push_back(n);
+	if(!(params >> group))
+	{
+		log("Missing group");
+		return;
+	}
+
+//	if(params >> group)
+//		while(params >> n)
+//			items.push_back(n);
+
+	str range;
+	while(sgl(params, range, ','))
+	{
+		// "1-4", "7", "9-11 ", " 15 - 16" ...
+		siss iss(range);
+
+		str lb, ub;
+		sgl(sgl(iss, lb, '-'), ub);
+		if(lb.empty())
+		{
+			log("Bad range: " << range);
+			continue;
+		}
+
+		siz l, u;
+
+		if(!(siss(lb) >> l))
+		{
+			log("Bad range (unrecognized number): " << range);
+			continue;
+		}
+
+		if(ub.empty() || !(siss(ub) >> u))
+			u = l;
+
+		if(u < l)
+		{
+			log("Bad range (higher to lower): " << range);
+			continue;
+		}
+
+		for(siz i = l; i <= u; ++i)
+			items.push_back(i);
+	}
 
 	if(trim(group).empty() || items.empty())
 	{
@@ -916,7 +957,7 @@ bool PFinderIrcBotPlugin::initialize()
 	add
 	({
 		"!oaunlink"
-		, "!oaunlink <nick|group> <#>* Unlink either a numbered item from an IRC <nick> or a <group> added through !oalink."
+		, "!oaunlink <nick|group> 1-3, 5, 7-8 Unlink either a list of numbered items or ranges from an IRC <nick> or a <group> added through !oalink."
 		, [&](const message& msg){ oaunlink(msg); }
 	});
 	add

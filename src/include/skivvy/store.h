@@ -40,6 +40,8 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 #include <pcrecpp.h>
 
+#include <skivvy/stl.h>
+
 namespace skivvy { namespace utils {
 
 using namespace skivvy::types;
@@ -125,6 +127,12 @@ public:
 	virtual str get_at(const str& k, siz n, const str& dflt = "") = 0;
 
 	virtual str_vec get_vec(const str& k) = 0;
+//	str_set get_set(const str& k)
+//	{
+//		str_set set;
+//		return stl::copy(get_vec(k), std::inserter(set, set.begin()));
+//		return set;
+//	}
 
 	/**
 	 * Clear entire store.
