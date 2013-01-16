@@ -8,6 +8,28 @@
 #ifndef MAIL_H_
 #define MAIL_H_
 
+/*-----------------------------------------------------------------.
+| Copyright (C) 2012 SooKee oaskivvy@gmail.com               |
+'------------------------------------------------------------------'
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+02110-1301, USA.
+
+http://www.gnu.org/licenses/gpl-2.0.html
+
+'-----------------------------------------------------------------*/
 #include <skivvy/types.h>
 #include <skivvy/logrep.h>
 #include <skivvy/socketstream.h>
@@ -21,6 +43,25 @@ class SMTP
 {
 	const str host;
 	const long port;
+
+	bool tx(std::ostream& os, const str& data = "")
+	{
+		return os << data << "\r\n" << std::flush;
+	}
+
+	bool rx(std::istream& is, const str& code)
+	{
+		str reply;
+		if(!sgl(is, reply))
+		{
+			log(strerror(errno));
+			return false;
+		}
+		log(trim(reply));
+		if(reply.find(code))
+			return false;
+		return true;
+	}
 
 public:
 	// protocol
@@ -46,78 +87,41 @@ public:
 
 		ss.open(host, port);
 
-		if(!sgl(ss, reply))
-		{
-			log(strerror(errno));
-			return false;
-		}
-		log(trim(reply));
-		if(reply.find("220"))
+		if(!rx(ss, "220"))
 			return false;
 
-		ss << "HELO sookee.dyndns.org" << "\r\n" << std::flush;
-		if(!sgl(ss, reply))
-		{
-			log(strerror(errno));
-			return false;
-		}
-		log(trim(reply));
-		if(reply.find("250"))
+		tx(ss, "HELO sookee.dyndns.org");
+		if(!rx(ss, "250"))
 			return false;
 
 		// one or more
 		{
-			ss << "MAIL FROM: " << mailfrom << "\r\n" << std::flush;
-			if(!sgl(ss, reply))
-			{
-				log(strerror(errno));
-				return false;
-			}
-			log(trim(reply));
-			if(reply.find("250"))
+			tx(ss, "MAIL FROM: " + mailfrom);
+			if(!rx(ss, "250"))
 				return false;
 
 			// one or more
 			{
-				ss << "RCPT TO: " << rcptto << "\r\n" << std::flush;
-				if(!sgl(ss, reply))
-				{
-					log(strerror(errno));
-					return false;
-				}
-				log(trim(reply));
-				if(reply.find("250"))
+				tx(ss, "RCPT TO: " + rcptto);
+				if(!rx(ss, "250"))
 					return false;
 			}
 
-			ss << "DATA" << "\r\n" << std::flush;
-			ss << "From: " << mailfrom << "\r\n" << std::flush;
-			ss << "To: " << rcptto << "\r\n" << std::flush;
-			ss << "Date: " << time << "\r\n" << std::flush;
-			ss << "Subject: " << subject << "\r\n" << std::flush;
-			ss << "Reply-To: " << replyto << "\r\n" << std::flush;
-			ss << "\r\n" << std::flush;
-
-			ss << data << "\r\n" << std::flush;
-			ss << "." << "\r\n" << std::flush;
-			if(!sgl(ss, reply))
-			{
-				log(strerror(errno));
-				return false;
-			}
-			log(trim(reply));
-			if(reply.find("354"))
+			tx(ss, "DATA");
+			tx(ss, "From: " + mailfrom);
+			tx(ss, "To: " + rcptto);
+			tx(ss, "Date: " + time);
+			tx(ss, "Subject: " + subject);
+			tx(ss, "Reply-To: " + replyto);
+			tx(ss);
+			tx(ss, data);
+			tx(ss, ".");
+			if(!rx(ss, "354"))
 				return false;
 		}
 
-		ss << "QUIT" << "\r\n" << std::flush;
-		if(!sgl(ss, reply))
-		{
-			log(strerror(errno));
-			return false;
-		}
-		log(trim(reply));
-		if(reply.find("250"))
+		tx(ss, "QUIT");
+		if(!rx(ss, "250"))
 			return false;
 
 		ss.close();
@@ -137,7 +141,7 @@ public:
 //	smtp.to = "SooKee " + smtp.rcptto;
 //	smtp.replyto = "Skivvy <oaskivvy@gmail.com>";
 //
-//	smtp.sendmail("Another hopeless go three.", "Time to be different again and again.");
+//	smtp.sendmail("New World Order.", "Some thing great.");
 //}
 
 
