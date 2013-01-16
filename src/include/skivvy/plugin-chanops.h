@@ -96,19 +96,20 @@ public:
 	 */
 	struct user_t
 	{
-		str prefix; // <nick>!<ircuser>@<host>
+//		str prefix; // <nick>!<ircuser>@<host>
+		str userhost; // <ircuser>@<host>
 		str user; // the user by which we logged in as
 		str nick; // current nick
 		str_set groups;
 
 //		user_t(const user_t& u): prefix(u.prefix) {}
 		user_t(const message& msg, const user_r& ur)
-		: prefix(msg.from), user(ur.user)
+		: userhost(msg.get_userhost()), user(ur.user)
 		, nick(msg.get_nick()), groups(ur.groups)
 		{}
 
-		bool operator<(const user_t& u) const { return prefix < u.prefix; }
-		bool operator==(const user_t& u) const { return prefix == u.prefix; }
+		bool operator<(const user_t& u) const { return user < u.user; }
+		bool operator==(const user_t& u) const { return user == u.user; }
 	};
 
 	typedef std::set<user_t> user_set;

@@ -170,7 +170,7 @@ bool ChanopsIrcBotPlugin::permit(const message& msg)
 	bool in = false;
 	for(const user_t& u: users)
 	{
-		if(u.prefix != msg.from)
+		if(u.userhost != msg.get_userhost())
 			continue;
 		in = true;
 		for(const str& g: u.groups)
@@ -265,12 +265,12 @@ bool ChanopsIrcBotPlugin::login(const message& msg)
 
 void ChanopsIrcBotPlugin::apply_acts(const user_t& u)
 {
-	if(u.groups.count(G_BANNED))
-		irc->mode(u.nick, "+b");
-	else if(u.groups.count(G_OPPED))
-		irc->mode(u.nick, "+o");
-	else if(u.groups.count(G_VOICED))
-		irc->mode(u.nick, "+v");
+//	if(u.groups.count(G_BANNED))
+//		irc->mode(u.nick, "+b");
+//	else if(u.groups.count(G_OPPED))
+//		irc->mode(u.nick, "+o");
+//	else if(u.groups.count(G_VOICED))
+//		irc->mode(u.nick, "+v");
 }
 
 bool ChanopsIrcBotPlugin::list_users(const message& msg)
@@ -285,7 +285,7 @@ bool ChanopsIrcBotPlugin::list_users(const message& msg)
 	lock_guard lock(users_mtx);
 
 	for(const user_t& u: users)
-		bot.fc_reply_pm(msg, u.user + ": " + u.prefix);
+		bot.fc_reply_pm(msg, u.user + ": " + u.userhost);
 	return true;
 }
 
@@ -326,6 +326,26 @@ bool ChanopsIrcBotPlugin::ban(const message& msg)
 bool ChanopsIrcBotPlugin::reclaim(const message& msg)
 {
 	BUG_COMMAND(msg);
+	if(!permit(msg))
+		return false;
+
+	// cmd: !reclaim
+	//                  from: SooKee!~SooKee@SooKee.users.quakenet.org
+	//                   cmd: PRIVMSG
+	//                params: #skivvy
+	//                    to: #skivvy
+	//                  text: !reclaim SooKee
+	// msg.from_channel()   : true
+	// msg.get_nick()       : SooKee
+	// msg.get_user()       : ~SooKee
+	// msg.get_host()       : SooKee.users.quakenet.org
+	// msg.get_userhost()   : ~SooKee@SooKee.users.quakenet.org
+	// msg.get_user_cmd()   : !reclaim
+	// msg.get_user_params(): SooKee
+	// msg.reply_to()       : #skivvy
+	// 2013-01-16 09:12:51: IrcBot::execute(): Unknown command: !reclaim
+
+//	users;
 
 	str nick;
 	if(!bot.extract_params(msg, {&nick}))
@@ -372,6 +392,12 @@ bool ChanopsIrcBotPlugin::initialize()
 		}
 	}
 
+	add
+	({
+		"!reclaim" // no ! indicated PM only command
+		, "!reclaim <nick> - notify when <nick> is unused (must be logged in)."
+		, [&](const message& msg){ signup(msg); }
+	});
 	add
 	({
 		"register" // no ! indicated PM only command
@@ -487,6 +513,7 @@ bool ChanopsIrcBotPlugin::whoisuser_event(const message& msg)
 bool ChanopsIrcBotPlugin::name_event(const message& msg)
 {
 	BUG_COMMAND(msg);
+
 	// :dreamhack.se.quakenet.org 353 Skivvy = #openarena :Skivvy +SooKee +I4C @OAbot +Light3r +pet
 
 	str skip, chan;
@@ -540,6 +567,7 @@ std::future<void> fut;
 bool ChanopsIrcBotPlugin::mode_event(const message& msg)
 {
 	BUG_COMMAND(msg);
+
 	// -----------------------------------------------------
 	//                  from: SooKee!~SooKee@SooKee.users.quakenet.org
 	//                   cmd: MODE
@@ -644,7 +672,7 @@ bool ChanopsIrcBotPlugin::mode_event(const message& msg)
 
 bool ChanopsIrcBotPlugin::join_event(const message& msg)
 {
-//	BUG_COMMAND(msg);
+	BUG_COMMAND(msg);
 
 	// Auto OP/VOICE/MODE/bans etc..
 
@@ -727,10 +755,15 @@ bool ChanopsIrcBotPlugin::enforce_dynamic_rules(const str& chan, const str& user
 //			irc->kick({msg.to}, {msg.get_user()}, "Bye bye.");
 //			return true;
 //		}
+	return true;
 }
 
 bool ChanopsIrcBotPlugin::enforce_static_rules(const str& chan, const str& userhost, const str& nick)
 {
+	bug_func();
+	bug_var(chan);
+	bug_var(userhost);
+	bug_var(nick);
 	str chan_pattern, who_pattern;
 
 	str why;

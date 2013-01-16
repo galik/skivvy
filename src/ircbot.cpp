@@ -980,7 +980,7 @@ bool IrcBot::init(const str& config_file)
 		}
 		else if(msg.cmd == JOIN)
 		{
-			BUG_MSG(msg, JOIN);
+//			BUG_MSG(msg, JOIN);
 			// track known nicks
 			const str who = msg.get_nick();
 			str_set& known = nicks[msg.params];
@@ -1081,6 +1081,22 @@ bool IrcBot::init(const str& config_file)
 							fc_reply(msg, "Incorrect password.");
 						}
 					}
+				}
+				else if(cmd == "!reconfigure")
+				{
+					str pass;
+					if(!(ios::getstring(siss(msg.get_user_params()), pass)))
+					{
+						fc_reply(msg, "!restart <password>");
+						continue;
+					}
+					bug_var(pass);
+					if(!have(PROP_PASSWORD) || get(PROP_PASSWORD) == pass)
+					{
+						exec("/reconfigure");
+						continue;
+					}
+					fc_reply(msg, "Wrong password");
 				}
 				else if(cmd == "!restart")
 				{
