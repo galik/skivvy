@@ -445,6 +445,8 @@ void PFinderIrcBotPlugin::cvar(const message& msg)
 void PFinderIrcBotPlugin::oaserver(const message& msg)
 {
 	BUG_COMMAND(msg);
+	bot.fc_reply(msg, "!oaserver function is officially off-line until some idiot fixed it.");
+	return;
 
 	str param = msg.get_user_params();
 
@@ -521,17 +523,21 @@ void PFinderIrcBotPlugin::oaserver(const message& msg)
 	bug_var(uid);
 	bug_var(ifs);
 
+	siz n = 0;
 	while(ifs >> s)
 	{
-		siz n = 0;
 		if(!match_uid)
 		{
+			// NOTE: Add proper batching with #<batch number>
 			bug("matching: " << s.match);
-			if(bot.wild_match("*" + lowercase(param) + "*", lowercase(s.match)) && ++n < 12)
+			if(bot.wild_match("*" + lowercase(param) + "*", lowercase(s.match)))
 			{
-				std::ostringstream oss;
-				oss << s.uid << ' ' << s.print << ' ' << s.gametype;
-				bot.fc_reply(msg, oss.str());
+				if(++n < 8)
+				{
+					std::ostringstream oss;
+					oss << s.uid << ' ' << s.print << ' ' << s.gametype;
+					bot.fc_reply(msg, oss.str());
+				}
 			}
 		}
 		else if(s.uid == match_uid)

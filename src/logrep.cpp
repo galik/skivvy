@@ -30,14 +30,17 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 #include <skivvy/logrep.h>
 #include <skivvy/str.h>
+#include <skivvy/ansi.h>
 
 #include <cctype>
 #include <sstream>
 #include <algorithm>
 #include <thread>
+#include <numeric>
 
 namespace skivvy { namespace utils {
 
+using namespace skivvy::ansi;
 using namespace skivvy::types;
 using namespace skivvy::string;
 
@@ -78,4 +81,72 @@ str obj_name(void* id)
 	return "{" + std::to_string(obj_map[id]) + ": " + oss.str() + "}";
 }
 
-}} // sookee::utils
+const str COL = "\\[\\033[1;34m\\]";
+const str OFF = "\\[\\033[0m\\]";
+
+std::ostream& botbug(std::ostream* os)
+{
+	static std::ostream* osp = 0;
+	static ansistream as(std::cout);
+
+	if(!osp) // initialize
+		if(!os)
+			osp = &std::cout;
+//			osp = &as;
+	if(os) // change
+		osp = os;
+	return *osp;
+}
+
+str notbug()
+{
+	return ansi_esc({NORM});
+}
+
+str embellish(siz indent)
+{
+	return std::string(indent, '-');
+}
+
+const int_vec col =
+{
+	FG_RED
+	, FG_GREEN
+	, FG_YELLOW
+	, FG_BLUE
+	, FG_MAGENTA
+	, FG_CYAN
+};
+
+str get_col(const str& name, int seed = 0)
+{
+	static str_map m;
+
+	if(m.find(name) == m.end())
+		m[name] = ansi_esc({col[std::accumulate(name.begin(), name.end(), seed) % col.size()]});// ;
+
+	return m[name];
+}
+
+__scope__bomb__::__scope__bomb__(const char* name): name(name)
+{
+	++indent;
+	bug(get_col(name) << str(indent, '-') + "> " << name << ' ' << get_col(THREAD, 1) << THREAD << get_col(OBJECT, 2) << OBJECT << ansi_esc({NORM}));
+}
+__scope__bomb__::~__scope__bomb__()
+{
+	bug(get_col(name) << "<" << str(indent, '-') << name << ' ' << get_col(THREAD, 1) << THREAD << get_col(OBJECT, 2) << OBJECT << ansi_esc({NORM}));
+	--indent;
+}
+
+int rand_int(int low, int high)
+{
+//	static /*std::default_random_engine*/ std::mt19937 re {};
+//	static std::uniform_int_distribution<int> uid {};
+//	return uid(re, std::uniform_int_distribution<int>::param_type {low, high});
+	static std::minstd_rand g(std::time(0));
+	std::uniform_int_distribution<> d(low, high);
+	return d(g);
+}
+
+}} // skivvy::utils

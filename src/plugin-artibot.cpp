@@ -40,6 +40,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <thread>
 
 #include <skivvy/logrep.h>
+#include <skivvy/stl.h>
 #include <skivvy/str.h>
 
 namespace skivvy { namespace ircbot {
@@ -47,6 +48,7 @@ namespace skivvy { namespace ircbot {
 IRC_BOT_PLUGIN(ArtibotIrcBotPlugin);
 PLUGIN_INFO("Artibot AI", "0.1");
 
+using namespace skivvy;
 using namespace skivvy::types;
 using namespace skivvy::utils;
 using namespace skivvy::string;
@@ -57,8 +59,8 @@ const str AUTOREAD = "artibot.autoread";
 const siz AUTOREAD_DEFAULT = 60 * 60 * 24; // daily
 const str OFFENDER_FILE = "artibot.offender_file";
 const str OFFENDER_FILE_DEFAULT = "artibot-offenders.txt";
-const str BANNED_WORD_FILE = "artibot.banned_word_fil";
-const str BANNED_WORD_FILE_DEFAULT = "airtibot-banned-words.tx";
+const str BANNED_WORD_FILE = "artibot.banned_word_file";
+const str BANNED_WORD_FILE_DEFAULT = "airtibot-banned-words.txt";
 const str RESPOND = "artibot.respond";
 const str RESPOND_DIRECT = "direct";
 const str RESPOND_CASUAL = "casual";
@@ -449,26 +451,27 @@ str ArtibotIrcBotPlugin::mh(const message& msg)
 	while(iss >> word)
 	{
 		bug("CHECK WORD: " << word);
-		if(std::find(banned_words.cbegin(), banned_words.cend(), lowercase(word)) != banned_words.cend())
-		{
-			offender_mtx.lock();
-			++offender_map[msg.from];
-
-			// Save offender map
-			std::ofstream ofs(bot.getf(OFFENDER_FILE, OFFENDER_FILE_DEFAULT));
-			for(const str_siz_pair& p: offender_map)
-				ofs << p.first << '\n' << p.second << '\n';
-			ofs.close();
-			offender_mtx.unlock();
-
-			if(offender_map[msg.from] > 3)
+		for(const str& match: banned_words)
+			if(bot.wild_match(match, word))
 			{
-				log("Adding to ignores: " << msg.from);
-				offends.push_back(msg.from);
+				offender_mtx.lock();
+				++offender_map[msg.from];
+
+				// Save offender map
+				std::ofstream ofs(bot.getf(OFFENDER_FILE, OFFENDER_FILE_DEFAULT));
+				for(const str_siz_pair& p: offender_map)
+					ofs << p.first << '\n' << p.second << '\n';
+				ofs.close();
+				offender_mtx.unlock();
+
+				if(offender_map[msg.from] > 3)
+				{
+					log("Adding to ignores: " << msg.from);
+					offends.push_back(msg.from);
+				}
+				log("Warning to: " << msg.from);
+				return random_excuse(word);
 			}
-			log("Warning to: " << msg.from);
-			return random_excuse(word);
-		}
 	}
 	return mh(text);
 }
@@ -507,7 +510,8 @@ bool ArtibotIrcBotPlugin::initialize()
 
 		str word;
 		std::ifstream ifs(bot.getf(BANNED_WORD_FILE, BANNED_WORD_FILE_DEFAULT));
-		while(std::getline(ifs, word) && !trim(word).empty()) banned_words.push_back(word);
+		while(std::getline(ifs, word) && !trim(word).empty())
+			banned_words.push_back(word);
 	}
 	else
 	{
@@ -621,42 +625,51 @@ void ArtibotIrcBotPlugin::event(const message& msg)
 		extract_delimited_text(msg.text, "\001ACTION ", "\001", action);
 		bug("ACTION DETECTED: " << action);
 
-		// check action for rude words
-		std::istringstream iss(action);
+		bool allow_action = true;
+
 		str word;
+		siss iss(action);
 		while(iss >> word)
-			if(std::find(banned_words.cbegin(), banned_words.cend(), lowercase(word)) != banned_words.cend())
-				return;
+			for(const str& match: banned_words)
+				if(bot.wild_match(match, word))
+				{
+					log("BANNED WORD found in action: " << action << " - rejecting");
+					allow_action = false;
+					break;
+				}
 
-		size_t pos = 0;
-		const str_set& nicks = bot.nicks[msg.params];
-		bug("msg.params: " << msg.params);
 
-		for(pos = 0; (pos = action.find("*", pos)) != str::npos; pos += 2)
-			action.replace(pos, 1, "\\*");
-
-		bug_var(action);
-
-		for(const str& nick: nicks)
-			for(pos = 0; (pos = action.find(nick, pos)) != str::npos; ++pos)
-				action.replace(pos, nick.size(), "*");
-
-		bug_var(action);
-
-		random_acts_mtx.lock();
-		std::ifstream ifs(bot.getf(RANDOM_ACTS_FILE, RANDOM_ACTS_FILE_DEFAULT));
 		str_set acts;
+		lock_guard lock(random_acts_mtx);
+		std::ifstream ifs(bot.getf(RANDOM_ACTS_FILE, RANDOM_ACTS_FILE_DEFAULT));
 		str act;
 		while(std::getline(ifs, act))
 			acts.insert(act);
 		ifs.close();
-		acts.insert(action);
-		std::ofstream ofs(bot.getf(RANDOM_ACTS_FILE, RANDOM_ACTS_FILE_DEFAULT));
-		for(const str& act: acts)
-			ofs << act << '\n';
-		ofs.close();
-		random_acts_mtx.unlock();
 
+		if(allow_action)
+		{
+			size_t pos = 0;
+			const str_set& nicks = bot.nicks[msg.params];
+			bug("msg.params: " << msg.params);
+
+			for(pos = 0; (pos = action.find("*", pos)) != str::npos; pos += 2)
+				action.replace(pos, 1, "\\*");
+
+			bug_var(action);
+
+			for(const str& nick: nicks)
+				for(pos = 0; (pos = action.find(nick, pos)) != str::npos; ++pos)
+					action.replace(pos, nick.size(), "*");
+
+			bug_var(action);
+
+			acts.insert(action);
+			std::ofstream ofs(bot.getf(RANDOM_ACTS_FILE, RANDOM_ACTS_FILE_DEFAULT));
+			for(const str& act: acts)
+				ofs << act << '\n';
+			ofs.close();
+		}
 		if(acts.empty())
 			return;
 

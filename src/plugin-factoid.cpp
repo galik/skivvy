@@ -176,7 +176,7 @@ bool FactoidIrcBotPlugin::findfact(const message& msg)
 {
 	BUG_COMMAND(msg);
 
-	// !findfact *([group1,group2]) <regex>"
+	// !findfact *([group1,group2]) <wildcard>"
 
 
 	siss iss(msg.get_user_params());
@@ -200,7 +200,7 @@ bool FactoidIrcBotPlugin::findfact(const message& msg)
 	ios::getstring(iss, key_match);
 	bug_var(key_match);
 
-	str_set keys = store.get_keys_if_preg(lowercase(key_match));
+	str_set keys = store.get_keys_if_wild(lowercase(key_match));
 
 	if(!groups.empty()) // restrict search to these groups
 	{
@@ -258,7 +258,7 @@ bool FactoidIrcBotPlugin::findgroup(const message& msg)
 {
 	BUG_COMMAND(msg);
 
-	//  !fg <regex>
+	//  !fg <wildcard>
 
 	str_set groups;
 	str_set keys = index.get_keys();
@@ -268,7 +268,7 @@ bool FactoidIrcBotPlugin::findgroup(const message& msg)
 		siss iss(index.get(key));
 		str group;
 		while(sgl(iss, group, ','))
-			if(bot.preg_match(msg.get_user_params(), group))
+			if(bot.wild_match(msg.get_user_params(), group))
 				groups.insert(group);
 	}
 
@@ -406,7 +406,7 @@ bool FactoidIrcBotPlugin::initialize()
 	add
 	({
 		"!findfact"
-		, "!findfact *([<group1>,<group2>]) <regex> - Get a list of matching fact keys."
+		, "!findfact *([<group1>,<group2>]) <wildcard> - Get a list of matching fact keys."
 		, [&](const message& msg){ findfact(msg); }
 	});
 	add
@@ -418,7 +418,7 @@ bool FactoidIrcBotPlugin::initialize()
 	add
 	({
 		"!findgroup"
-		, "!findgroup *([<group1>,<group2>]) <regex> - Get a list of matching fact keys."
+		, "!findgroup <wildcard> - Get a list of matching groups."
 		, [&](const message& msg){ findgroup(msg); }
 	});
 	add

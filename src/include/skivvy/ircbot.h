@@ -1132,7 +1132,7 @@ public:
 	/**
 	 * Match s according to regular expression r.
 	 */
-	bool ereg_match(const str& r, const str& s); // extended regex
+//	bool ereg_match(const str& r, const str& s); // extended regex
 	bool preg_match(const str& r, const str& s, bool full = false); // peare regex
 	bool wild_match(const str& w, const str& s, int flags = 0);
 

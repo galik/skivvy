@@ -54,6 +54,12 @@ typename Container::iterator find(Container& c, const T& t)
 }
 
 template<typename Container, typename T> inline
+bool found(Container& c, const T& t)
+{
+	return std::find(c.cbegin(), c.cend(), t) != c.cend();
+}
+
+template<typename Container, typename T> inline
 typename Container::const_iterator find(const Container& c, const T& t)
 {
 	return std::find(c.cbegin(), c.cend(), t);

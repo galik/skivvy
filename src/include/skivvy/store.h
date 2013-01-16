@@ -39,6 +39,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <sstream>
 
 #include <pcrecpp.h>
+#include <fnmatch.h>
 
 #include <skivvy/stl.h>
 
@@ -51,11 +52,16 @@ class Store
 protected:
 //	str_vec_map store;
 
-	bool preg_match(const str& s, const str& r, bool full = false)
+	bool pcre_match(const str& r, const str& s, bool full = false)
 	{
 		if(full)
 			return pcrecpp::RE(r).FullMatch(s);
 		return pcrecpp::RE(r).PartialMatch(s);
+	}
+
+	bool wild_match(const str& w, const str& s, int flags = 0)
+	{
+		return !fnmatch(w.c_str(), s.c_str(), flags | FNM_EXTMATCH);
 	}
 
 public:
@@ -115,7 +121,8 @@ public:
 		set_at(k, 0, v);
 	}
 
-	virtual str_set get_keys_if_preg(const str& reg) = 0;
+	virtual str_set get_keys_if_pcre(const str& r) = 0;
+	virtual str_set get_keys_if_wild(const str& w) = 0;
 
 	/**
 	 * Return a set of all keys
@@ -216,12 +223,22 @@ public:
 		load();
 	}
 
-	str_set get_keys_if_preg(const str& reg)
+	str_set get_keys_if_pcre(const str& reg)
 	{
 		str_set res;
 		lock_guard lock(mtx);
 		for(const str_vec_pair& p: store)
-			if(preg_match(p.first, reg))
+			if(pcre_match(reg, p.first))
+				res.insert(p.first);
+		return res;
+	}
+
+	str_set get_keys_if_wild(const str& wld)
+	{
+		str_set res;
+		lock_guard lock(mtx);
+		for(const str_vec_pair& p: store)
+			if(wild_match(p.first, wld))
 				res.insert(p.first);
 		return res;
 	}
@@ -366,7 +383,7 @@ private:
 public:
 	CacheStore(const str& file, siz max = 0):file(file), max(max) {}
 
-	str_set get_keys_if_preg(const str& reg)
+	str_set get_keys_if_pcre(const str& reg)
 	{
 		str_set res;
 		lock_guard lock(mtx);
@@ -374,7 +391,7 @@ public:
 		ifs.open(file);
 		str line;
 		while(sgl(ifs, line))
-			if(sgl(siss(line), line, ':') && preg_match(line, reg))
+			if(sgl(siss(line), line, ':') && pcre_match(reg, line))
 				res.insert(line);
 		ifs.close();
 
@@ -532,14 +549,14 @@ private:
 public:
 	FileStore(const str& file):file(file) {}
 
-	str_set get_keys_if_preg(const str& reg)
+	str_set get_keys_if_pcre(const str& reg)
 	{
 		str_set res;
 		lock_guard lock(mtx);
 
 		ifs.open(file);
 		while(sgl(ifs, line))
-			if(sgl(siss(line), line, ':') && preg_match(line, reg))
+			if(sgl(siss(line), line, ':') && pcre_match(reg, line))
 				res.insert(line);
 		ifs.close();
 

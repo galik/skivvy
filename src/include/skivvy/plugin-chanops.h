@@ -138,6 +138,20 @@ private:
 	//void apply_acts(const str& id);
 	void apply_acts(const user_t& u);
 
+
+	bool enforce_rules(const str& chan);
+	bool enforce_rules(const str& chan, const str& nick);
+
+	/**
+	 * Rules found in the config file
+	 */
+	bool enforce_static_rules(const str& chan, const str& userhost, const str& nick);
+	/**
+	 * Rules found in the persistant store
+	 */
+	bool enforce_dynamic_rules(const str& chan, const str& userhost, const str& nick);
+	bool kickban(const str& chan, const str& nick);
+
 	/**
 	 * List users
 	 */

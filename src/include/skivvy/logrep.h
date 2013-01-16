@@ -52,18 +52,8 @@ using namespace skivvy::types;
 /*
  * Basic bug reporting.
  */
-inline
-std::ostream& botbug(std::ostream* os = 0)
-{
-	static std::ostream* osp = 0;
-
-	if(!osp) // initialize
-		if(!os)
-			osp = &std::cout;
-	if(os) // change
-		osp = os;
-	return *osp;
-}
+std::ostream& botbug(std::ostream* os = 0);
+str notbug();
 
 str thread_name();
 str obj_name(void* id);
@@ -84,16 +74,8 @@ struct __scope__bomb__
 {
 	static size_t indent;
 	const char* name;
-	__scope__bomb__(const char* name): name(name)
-	{
-		++indent;
-		bug(std::string(indent, '-') + "> " << name << ' ' << THREAD << OBJECT);
-	}
-	~__scope__bomb__()
-	{
-		bug("<" << std::string(indent, '-') << name << ' ' << THREAD << OBJECT);
-		--indent;
-	}
+	__scope__bomb__(const char* name);
+	~__scope__bomb__();
 };
 
 #define QUOTE(s) #s
@@ -161,14 +143,7 @@ std::ostream& botlog(std::ostream* os = 0)
 
 #define log(m) do{skivvy::utils::botlog() << skivvy::utils::get_stamp() << ": " << m << std::endl;}while(false)
 
-inline
-int rand_int(int low, int high)
-{
-	static /*std::default_random_engine*/ std::mt19937 re {};
-//	using Dist = uniform_int_distribution<int>;
-	static std::uniform_int_distribution<int> uid {};
-	return uid(re, std::uniform_int_distribution<int>::param_type {low, high});
-}
+int rand_int(int low, int high);
 
 // Console output
 #define con(m) do{std::cout << m << std::endl;}while(false)

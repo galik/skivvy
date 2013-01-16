@@ -55,7 +55,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <functional>
 
 #include <dirent.h>
-#include <regex.h>
+//#include <regex.h>
 #include <pcrecpp.h>
 #include <readline/readline.h>
 #include <readline/history.h>
@@ -70,9 +70,9 @@ using namespace skivvy::types;
 using namespace skivvy::utils;
 using namespace skivvy::string;
 
-const str SERVER_HOST = "server_host";
-const str SERVER_PORT = "server_port";
-const siz SERVER_PORT_DEFAULT = 6667;
+static const str SERVER_HOST = "server_host";
+static const str SERVER_PORT = "server_port";
+static const siz SERVER_PORT_DEFAULT = 6667;
 
 static const str PROP_PASSWORD = "password";
 static const str PROP_WELCOME = "welcome";
@@ -81,6 +81,11 @@ static const str PROP_ON_CONNECT = "on_connect";
 static const str PROP_SERVER_PASSWORD = "server_password";
 static const str PROP_SERVER_RETRIES = "server_retries";
 static const str PROP_JOIN = "join";
+
+static const str FLOOD_TIME_BETWEEN_POLLS = "flood.poll.time";
+static const siz FLOOD_TIME_BETWEEN_POLLS_DEFAULT = 300;
+static const str FLOOD_TIME_BETWEEN_EVENTS = "flood.event.time";
+static const siz FLOOD_TIME_BETWEEN_EVENTS_DEFAULT = 1600;
 
 
 // :port80a.se.quakenet.org 353 Skivvy = #oa-ictf :Skivvy @SooKee pet @Q
@@ -664,6 +669,11 @@ void IrcBot::official_join(const str& channel)
 	irc.say(channel, get_name() + " v" + get_version());
 
 	str_vec welcomes = get_vec(PROP_WELCOME);
+
+	bug("TESTING WELCOME VECTOR");
+	for(const str& w: welcomes)
+		bug_var(w);
+
 	if(!welcomes.empty())
 		irc.say(channel, welcomes[rand_int(0, welcomes.size() - 1)]);
 }
@@ -779,11 +789,6 @@ void IrcBot::dispatch_msgevent(const message& msg)
 		if(now - mi->second.when < int(mi->second.timeout))
 			mi->second.func(msg);
 }
-
-const str FLOOD_TIME_BETWEEN_POLLS = "flood.poll.time";
-const siz FLOOD_TIME_BETWEEN_POLLS_DEFAULT = 300;
-const str FLOOD_TIME_BETWEEN_EVENTS = "flood.event.time";
-const siz FLOOD_TIME_BETWEEN_EVENTS_DEFAULT = 1600;
 
 bool IrcBot::init(const str& config_file)
 {
@@ -1018,9 +1023,11 @@ bool IrcBot::init(const str& config_file)
 					if(!have(PROP_PASSWORD) || get(PROP_PASSWORD) == msg.get_user_params())
 					{
 						str_vec goodbyes = get_vec(PROP_GOODBYE);
+
 						for(const str& c: chans)
 						{
 							if(!goodbyes.empty())
+//								irc.part(c, goodbyes[rand_int(0, goodbyes.size() - 1)]);
 								irc.say(c, goodbyes[rand_int(0, goodbyes.size() - 1)]);
 							irc.part(c);
 						}
@@ -1353,22 +1360,28 @@ void IrcBot::exec(const std::string& cmd, std::ostream* os)
 		}
 		else if(cmd == "/die")
 		{
+			str_vec goodbyes = get_vec(PROP_GOODBYE);
+
 			for(const str& c: chans)
 			{
-				irc.say(c, get(PROP_GOODBYE));
+				if(!goodbyes.empty())
+					irc.say(c, goodbyes[rand_int(0, goodbyes.size() - 1)]);
 				irc.part(c);
 			}
 			done = true;
 		}
 		else if(cmd == "/restart")
 		{
+			str_vec goodbyes = get_vec(PROP_GOODBYE);
+
 			for(const str& c: chans)
 			{
-				irc.say(c, get(PROP_GOODBYE));
+				if(!goodbyes.empty())
+					irc.say(c, goodbyes[rand_int(0, goodbyes.size() - 1)]);
 				irc.part(c);
 			}
-			done = true;
 			restart = true;
+			done = true;
 		}
 		else if(cmd == "/reconfigure")
 		{
@@ -1494,39 +1507,39 @@ void IrcBot::exec(const std::string& cmd, std::ostream* os)
 			(*os) << "ERROR: Commands begin with /.\n";
 }
 
-str get_regerror(int errcode, regex_t *compiled)
-{
-	size_t length = regerror(errcode, compiled, NULL, 0);
-	char *buffer = new char[length];
-	(void) regerror(errcode, compiled, buffer, length);
-	str e(buffer);
-	delete[] buffer;
-	return e;
-}
-
-bool IrcBot::ereg_match(const str& r, const str& s)
-{
-	bug_func();
-	bug_var(s);
-	bug_var(r);
-	regex_t regex;
-
-	if(regcomp(&regex, r.c_str(), REG_EXTENDED | REG_ICASE))
-	{
-		log("Could not compile regex: " << r);
-		return false;
-	}
-
-	int reti = regexec(&regex, s.c_str(), 0, NULL, 0);
-	regfree(&regex);
-	if(!reti)
-		return true;
-	else if(reti != REG_NOMATCH)
-		log("regex: " << get_regerror(reti, &regex));
-
-	return false;
-//	return lowercase(s).find(lowercase(r)) != str::npos;
-}
+//str get_regerror(int errcode, regex_t *compiled)
+//{
+//	size_t length = regerror(errcode, compiled, NULL, 0);
+//	char *buffer = new char[length];
+//	(void) regerror(errcode, compiled, buffer, length);
+//	str e(buffer);
+//	delete[] buffer;
+//	return e;
+//}
+//
+//bool IrcBot::ereg_match(const str& r, const str& s)
+//{
+//	bug_func();
+//	bug_var(s);
+//	bug_var(r);
+//	regex_t regex;
+//
+//	if(regcomp(&regex, r.c_str(), REG_EXTENDED | REG_ICASE))
+//	{
+//		log("Could not compile regex: " << r);
+//		return false;
+//	}
+//
+//	int reti = regexec(&regex, s.c_str(), 0, NULL, 0);
+//	regfree(&regex);
+//	if(!reti)
+//		return true;
+//	else if(reti != REG_NOMATCH)
+//		log("regex: " << get_regerror(reti, &regex));
+//
+//	return false;
+////	return lowercase(s).find(lowercase(r)) != str::npos;
+//}
 
 bool IrcBot::preg_match(const str& r, const str& s, bool full)
 {
