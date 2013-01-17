@@ -139,7 +139,8 @@ ChanopsIrcBotPlugin::ChanopsIrcBotPlugin(IrcBot& bot)
 : BasicIrcBotPlugin(bot)
 , store(bot.getf(STORE_FILE, STORE_FILE_DEFAULT))
 {
-	smtp.mailfrom = "<noreply@sookee.dyndns.org>";
+//	smtp.mailfrom = "<noreply@sookee.dyndns.org>";
+	smtp.mailfrom = "<noreply@cpc2-pool13-2-0-cust799.15-1.cable.virginmedia.com>";
 }
 
 ChanopsIrcBotPlugin::~ChanopsIrcBotPlugin() {}
@@ -244,9 +245,25 @@ bool ChanopsIrcBotPlugin::email_signup(const message& msg)
 	user_r ur;
 	siz retries = 4;
 
+	sifs ifs(bot.getf("chanops.email.template", "chanops-email-template.txt"));
+	if(!ifs)
+	{
+		log("Unable to open email template: " << bot.getf("chanops.email.template", "chanops-email-template.txt"));
+		return bot.cmd_error(msg, "Failed to send email - signup aborted, please try again later.");
+	}
+
+	char c;
+	str body;
+	while(ifs.get(c))
+		body += c;
+
+	replace(body, "$USER", user);
+	replace(body, "$PASS", pass);
+	replace(body, "$BOTNAME", bot.nick);
+
 	smtp.rcptto = "<" + email + ">";
 	smtp.to = "<" + email + ">";
-	while(--retries && !smtp.sendmail(bot.nick + ", chanops signup", "password: " + pass));
+	while(--retries && !smtp.sendmail(bot.nick + ", chanops signup", body));
 
 	if(!retries)
 		return bot.cmd_error(msg, "Failed to send email - signup aborted, please try again later.");

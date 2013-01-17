@@ -38,6 +38,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <sstream>
 #include <functional>
 #include <mutex>
+#include <ctime>
 
 #include <skivvy/ios.h>
 #include <skivvy/irc.h>
@@ -387,15 +388,21 @@ std::vector<str> PFinderIrcBotPlugin::oafind(const str handle)
 					s.uid = ++uid;
 				servers[s.name] = s;
 			}
-			else if(line.find(R"(<div id="ping">PING</div>)") != npos
-			&& line.find(R"(<div id="frags">FRAGS</div>)") != npos
-			&& line.find(R"(<div id="handle">NAME</div>)") != npos)
+//			else if(line.find(R"(<div id="ping">PING</div>)") != npos
+//			&& line.find(R"(<div id="frags">FRAGS</div>)") != npos
+//			&& line.find(R"(<div id="handle">NAME</div>)") != npos)
+//				do_players = true;
+			else if(line.find("PING") != npos
+			&& line.find("FRAGS") != npos
+			&& line.find("NAME") != npos)
 				do_players = true;
 		}
 	}
 
 	// refresh server UID file
 	write_server_uidfile(servers, uid);
+
+
 	return found;
 }
 
@@ -572,6 +579,8 @@ void PFinderIrcBotPlugin::oafind(const message& msg)
 {
 	BUG_COMMAND(msg);
 
+	time_t start = std::time(0);
+
 	str handle = msg.get_user_params();
 	if(trim(handle).empty())
 	{
@@ -595,6 +604,8 @@ void PFinderIrcBotPlugin::oafind(const message& msg)
 
 	for(const str& s: found)
 		bot.fc_reply(msg, s);
+
+	bot.fc_reply(msg, "Query took: " + std::to_string(std::time(0) - start) + " seconds.");
 }
 
 void read_links_file(IrcBot& bot, str_set_map& links)

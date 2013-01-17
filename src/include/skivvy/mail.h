@@ -60,7 +60,8 @@ class SMTP
 			log(strerror(errno));
 			return false;
 		}
-		log(trim(reply));
+		trim(reply);
+		bug_var(reply);
 		if(reply.find(code))
 			return false;
 		return true;
@@ -85,8 +86,14 @@ public:
 		str reply;
 
 		std::time_t t = std::time(0);
-		str time = std::ctime(&t);
-		trim(time);
+
+		tm* timeinfo = localtime(&t);
+		char buffer[80];
+
+		siz size = strftime(buffer, 80, "%a, %d %b %Y %T %z", timeinfo);
+
+		str time(buffer, size);
+//		trim(time);
 
 		ss.open(host, port);
 

@@ -141,9 +141,6 @@ __scope__bomb__::~__scope__bomb__()
 
 int rand_int(int low, int high)
 {
-//	static /*std::default_random_engine*/ std::mt19937 re {};
-//	static std::uniform_int_distribution<int> uid {};
-//	return uid(re, std::uniform_int_distribution<int>::param_type {low, high});
 	static std::minstd_rand g(std::time(0));
 	std::uniform_int_distribution<> d(low, high);
 	return d(g);
