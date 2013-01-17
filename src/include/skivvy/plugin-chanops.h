@@ -38,9 +38,11 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <map>
 
 #include <skivvy/store.h>
+#include <skivvy/mail.h>
 
 namespace skivvy { namespace ircbot {
 
+using namespace skivvy::email;
 using namespace skivvy::utils;
 
 #define CHANOPS_GROUP(name) \
@@ -66,6 +68,8 @@ private:
 	typedef std::map<str, str> nick_map;
 	typedef std::pair<const str, str> nick_pair;
 
+	SMTP smtp;
+
 	std::mutex nicks_mtx;
 	nick_map nicks;
 
@@ -83,6 +87,7 @@ public:
 		str user; // the user by which we log in as
 		uint32_t sum; // password sum
 		str_set groups;
+		str email;
 
 		// <user>:<sum>:group1,group2
 
@@ -134,6 +139,7 @@ private:
 	bool permit(const message& msg);
 
 	bool signup(const message& msg);
+	bool email_signup(const message& msg);
 
 	bool login(const message& msg);
 	//void apply_acts(const str& id);

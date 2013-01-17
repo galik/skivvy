@@ -30,6 +30,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 http://www.gnu.org/licenses/gpl-2.0.html
 
 '-----------------------------------------------------------------*/
+
+#include <skivvy/str.h>
 #include <skivvy/types.h>
 #include <skivvy/logrep.h>
 #include <skivvy/socketstream.h>
@@ -38,6 +40,7 @@ namespace skivvy { namespace email {
 
 using namespace skivvy;
 using namespace skivvy::types;
+using namespace skivvy::string;
 
 class SMTP
 {
@@ -73,7 +76,7 @@ public:
 	str to;
 	str replyto;
 
-	SMTP(const str& host, long port = 25): host(host), port(port) {}
+	SMTP(const str& host = "localhost", long port = 25): host(host), port(port) {}
 
 	bool sendmail(const str& subject, const str& data)
 	{
@@ -108,20 +111,23 @@ public:
 			}
 
 			tx(ss, "DATA");
+			if(!rx(ss, "354"))
+				return false;
 			tx(ss, "From: " + mailfrom);
 			tx(ss, "To: " + rcptto);
 			tx(ss, "Date: " + time);
 			tx(ss, "Subject: " + subject);
-			tx(ss, "Reply-To: " + replyto);
+			if(!replyto.empty())
+				tx(ss, "Reply-To: " + replyto);
 			tx(ss);
 			tx(ss, data);
 			tx(ss, ".");
-			if(!rx(ss, "354"))
+			if(!rx(ss, "250"))
 				return false;
 		}
 
 		tx(ss, "QUIT");
-		if(!rx(ss, "250"))
+		if(!rx(ss, "221"))
 			return false;
 
 		ss.close();

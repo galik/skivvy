@@ -113,7 +113,7 @@ std::ostream& operator<<(std::ostream& os, const ChanopsIrcBotPlugin::user_r& ur
 
 	// <user>:<sum>:group1,group2
 
-	os << ur.user <<  ':' << std::hex << ur.sum << ':';
+	os << ur.user <<  ':' << std::hex << ur.sum << ':' << ur.email << ':';
 	str sep;
 	for(const str& g: ur.groups)
 		{ os << sep << g; sep = ","; }
@@ -126,22 +126,12 @@ std::istream& operator>>(std::istream& is, ChanopsIrcBotPlugin::user_r& ur)
 
 	// <user>:<sum>:group1,group2
 
-	std::getline(is, ur.user, ':');
+	sgl(is, ur.user, ':');
 	(is >> std::hex >> ur.sum).ignore();
-
+	sgl(is, ur.email, ':');
 	str group;
 	while(std::getline(is, group, ','))
 		ur.groups.insert(group);
-//	siz s;
-//	str line, g;
-//	std::getline(is, ur.user);
-//	std::getline(is, line);
-//	std::istringstream(line) >> std::hex >> ur.sum;
-//	std::getline(is, line);
-//	std::istringstream(line) >> s;
-//	for(siz i = 0; i < s; ++i)
-//		if(std::getline(is, g))
-//			ur.groups.insert(g);
 	return is;
 }
 
@@ -149,6 +139,7 @@ ChanopsIrcBotPlugin::ChanopsIrcBotPlugin(IrcBot& bot)
 : BasicIrcBotPlugin(bot)
 , store(bot.getf(STORE_FILE, STORE_FILE_DEFAULT))
 {
+	smtp.mailfrom = "<noreply@sookee.dyndns.org>";
 }
 
 ChanopsIrcBotPlugin::~ChanopsIrcBotPlugin() {}
@@ -212,6 +203,58 @@ bool ChanopsIrcBotPlugin::signup(const message& msg)
 	ur.user = user;
 	ur.groups.insert(G_USER);
 	ur.sum = checksum(pass);
+
+	store.set("user." + user, ur);
+
+	bot.fc_reply_pm(msg, "Successfully registered.");
+	return true;
+}
+
+str gen_password(siz len = 8)
+{
+	str pass;
+	for(siz n, i = 0; i < len; ++i)
+		pass += (n = rand_int(0, 61)) < 26 ? ('a' + n) : n < 52 ? ('A' + n - 26) : ('0' + n - 52);
+	return pass;
+}
+
+bool ChanopsIrcBotPlugin::email_signup(const message& msg)
+{
+	BUG_COMMAND(msg);
+
+	std::string user, email, email2;
+	if(!bot.extract_params(msg, {&user, &email, &email2}))
+		return false;
+
+	bug("user  : " << user);
+	bug("email : " << email);
+	bug("email2: " << email2);
+
+	if(!bot.preg_match("\\w+@[^.]+\\.[\\w.]+", email, true))
+		return bot.cmd_error_pm(msg, "ERROR: Invalis email address: " + email);
+
+	if(email != email2)
+		return bot.cmd_error_pm(msg, "ERROR: Email addresses don't match.");
+
+	if(store.has("user." + user))
+		return bot.cmd_error_pm(msg, "ERROR: User already registered.");
+
+	str pass = gen_password();
+
+	user_r ur;
+	siz retries = 4;
+
+	smtp.rcptto = "<" + email + ">";
+	smtp.to = "<" + email + ">";
+	while(--retries && !smtp.sendmail(bot.nick + ", chanops signup", "password: " + pass));
+
+	if(!retries)
+		return bot.cmd_error(msg, "Failed to send email - signup aborted, please try again later.");
+
+	ur.user = user;
+	ur.groups.insert(G_USER);
+	ur.sum = checksum(pass);
+	ur.email = email;
 
 	store.set("user." + user, ur);
 
@@ -396,13 +439,13 @@ bool ChanopsIrcBotPlugin::initialize()
 	({
 		"!reclaim" // no ! indicated PM only command
 		, "!reclaim <nick> - notify when <nick> is unused (must be logged in)."
-		, [&](const message& msg){ signup(msg); }
+		, [&](const message& msg){ reclaim(msg); }
 	});
 	add
 	({
 		"register" // no ! indicated PM only command
 		, "register <username> <password> <password>"
-		, [&](const message& msg){ signup(msg); }
+		, [&](const message& msg){ email_signup(msg); }
 	});
 	add
 	({
