@@ -45,8 +45,8 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 namespace skivvy { namespace ircbot {
 
+PLUGIN_INFO("artibot", "Artibot AI", "0.1");
 IRC_BOT_PLUGIN(ArtibotIrcBotPlugin);
-PLUGIN_INFO("Artibot AI", "0.1");
 
 using namespace skivvy;
 using namespace skivvy::types;
@@ -564,6 +564,7 @@ bool ArtibotIrcBotPlugin::initialize()
 
 // INTERFACE: IrcBotPlugin
 
+str ArtibotIrcBotPlugin::get_id() const { return ID; }
 str ArtibotIrcBotPlugin::get_name() const { return NAME; }
 str ArtibotIrcBotPlugin::get_version() const { return VERSION; }
 

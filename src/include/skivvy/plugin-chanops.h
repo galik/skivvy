@@ -192,6 +192,7 @@ public:
 
 	// INTERFACE: IrcBotPlugin
 
+	virtual std::string get_id() const _override_;
 	virtual std::string get_name() const _override_;
 	virtual std::string get_version() const _override_;
 	virtual void exit() _override_;

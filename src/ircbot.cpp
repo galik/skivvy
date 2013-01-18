@@ -62,7 +62,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 namespace skivvy { namespace ircbot {
 
-PLUGIN_INFO("IrcBot", "0.1");
+PLUGIN_INFO("skivvy", "IrcBot", "0.2");
 
 using namespace skivvy;
 using namespace skivvy::irc;
@@ -655,6 +655,7 @@ str IrcBot::locate_file(const str& name)
 
 // INTERFACE: IrcBotPlugin
 
+str IrcBot::get_id() const { return ID; }
 str IrcBot::get_name() const { return NAME; }
 str IrcBot::get_version() const { return VERSION; }
 
@@ -792,6 +793,7 @@ void IrcBot::dispatch_msgevent(const message& msg)
 
 bool IrcBot::init(const str& config_file)
 {
+	bug_func();
 	std::srand(std::time(0));
 
 	if(have(FLOOD_TIME_BETWEEN_POLLS))
@@ -870,7 +872,7 @@ bool IrcBot::init(const str& config_file)
 			p = plugins.erase(p);
 			continue;
 		}
-		log("\tPlugin initialised: " << (*p)->get_name() << " v" << (*p)->get_version());
+		log("\tPlugin initialised: " << (*p)->get_id() << ": " << (*p)->get_name() << " v" << (*p)->get_version());
 		for(str& c: (*p)->list())
 		{
 			log("\t\tRegister command: " << c);
@@ -1576,6 +1578,7 @@ bool IrcBot::wild_match(const str& w, const str& s, int flags)
 
 void IrcBot::console()
 {
+	bug_func();
 	std::istream& is = this->is ? *this->is : std::cin;
 	std::ostream& os = this->os ? *this->os : std::cout;
 
@@ -1624,6 +1627,7 @@ void IrcBot::console()
 
 void IrcBot::pinger()
 {
+	bug_func();
 	while(!done)
 	{
 		const size_t retries = get<int>(PROP_SERVER_RETRIES, 10);

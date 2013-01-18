@@ -164,6 +164,7 @@ public:
 
 	// INTERFACE: IrcBotPlugin
 
+	virtual str get_id() const;
 	virtual str get_name() const;
 	virtual str get_version() const;
 	virtual void exit();

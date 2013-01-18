@@ -481,82 +481,6 @@ public:
 	bool turn_off();
 };
 
-///**
-// * Producer/Consumer priority que for dispatching
-// * event at a configurable minimal interval.
-// */
-//class FloodController
-//{
-//private:
-//	struct dispatch
-//	{
-//		size_t priority;
-//		//std::thread::id id;
-//		std::function<bool()> func;
-//		bool operator<(const dispatch& d) const { return priority > d.priority; }
-//		dispatch(size_t priority, std::function<bool()> func): priority(priority), func(func) {}
-//	};
-//	typedef std::priority_queue<dispatch> dispatch_que;
-//
-//	std::mutex mtx;
-//	std::future<void> fut;
-//	dispatch_que que;
-//	bool dispatching;
-//	size_t priority; // current priority entry point
-//	size_t max;
-//
-//
-//	typedef std::map<const std::thread::id, dispatch_que> mtpq_map;
-//	typedef std::pair<const std::thread::id, dispatch_que> mtpq_pair;
-//	typedef mtpq_map::iterator mtpq_map_iter;
-//	typedef mtpq_map::const_iterator mtpq_map_citer;
-//
-//	std::map<std::thread::id, siz> mt_priority;
-//	mtpq_map mt_que;
-////	std::map<std::thread::id, std::priority_queue<dispatch>>::iterator mt_que_iter;
-//	siz robin;
-//
-//	size_t get_priority(const std::thread::id& id);
-//	void dispatcher();
-//
-//public:
-//	FloodController();
-//	~FloodController();
-//
-//	bool send(std::function<bool()> func);
-//	void start();
-//	void stop();
-//};
-//
-//class FloodController2
-//{
-//private:
-//	typedef std::queue<std::function<bool()>> dispatch_que;
-//	typedef std::map<str, dispatch_que> dispatch_map;
-//	typedef std::pair<const str, dispatch_que> dispatch_pair;
-//
-//	typedef str_set dispatch_set;
-//
-//	std::mutex mtx;
-//	//dispatch_set s; // channels
-//	dispatch_map m; // channel -> dispatch_que
-//	str c; // current channel being dispatched
-//
-//	std::future<void> fut;
-//	bool dispatching = false;
-//
-//	bool find_next(str& c);
-//	void dispatcher();
-//
-//public:
-//	FloodController2();
-//	~FloodController2();
-//
-//	bool send(const str& channel, std::function<bool()> func);
-//	void start();
-//	void stop();
-//};
-
 // ==================================================
 // Bot Plugin Framework
 // ==================================================
@@ -681,6 +605,11 @@ public:
 	/**
 	 * Return the name of the plugin.
 	 */
+	virtual str get_id() const = 0;
+
+	/**
+	 * Return the name of the plugin.
+	 */
 	virtual str get_name() const = 0;
 
 	/**
@@ -738,6 +667,10 @@ typedef std::shared_ptr<IrcBotPlugin> IrcBotPluginPtr;
  *  otherwise initialize the bot. Also this is where the
  *  bot should register any IrcBotMonitor objects by
  *  calling IrcBot::add_monitor(IrcBotMonitor& mon).
+ *
+ * virtual str get_id() = 0;
+ *
+ *  This function should return the Bot's id.
  *
  * virtual str get_name() = 0;
  *
@@ -880,6 +813,7 @@ public:
 	 */
 	virtual str help(const str& cmd) const; // final
 
+	virtual str get_id() const = 0;
 	virtual str get_name() const = 0;
 	virtual str get_version() const = 0;
 
@@ -934,26 +868,32 @@ class IrcBotPluginHandle
 {
 	typedef std::auto_ptr<Plugin> PluginPtr;
 	IrcBot& bot;
-	const str name;
+	const str id;
 	PluginPtr plugin;// = 0;
 	time_t plugin_load_time = 0;
 
 	static Plugin null_plugin;
 
 public:
+
+	operator bool()
+	{
+		return plugin.get();
+	}
+
 	IrcBotPluginHandle(IrcBot& bot)
 	: bot(bot)
 	{
 	}
 
 	IrcBotPluginHandle(IrcBotPluginHandle<Plugin>&& handle)
-	: bot(handle.bot), name(handle.name), plugin(handle.plugin)
+	: bot(handle.bot), id(handle.id), plugin(handle.plugin)
 	, plugin_load_time(handle.plugin_load_time)
 	{
 	}
 
-	IrcBotPluginHandle(IrcBot& bot, const str& name)
-	: bot(bot), name(name)
+	IrcBotPluginHandle(IrcBot& bot, const str& id)
+	: bot(bot), id(id)
 	{
 	}
 
@@ -963,7 +903,7 @@ public:
 	{
 		ensure_plugin();
 
-		if(!plugin)
+		if(!plugin.get())
 		{
 			log("ERROR: Bad IrcBotPluginHandle: " << this);
 			return *null_plugin;
@@ -975,12 +915,12 @@ public:
 	{
 		ensure_plugin();
 
-		if(!plugin)
+		if(!plugin.get())
 		{
 			log("ERROR: Bad IrcBotPluginHandle: " << this);
-			return null_plugin;
+			return &null_plugin;
 		}
-		return plugin;
+		return plugin.get();
 	}
 };
 
@@ -1219,10 +1159,10 @@ public:
 		return services.find(name) == services.end() ? 0 : services[name];
 	}
 
-	IrcBotPluginPtr get_plugin(const str& name)
+	IrcBotPluginPtr get_plugin(const str& id)
 	{
 		for(IrcBotPluginPtr plugin: plugins)
-			if(plugin->get_name() == name)
+			if(plugin->get_id() == id)
 				return plugin;
 		return IrcBotPluginPtr(0);
 	}
@@ -1282,6 +1222,7 @@ public:
 
 	// INTERFACE: IrcBotPlugin
 
+	virtual str get_id() const;
 	virtual str get_name() const;
 	virtual str get_version() const;
 
@@ -1297,7 +1238,7 @@ void IrcBotPluginHandle<Plugin>::ensure_plugin()
 {
 	if(bot.get_plugin_load_time() > plugin_load_time)
 	{
-		IrcBotPluginPtr ptr = bot.get_plugin(name);
+		IrcBotPluginPtr ptr = bot.get_plugin(id);
 		plugin.reset(dynamic_cast<Plugin*>(ptr.get()));
 		plugin_load_time = std::time(0);
 	}

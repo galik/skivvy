@@ -48,8 +48,11 @@ public:
 	// INTERFACE: IrcBotPlugin
 
 	virtual bool init();
+
+	virtual std::string get_id() const;
 	virtual std::string get_name() const;
 	virtual std::string get_version() const;
+
 	virtual command_list list() const;
 	virtual void execute(const std::string& cmd, const message& msg);
 	virtual std::string help(const std::string& cmd) const;

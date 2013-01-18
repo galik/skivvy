@@ -42,7 +42,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 namespace skivvy { namespace ircbot {
 
 IRC_BOT_PLUGIN(DictionIrcBotPlugin);
-PLUGIN_INFO("Dictionary Lookup", "0.1");
+PLUGIN_INFO("diction", "Dictionary Lookup", "0.1");
 
 using namespace skivvy::irc;
 using namespace skivvy::types;
@@ -547,6 +547,7 @@ bool DictionIrcBotPlugin::initialize()
 
 // INTERFACE: IrcBotPlugin
 
+std::string DictionIrcBotPlugin::get_id() const { return ID; }
 std::string DictionIrcBotPlugin::get_name() const { return NAME; }
 std::string DictionIrcBotPlugin::get_version() const { return VERSION; }
 

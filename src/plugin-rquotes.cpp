@@ -44,7 +44,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 namespace skivvy { namespace ircbot {
 
 IRC_BOT_PLUGIN(RQuotesIrcBotPlugin);
-PLUGIN_INFO("Random Quotes", "0.1");
+PLUGIN_INFO("rquotes", "Random Quotes", "0.1");
 
 using namespace skivvy::types;
 using namespace skivvy::utils;
@@ -86,6 +86,7 @@ public:
 
 	// INTERFACE: IrcBotPlugin
 
+	virtual std::string get_id() const;
 	virtual std::string get_name() const;
 	virtual std::string get_version() const;
 	virtual void exit();
@@ -306,6 +307,7 @@ void RandomQuoteIrcBotPluginRep::quotes_off(const message& msg)
 
 bool RandomQuoteIrcBotPluginRep::initialize()
 {
+	bug_func();
 	add
 	({
 		"!quote"
@@ -347,9 +349,9 @@ bool RandomQuoteIrcBotPluginRep::initialize()
 
 // INTERFACE: IrcBotPlugin
 
-std::string RandomQuoteIrcBotPluginRep::get_name() const { return NAME; }
-
-std::string RandomQuoteIrcBotPluginRep::get_version() const { return VERSION; }
+str RandomQuoteIrcBotPluginRep::get_id() const { return ID; }
+str RandomQuoteIrcBotPluginRep::get_name() const { return NAME; }
+str RandomQuoteIrcBotPluginRep::get_version() const { return VERSION; }
 
 void RandomQuoteIrcBotPluginRep::exit()
 {
@@ -371,6 +373,7 @@ RQuotesIrcBotPlugin::~RQuotesIrcBotPlugin()
 
 // INTERFACE: IrcBotPlugin
 bool  RQuotesIrcBotPlugin::init() { return rep.init(); }
+std::string RQuotesIrcBotPlugin::get_id() const { return rep.get_id(); }
 std::string RQuotesIrcBotPlugin::get_name() const { return rep.get_name(); }
 std::string RQuotesIrcBotPlugin::get_version() const { return rep.get_version(); }
 IrcBotPlugin::command_list RQuotesIrcBotPlugin::list() const { return rep.list(); }

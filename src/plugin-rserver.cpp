@@ -50,7 +50,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 namespace skivvy { namespace ircbot {
 
 IRC_BOT_PLUGIN(RServerIrcBotPlugin);
-PLUGIN_INFO("Remote Server", "0.1");
+PLUGIN_INFO("rserver", "Remote Server", "0.1");
 
 using namespace skivvy::types;
 using namespace skivvy::utils;
@@ -160,6 +160,7 @@ bool RServerIrcBotPlugin::initialize()
 
 // INTERFACE: IrcBotPlugin
 
+str RServerIrcBotPlugin::get_id() const { return ID; }
 std::string RServerIrcBotPlugin::get_name() const { return NAME; }
 std::string RServerIrcBotPlugin::get_version() const { return VERSION; }
 

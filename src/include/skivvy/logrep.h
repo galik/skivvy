@@ -108,7 +108,8 @@ bug("-----------------------------------------------------")
 #define REVISION "0000000"
 #endif
 
-#define PLUGIN_INFO(N, V) \
+#define PLUGIN_INFO(I, N, V) \
+	static const char* ID = I; \
 	static const char* NAME = N; \
 	static const char* VERSION = V "-" STAMP "-" COMMITS "-" REVISION DEV
 

@@ -46,7 +46,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 namespace skivvy { namespace ircbot {
 
 IRC_BOT_PLUGIN(TrivialIrcBotPlugin);
-PLUGIN_INFO("Trivial Quiz Game", "0.1");
+PLUGIN_INFO("trivial", "Trivial Quiz Game", "0.1");
 
 using namespace skivvy;
 using namespace skivvy::types;
@@ -378,6 +378,7 @@ bool TrivialIrcBotPlugin::initialize()
 
 // INTERFACE: IrcBotPlugin
 
+std::string TrivialIrcBotPlugin::get_id() const { return ID; }
 std::string TrivialIrcBotPlugin::get_name() const { return NAME; }
 std::string TrivialIrcBotPlugin::get_version() const { return VERSION; }
 

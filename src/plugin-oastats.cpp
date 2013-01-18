@@ -49,7 +49,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 namespace skivvy { namespace ircbot {
 
 IRC_BOT_PLUGIN(OAStatsIrcBotPlugin);
-PLUGIN_INFO("OA Stats Reporter", "0.1");
+PLUGIN_INFO("oastats", "OA Stats Reporter", "0.1");
 
 using namespace skivvy;
 using namespace skivvy::irc;
@@ -912,6 +912,7 @@ bool OAStatsIrcBotPlugin::initialize()
 
 // INTERFACE: IrcBotPlugin
 
+str OAStatsIrcBotPlugin::get_id() const { return ID; }
 str OAStatsIrcBotPlugin::get_name() const { return NAME; }
 str OAStatsIrcBotPlugin::get_version() const { return VERSION; }
 

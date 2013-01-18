@@ -42,7 +42,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 namespace skivvy { namespace ircbot {
 
 IRC_BOT_PLUGIN(ChanopsIrcBotPlugin);
-PLUGIN_INFO("Channel Operations", "0.1");
+PLUGIN_INFO("chanops", "Channel Operations", "0.1");
 
 using namespace skivvy;
 using namespace skivvy::irc;
@@ -219,6 +219,14 @@ str gen_password(siz len = 8)
 	return pass;
 }
 
+str gen_boundary(siz len = 64)
+{
+	str bound;
+	for(siz n, i = 0; i < len; ++i)
+		bound += (n = rand_int(0, 15)) < 10 ? ('0' + n) : ('A' + n - 10);
+	return bound;
+}
+
 bool ChanopsIrcBotPlugin::email_signup(const message& msg)
 {
 	BUG_COMMAND(msg);
@@ -257,9 +265,15 @@ bool ChanopsIrcBotPlugin::email_signup(const message& msg)
 	while(ifs.get(c))
 		body += c;
 
+	str boundary = gen_boundary();
+
+	replace(body, "$SUBJECT", "Skivvy's Email Sighnup");
+	replace(body, "$FROM", "<oaskivvy@gmail.com>");
+	replace(body, "$TO", "<" + email + ">");
 	replace(body, "$USER", user);
 	replace(body, "$PASS", pass);
 	replace(body, "$BOTNAME", bot.nick);
+	replace(body, "$BOUNDARY", boundary);
 
 	smtp.rcptto = "<" + email + ">";
 	smtp.to = "<" + email + ">";
@@ -488,6 +502,7 @@ bool ChanopsIrcBotPlugin::initialize()
 
 // INTERFACE: IrcBotPlugin
 
+std::string ChanopsIrcBotPlugin::get_id() const { return ID; }
 std::string ChanopsIrcBotPlugin::get_name() const { return NAME; }
 std::string ChanopsIrcBotPlugin::get_version() const { return VERSION; }
 

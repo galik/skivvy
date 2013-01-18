@@ -6,7 +6,7 @@
  */
 
 /*-----------------------------------------------------------------.
-| Copyright (C) 2011 SooKee oaskivvy@gmail.com               |
+| Copyright (C) 2011 SooKee oaskivvy@gmail.com                     |
 '------------------------------------------------------------------'
 
 This program is free software; you can redistribute it and/or
@@ -53,7 +53,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 namespace skivvy { namespace ircbot {
 
 IRC_BOT_PLUGIN(PFinderIrcBotPlugin);
-PLUGIN_INFO("OA Player Finder", "0.1");
+PLUGIN_INFO("pfinder", "OA Player Finder", "0.1");
 
 using namespace skivvy;
 using namespace skivvy::irc;
@@ -1185,6 +1185,7 @@ bool PFinderIrcBotPlugin::initialize()
 
 // INTERFACE: IrcBotPlugin
 
+str PFinderIrcBotPlugin::get_id() const { return ID; }
 str PFinderIrcBotPlugin::get_name() const { return NAME; }
 str PFinderIrcBotPlugin::get_version() const { return VERSION; }
 

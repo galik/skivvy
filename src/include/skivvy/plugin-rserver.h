@@ -70,8 +70,10 @@ public:
 
 	// INTERFACE: IrcBotPlugin
 
+	virtual std::string get_id() const;
 	virtual std::string get_name() const;
 	virtual std::string get_version() const;
+
 	virtual void exit();
 };
 

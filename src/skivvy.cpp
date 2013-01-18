@@ -32,6 +32,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <skivvy/logrep.h>
 
 using namespace skivvy::ircbot;
+using namespace skivvy::utils;
 
 #include <cstdio>
 #include <execinfo.h>
@@ -74,7 +75,8 @@ void handler(int sig)
 
 int main(int argc, char* argv[])
 {
-	signal(SIGSEGV, handler);   // install our handler
+	bug_func();
+	//signal(SIGSEGV, handler);   // install our handler
 
 	IrcBot bot;
 	log(bot.get_name() + " v" + bot.get_version());

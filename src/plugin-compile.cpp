@@ -42,7 +42,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 namespace skivvy { namespace ircbot {
 
 IRC_BOT_PLUGIN(FactoidIrcBotPlugin);
-PLUGIN_INFO("Compile Code", "0.1");
+PLUGIN_INFO("compile", "Compile Code", "0.1");
 
 using namespace skivvy::types;
 using namespace skivvy::utils;
@@ -196,6 +196,7 @@ bool FactoidIrcBotPlugin::initialize()
 
 // INTERFACE: IrcBotPlugin
 
+str FactoidIrcBotPlugin::get_id() const { return ID; }
 str FactoidIrcBotPlugin::get_name() const { return NAME; }
 str FactoidIrcBotPlugin::get_version() const { return VERSION; }
 
