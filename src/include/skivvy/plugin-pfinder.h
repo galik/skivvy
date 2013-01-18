@@ -120,6 +120,7 @@ private:
 	 **/
 	bool lookup_players(const str& search, std::vector<str>& handles);
 	std::vector<str> oafind(const str handle);
+	std::vector<str> xoafind(const str handle);
 	void check_tell();
 
 	/**
@@ -135,10 +136,15 @@ private:
 	str::size_type extract_server(const str& line, server& s, str::size_type pos = 0) const;
 	str::size_type extract_player(const str& line, player& p, str::size_type pos = 0) const;
 
+	void read_links_file(str_set_map& links);
+	void write_links_file(const str_set_map& links);
+
 	// Bot Commands
 
 //	void oarcon(const message& msg);
 //	void oarconmsg(const message& msg);
+
+	bool links_changed = false;
 
 	void cvar(const message& msg);
 	void oafind(const message& msg);

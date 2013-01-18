@@ -54,6 +54,9 @@ using namespace skivvy::types;
 
 bool aocom(const str& cmd, str_vec& packets, const str& host, int port)
 {
+	bug_var(cmd);
+	bug_var(host);
+	bug_var(port);
 	// One mutex per server:port to ensure that all threads
 	// accessing the same server:port pause for a minimum time
 	// between calls to avoid flood protection.
@@ -80,7 +83,7 @@ bool aocom(const str& cmd, str_vec& packets, const str& host, int port)
 		return false;
 	}
 
-//	fcntl(cs, F_SETFL, O_NONBLOCK);
+	fcntl(cs, F_SETFL, O_NONBLOCK);
 
 	const str key = host + ":" + std::to_string(port);
 
@@ -93,18 +96,23 @@ bool aocom(const str& cmd, str_vec& packets, const str& host, int port)
 	time_point pause = steady_clock::now() + std::chrono::milliseconds(1000);
 
 	const str msg = "\xFF\xFF\xFF\xFF" + cmd;
+
+	int len;
 	if(send(cs, msg.c_str(), msg.size(), 0) < 1)
 	{
-		log(strerror(errno));
+		log("cs send: " << strerror(errno));
 		return false;
 	}
 
 	packets.clear();
 
-	int len;
 	char buf[1024];
 
-	if((len = read(cs, buf, 1024)) > 0)
+	while((len = recv(cs, buf, 1024, MSG_DONTWAIT)) ==  -1 && (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR))
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+	if(len < 0)
+		log("cs recv: " << strerror(errno));
+	if(len > 0)
 		packets.push_back(str(buf, len));
 
 	close(cs);
@@ -115,12 +123,6 @@ bool aocom(const str& cmd, str_vec& packets, const str& host, int port)
 }
 
 typedef unsigned char byte;
-
-struct oa_server_t
-{
-	str host;
-	siz port;
-};
 
 typedef std::vector<oa_server_t> oa_server_vec;
 

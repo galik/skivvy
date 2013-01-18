@@ -37,7 +37,18 @@ namespace skivvy { namespace oacom {
 
 using namespace skivvy::types;
 
-bool oacom(const str& cmd, str& result, const str& host, int port);
+bool aocom(const str& cmd, str_vec& packets, const str& host, int port);
+
+struct oa_server_t
+{
+	str host;
+	siz port;
+};
+
+typedef std::vector<oa_server_t> oa_server_vec;
+
+bool getservers(oa_server_vec& servers);
+bool getstatus(const str& host, siz port, str& status);
 
 }} // skivvy::oacom
 

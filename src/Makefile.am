@@ -77,6 +77,7 @@ noinst_HEADERS = \
 	$(srcdir)/include/skivvy/plugin-factoid.h \
 	$(srcdir)/include/skivvy/plugin-oastats.h \
 	$(srcdir)/include/skivvy/plugin-pfinder.h \
+	$(srcdir)/include/skivvy/plugin-pfinder-oacom.h \
 	$(srcdir)/include/skivvy/plugin-rquotes.h \
 	$(srcdir)/include/skivvy/plugin-rserver.h
 
@@ -131,7 +132,7 @@ skivvy_plugin_diction_la_SOURCES = plugin-diction.cpp
 #skivvy_plugin_example_la_SOURCES = plugin-example.cpp
 skivvy_plugin_factoid_la_SOURCES = plugin-factoid.cpp
 skivvy_plugin_oastats_la_SOURCES = plugin-oastats.cpp
-skivvy_plugin_pfinder_la_SOURCES = plugin-pfinder.cpp
+skivvy_plugin_pfinder_la_SOURCES = plugin-pfinder.cpp plugin-pfinder-oacom.cpp 
 skivvy_plugin_rquotes_la_SOURCES = plugin-rquotes.cpp
 skivvy_plugin_rserver_la_SOURCES = plugin-rserver.cpp
 #skivvy_plugin_trivial_la_SOURCES = plugin-trivial.cpp

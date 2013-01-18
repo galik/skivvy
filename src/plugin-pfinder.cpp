@@ -28,6 +28,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 '-----------------------------------------------------------------*/
 
 #include <skivvy/plugin-pfinder.h>
+#include <skivvy/plugin-pfinder-oacom.h>
 
 #include <iomanip>
 #include <array>
@@ -56,6 +57,7 @@ PLUGIN_INFO("OA Player Finder", "0.1");
 
 using namespace skivvy;
 using namespace skivvy::irc;
+using namespace skivvy::oacom;
 using namespace skivvy::types;
 using namespace skivvy::utils;
 using namespace skivvy::string;
@@ -243,7 +245,8 @@ bool PFinderIrcBotPlugin::lookup_players(const str& search, std::vector<str>& ha
 
 	// If our parameter was not an alias, assume it is a player
 	bool replaced = !handles.empty();
-	if(!replaced) handles.push_back(search);
+	if(!replaced)
+		handles.push_back(search);
 
 	return replaced;
 }
@@ -319,8 +322,149 @@ std::vector<str> PFinderIrcBotPlugin::oafind(const str handle)
 
 	// The supplied parameter may resolve into a list of handles
 	// or just one
-	std::vector<str> handles;
-	bool subst = lookup_players(handle, handles);
+	str_set handles;
+	bool subst = false;
+	{
+		str_vec tmp_handles;
+		subst = lookup_players(handle, tmp_handles);
+		handles.insert(tmp_handles.begin(), tmp_handles.end());
+	}
+	str line;
+
+	oa_server_vec oa_servers;
+	if(!getservers(oa_servers))
+	{
+		log("No servers found.");
+		return found;
+	}
+
+	bug_var(oa_servers.size());
+
+
+	// Process response
+	server s;
+	player p;
+	size_t matches = 0;
+	std::ostringstream oss;
+
+	//std::vector<server> servers; // rebuild server uid file
+	const str uidfile = bot.getf(SERVER_UID_FILE, SERVER_UID_FILE_DEFAULT);
+	siz uid = 0;
+	std::map<str, scache> servers;
+	{
+		lock_guard lock(uidfile_mtx);
+		std::ifstream ifs(uidfile);
+
+		scache s;
+		std::time_t time;
+		// skip time
+		ifs >> time >> uid >> std::ws;
+		while(ifs >> s)
+			servers[s.name] = s;
+	}
+
+
+	str status;
+	for(siz i = 0; i < servers.size() && i < 10; ++i)
+	{
+		bug_var(oa_servers[i].host);
+		if(getstatus(oa_servers[i].host, oa_servers[i].port, status))
+		{
+			str_vec lines;
+			str info, line;
+			siss iss(status);
+			sgl(iss, info);
+			while(sgl(iss, line))
+				lines.push_back(line);
+
+			server srv;
+			str key, val;
+			siss iss_s(info);
+			srv.address = oa_servers[i].host + ":" + std::to_string(oa_servers[i].port);
+			srv.players = std::to_string(lines.size());
+			while(sgl(sgl(iss_s, key, '\\'), val, '\\'))
+			{
+				if(key == "sv_hostname")
+					srv.name = val;
+				else if(key == "mapname")
+					srv.map = val;
+				else if(key == "g_gametype")
+					srv.gametype = val;
+			}
+
+			s = srv;
+			if(servers.count(s.name))
+				s.uid = servers[s.name].uid;
+			else
+				s.uid = ++uid;
+			servers[s.name] = s;
+
+			// players
+			for(const str& line: lines)
+			{
+				if(sgl(siss(line) >> p.frags >> p.ping >> std::ws, p.handle))
+				{
+					bug("Found player: " << p.handle);
+					for(str h: handles)
+					{
+						bug_var(h);
+						bug_var(p.handle);
+						if(match_player(subst, net::html_to_text(p.handle), h))
+						{
+							oss.clear();
+							oss.str("");
+							oss << IRC_BOLD << net::html_to_text(s.name) << IRC_NORMAL;
+							oss << ": " << s.map;
+							oss << " (" << IRC_BOLD << html_handle_to_irc(p.handle) << IRC_NORMAL
+								<< " " << p.frags << ")";
+							oss << "-> " << IRC_BOLD << s.address << IRC_NORMAL;
+							oss << " [" << IRC_COLOR << IRC_Red << s.players << IRC_NORMAL << "]";
+							found.push_back(oss.str());
+							++matches;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// refresh server UID file
+	write_server_uidfile(servers, uid);
+
+
+	return found;
+}
+
+std::vector<str> PFinderIrcBotPlugin::xoafind(const str handle)
+{
+	bug_func();
+	bug("handle: " << handle);
+
+	std::vector<str> found;
+
+	// The supplied parameter may resolve into a list of handles
+	// or just one
+//	bool subst = false;
+//	str_set handles;
+
+	static std::map<str, str_set> handle_map;
+	static std::map<str, bool> subst_map;
+
+	if(links_changed)
+		handle_map[handle].clear();
+
+	if(subst_map.find(handle) == subst_map.end())
+	{
+		str_vec tmp_handles;
+		subst_map[handle] = lookup_players(handle, tmp_handles);
+		handle_map[handle].clear();
+		handle_map[handle].insert(tmp_handles.begin(), tmp_handles.end());
+		links_changed = false;
+	}
+
+	str_set& handles = handle_map[handle];
+	bool& subst = subst_map[handle];
+
 	str line;
 
 	// basic HTTP GET
@@ -352,6 +496,7 @@ std::vector<str> PFinderIrcBotPlugin::oafind(const str handle)
 			servers[s.name] = s;
 	}
 
+	str_set matched_set; // definite no-matches on player
 	while(std::getline(ss, line))
 	{
 		if(do_players)
@@ -359,10 +504,14 @@ std::vector<str> PFinderIrcBotPlugin::oafind(const str handle)
 			if(extract_player(line, p) == str::npos)
 				do_players = false;
 
-			if(do_players)
+			if(do_players && matched_set.find(p.handle) == matched_set.end())
+			{
+				bool matched = false;
 				for(str h: handles)
+				{
 					if(match_player(subst, net::html_to_text(p.handle), h))
 					{
+						matched = true;
 						oss.clear();
 						oss.str("");
 						oss << IRC_BOLD << net::html_to_text(s.name) << IRC_NORMAL;
@@ -374,6 +523,10 @@ std::vector<str> PFinderIrcBotPlugin::oafind(const str handle)
 						found.push_back(oss.str());
 						++matches;
 					}
+				}
+				if(!matched) // ditch p.handle
+					matched_set.insert(p.handle);
+			}
 		}
 		else
 		{
@@ -588,7 +741,7 @@ void PFinderIrcBotPlugin::oafind(const message& msg)
 		return;
 	}
 
-	std::vector<str> found = oafind(handle);
+	std::vector<str> found = xoafind(handle);
 	const size_t max_matches = bot.get<size_t>(MAX_MATCHES, MAX_MATCHES_DEFAULT);
 
 	if(found.empty())
@@ -608,7 +761,7 @@ void PFinderIrcBotPlugin::oafind(const message& msg)
 	bot.fc_reply(msg, "Query took: " + std::to_string(std::time(0) - start) + " seconds.");
 }
 
-void read_links_file(IrcBot& bot, str_set_map& links)
+void PFinderIrcBotPlugin::read_links_file(str_set_map& links)
 {
 	links.clear();
 	str entry;
@@ -622,12 +775,13 @@ void read_links_file(IrcBot& bot, str_set_map& links)
 	}
 }
 
-void write_links_file(IrcBot& bot, const str_set_map& links)
+void PFinderIrcBotPlugin::write_links_file(const str_set_map& links)
 {
 	std::ofstream ofs(bot.getf(LINKS_FILE, LINKS_FILE_DEFAULT));
 	for(const str_set_pair& link: links)
 		for(const str& item: link.second)
 			ofs << link.first << ' ' << item << '\n';
+	links_changed = true;
 }
 
 void PFinderIrcBotPlugin::oalink(const message& msg)
@@ -646,15 +800,25 @@ void PFinderIrcBotPlugin::oalink(const message& msg)
 	str_set_map links;
 
 	lock_guard lock(links_file_mtx);
-	read_links_file(bot, links);
+	read_links_file(links);
 
+	bool changed = false;
 	while(ios::getstring(iss, handle))
 	{
-		links[group].insert(trim(handle));
-		bot.fc_reply(msg, "Link established for: '" + handle + "'.");
+		if(links[group].count(handle))
+		{
+			bot.fc_reply(msg, "Link for: '" + handle + "' is already present.");
+		}
+		else if(!trim(handle).empty())
+		{
+			links[group].insert(handle);
+			bot.fc_reply(msg, "Link established for: '" + handle + "'.");
+			changed = true;
+		}
 	}
 
-	write_links_file(bot, links);
+	if(changed)
+		write_links_file(links);
 }
 
 void PFinderIrcBotPlugin::oalist(const message& msg)
@@ -668,7 +832,7 @@ void PFinderIrcBotPlugin::oalist(const message& msg)
 
 		{
 			lock_guard lock(links_file_mtx);
-			read_links_file(bot, links);
+			read_links_file(links);
 		}
 
 		if(links.empty())
@@ -732,7 +896,6 @@ void PFinderIrcBotPlugin::oaunlink(const message& msg)
 
 	std::istringstream params(msg.get_user_params());
 
-	siz n;
 	str group;
 	siz_vec items;
 
@@ -793,7 +956,7 @@ void PFinderIrcBotPlugin::oaunlink(const message& msg)
 	str_set_map links;
 
 	lock_guard lock(links_file_mtx);
-	read_links_file(bot, links);
+	read_links_file(links);
 
 	if(links.empty())
 	{
@@ -802,6 +965,7 @@ void PFinderIrcBotPlugin::oaunlink(const message& msg)
 	}
 
 
+	bool changed = false;
 	if(group == "all")
 	{
 		// TODO: Make this unlink a whole group
@@ -812,10 +976,11 @@ void PFinderIrcBotPlugin::oaunlink(const message& msg)
 		const str_vec entries(links[group].begin(), links[group].end());
 		for(siz i: items)
 			if(i < entries.size())
-				links[group].erase(entries[i]);
+				changed |= links[group].erase(entries[i]);
 	}
 
-	write_links_file(bot, links);
+	if(changed)
+		write_links_file(links);
 
 	bot.fc_reply(msg, "Unlinking complete.");
 }
