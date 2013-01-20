@@ -55,12 +55,11 @@ using namespace skivvy::types;
 
 str& replace(str& s, const str& from, const str& to)
 {
-	size_t pos;
-	while((pos = s.find(from)) != str::npos)
+	siz pos = 0;
+	while((pos = s.find(from, pos + to.size())) != str::npos)
 		s.replace(pos, from.size(), to);
 	return s;
 }
-
 
 str lowercase(str s)
 {
