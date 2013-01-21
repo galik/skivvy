@@ -33,6 +33,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 '-----------------------------------------------------------------*/
 
 #include <skivvy/rpc.h>
+#include <skivvy/store.h>
 #include <skivvy/logrep.h>
 #include <skivvy/socketstream.h>
 #include <skivvy/FloodController.h>
@@ -56,6 +57,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 namespace skivvy { namespace ircbot {
 
 using namespace skivvy::types;
+using namespace skivvy::utils;
 
 const str DATA_DIR = "data_dir";
 
@@ -151,17 +153,22 @@ typedef message_set::const_iterator message_set_citer;
 
 struct msgevent
 {
+	bool done = false; // signal when complete (remove me)
 	time_t when;
-	siz timeout = 30; // 30 seconds
+	time_t timeout = 30; // 30 seconds
 	std::function<void(const message&)> func;
 	msgevent(): when(std::time(0)) {}
 };
 
-typedef std::multimap<str, msgevent> msgevent_map;
-typedef std::pair<const str, msgevent> msgevent_pair;
-typedef msgevent_map::iterator msgevent_itr;
-typedef msgevent_map::const_iterator msgevent_citr;
-typedef std::pair<msgevent_itr, msgevent_itr> msgevent_range;
+typedef std::list<msgevent> msgevent_lst;
+typedef std::map<str, msgevent_lst> msgevent_map;
+typedef std::pair<const str, msgevent_lst> msgevent_pair;
+
+//typedef std::multimap<str, msgevent> msgevent_map;
+//typedef std::pair<const str, msgevent> msgevent_pair;
+//typedef msgevent_map::iterator msgevent_itr;
+//typedef msgevent_map::const_iterator msgevent_citr;
+//typedef std::pair<msgevent_itr, msgevent_itr> msgevent_range;
 
 struct user_info
 {
@@ -963,6 +970,7 @@ public:
 private:
 	RemoteIrcServer irc;
 	FloodController fc;
+	Store* store;
 
 	msgevent_map msgevents;
 	std::mutex msgevent_mtx;
@@ -1038,19 +1046,18 @@ public:
 //	siz timeout = 30; // 30 seconds
 //	std::function<void(const message&)> func;
 
-	void add_msgevent(const str& msg, const std::function<void(const message&)>& func, siz timeout = 30)
+	msgevent_lst::iterator add_msgevent(const str& msg, const msgevent& me)
+	{
+		lock_guard lock(msgevent_mtx);
+		return msgevents[msg].insert(msgevents[msg].begin(), me);
+	}
+
+	msgevent_lst::iterator add_msgevent(const str& msg, const std::function<void(const message&)>& func, siz timeout = 30)
 	{
 		msgevent me;
 		me.timeout = timeout;
 		me.func = func;
-		lock_guard lock(msgevent_mtx);
-		msgevents.insert(msgevent_pair(msg, me));
-	}
-
-	void add_msgevent(const str& msg, const msgevent& me)
-	{
-		lock_guard lock(msgevent_mtx);
-		msgevents.insert(msgevent_pair(msg, me));
+		return add_msgevent(msg, me);
 	}
 
 	time_t get_plugin_load_time() { return plugin_loaded; }
@@ -1149,7 +1156,8 @@ public:
 	 */
 	void exec(const std::string& cmd, std::ostream* os = 0);
 
-	void del_plugin(const str& name);
+	bool has_plugin(const str& id, const str& version = "");
+	void del_plugin(const str& id);
 	void add_plugin(IrcBotPluginPtr p);
 	void add_monitor(IrcBotMonitor& m);
 	void add_rpc_service(IrcBotRPCService& s);
@@ -1196,8 +1204,6 @@ public:
 
 
 	RemoteIrcServer& get_irc_server();
-
-	bool has_plugin(const str& name, const str& version = "");
 
 	// Utility
 

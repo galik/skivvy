@@ -70,17 +70,20 @@ using namespace skivvy::types;
 using namespace skivvy::utils;
 using namespace skivvy::string;
 
-static const str SERVER_HOST = "server_host";
-static const str SERVER_PORT = "server_port";
+static const str SERVER_HOST = "server.host";
+static const str SERVER_PORT = "server.port";
 static const siz SERVER_PORT_DEFAULT = 6667;
 
 static const str PROP_PASSWORD = "password";
 static const str PROP_WELCOME = "welcome";
 static const str PROP_GOODBYE = "goodbye";
 static const str PROP_ON_CONNECT = "on_connect";
-static const str PROP_SERVER_PASSWORD = "server_password";
-static const str PROP_SERVER_RETRIES = "server_retries";
+static const str PROP_SERVER_PASSWORD = "server.password";
+static const str PROP_SERVER_RETRIES = "server.retries";
 static const str PROP_JOIN = "join";
+
+static const str IRCBOT_STORE_FILE = "store.file";
+static const str IRCBOT_STORE_FILE_DEFAULT = "store.txt";
 
 static const str FLOOD_TIME_BETWEEN_POLLS = "flood.poll.time";
 static const siz FLOOD_TIME_BETWEEN_POLLS_DEFAULT = 300;
@@ -131,19 +134,19 @@ std::istream& parsemsg(std::istream&& is, message& m)
 
 std::ostream& printmsg(std::ostream& os, const message& m)
 {
-	os << "                 from: " << m.from << '\n';
-	os << "                  cmd: " << m.cmd << '\n';
-	os << "               params: " << m.params << '\n';
-	os << "                   to: " << m.to << '\n';
-	os << "                 text: " << m.text << '\n';
-	os << "msg.from_channel()   : " << m.from_channel() << '\n';
-	os << "msg.get_nick()       : " << m.get_nick() << '\n';
-	os << "msg.get_user()       : " << m.get_user() << '\n';
-	os << "msg.get_host()       : " << m.get_host() << '\n';
-	os << "msg.get_userhost()   : " << m.get_userhost() << '\n';
-	os << "msg.get_user_cmd()   : " << m.get_user_cmd() << '\n';
-	os << "msg.get_user_params(): " << m.get_user_params() << '\n';
-	os << "msg.reply_to()       : " << m.reply_to() << '\n';
+	os << "//                  from: " << m.from << '\n';
+	os << "//                   cmd: " << m.cmd << '\n';
+	os << "//                params: " << m.params << '\n';
+	os << "//                    to: " << m.to << '\n';
+	os << "//                  text: " << m.text << '\n';
+	os << "// msg.from_channel()   : " << m.from_channel() << '\n';
+	os << "// msg.get_nick()       : " << m.get_nick() << '\n';
+	os << "// msg.get_user()       : " << m.get_user() << '\n';
+	os << "// msg.get_host()       : " << m.get_host() << '\n';
+	os << "// msg.get_userhost()   : " << m.get_userhost() << '\n';
+	os << "// msg.get_user_cmd()   : " << m.get_user_cmd() << '\n';
+	os << "// msg.get_user_params(): " << m.get_user_params() << '\n';
+	os << "// msg.reply_to()       : " << m.reply_to() << '\n';
 	return os << std::flush;
 }
 
@@ -388,14 +391,6 @@ BasicIrcBotPlugin::BasicIrcBotPlugin(IrcBot& bot)
 BasicIrcBotPlugin::~BasicIrcBotPlugin() {}
 
 void BasicIrcBotPlugin::add(const action& a) { actions.insert(action_pair{a.cmd, a}); }
-//void BasicIrcBotPlugin::add(const oldaction& o)
-//{
-//	action a;
-//	a.cmd = o.cmd;
-//	a.help = o.help;
-//	a.func = o.func;
-//	actions.insert(action_pair{a.cmd, a});
-//}
 
 bool BasicIrcBotPlugin::init()
 {
@@ -441,8 +436,8 @@ IrcBotPluginPtr IrcBotPluginLoader::operator()(const str& file, IrcBot& bot)
 		log(dlerror());
 		return plugin;
 	}
-
-	if(!(skivvy_ircbot_factory = reinterpret_cast<IrcBotPluginPtr(*)(IrcBot&)>(dlsym(dl, "skivvy_ircbot_factory"))))
+	if(!(*(void**)&skivvy_ircbot_factory = dlsym(dl, "skivvy_ircbot_factory")))
+//	if(!(skivvy_ircbot_factory = reinterpret_cast<IrcBotPluginPtr(*)(IrcBot&)>(dlsym(dl, "skivvy_ircbot_factory"))))
 	{
 		log(dlerror());
 		return plugin;
@@ -451,42 +446,36 @@ IrcBotPluginPtr IrcBotPluginLoader::operator()(const str& file, IrcBot& bot)
 	if(!(plugin = skivvy_ircbot_factory(bot)))
 		return plugin;
 	plugin->dl = dl;
-	// ("#channel"|"*"|"PM") -> { "plugin#1", "plugin#2" }
-	bot.del_plugin(plugin->get_name());
+	bot.del_plugin(plugin->get_id());
 	bot.add_plugin(plugin);
 	return plugin;
 }
 
 void IrcBot::add_plugin(IrcBotPluginPtr plugin)
 {
-	bug_func();
 	if(plugin)
-	{
 		this->plugins.push_back(plugin);
-		// give every plugin 'free pass' access to channels
-		//chan_access["*"].insert(plugin->get_name());
-	}
 	else
 		log("ERROR: Adding non-plugin.");
 }
 
-bool IrcBot::has_plugin(const str& name, const str&  version)
+bool IrcBot::has_plugin(const str& id, const str&  version)
 {
 	for(const IrcBotPluginPtr& p: plugins)
-		if(p->get_name() == name && p->get_version() >= version)
+		if(p->get_id() == id && p->get_version() >= version)
 			return true;
 	return false;
 }
 
-void IrcBot::del_plugin(const str& name)
+void IrcBot::del_plugin(const str& id)
 {
 	bug_func();
-//	IrcBotPlugin* pp;
 	for(plugin_vec_iter p =  plugins.begin(); p != plugins.end();)
 	{
-		if((*p)->get_name() == name)
+		if((*p)->get_id() != id)
+			++p;
+		else
 		{
-//			(*pp)->
 			lock_guard lock(plugin_mtx);
 			if(monitors.erase(dynamic_cast<IrcBotMonitor*>(p->get())))
 				log("Unregistering monitor: " << (*p)->get_name());
@@ -494,13 +483,10 @@ void IrcBot::del_plugin(const str& name)
 			bug("exiting plugin: " << (*p)->get_name());
 			(*p)->exit();
 			bug("dlclose plugin: " << (*p)->get_name());
-//			dlclose(p->get()); // TODO add this again
-			dlclose((*p)->dl); // TODO add this again
+			dlclose((*p)->dl);
 			log("Unregistering plugin : " << (*p)->get_name());
 			p = plugins.erase(p);
 		}
-		else
-			++p;
 	}
 }
 
@@ -508,6 +494,7 @@ void IrcBot::del_plugin(const str& name)
 
 IrcBot::IrcBot()
 : irc()
+, store(0)
 , done(false)
 , debug(false)
 , connected(false)
@@ -528,18 +515,17 @@ std::istream& operator>>(std::istream& is, IrcBot& bot)
 
 	while(std::getline(is, line))
 	{
-		if(line.empty() || line[0] == '#')
-			continue;
-
 		if((pos = line.find("//")) != str::npos)
 			line.erase(pos);
 		trim(line);
 
-		bug_var(line);
+		if(line.empty() || line[0] == '#')
+			continue;
+
+		bug("prop: " << line);
 
 		str key, val;
-		std::istringstream iss(line);
-		if(!std::getline(std::getline(iss >> std::ws, key, ':') >> std::ws, val))
+		if(!sgl(sgl(siss(line) >> std::ws, key, ':') >> std::ws, val))
 		{
 			log("Error parsing prop: " << line);
 			continue;
@@ -552,24 +538,22 @@ std::istream& operator>>(std::istream& is, IrcBot& bot)
 		else if(key == "user") bot.info.user = val;
 		else if(key == "mode") bot.info.mode = val;
 		else if(key == "real") bot.info.real = val;
-//		else if(key == "join") bot.add_channel(val);
-//		else if(key == "ban") bot.banned.insert(val); // TODO: don't cache this value
 		else if(key == "include")
 		{
 			bug("include:" << val);
-			str file_name;
 			if(val.empty())
 				continue;
+			str file_name;
 			if(val[0] == '/')
 				file_name = val;
 			else
 			{
 				str file_path = bot.configfile.substr(0, bot.configfile.find_last_of('/'));
-				bug_var(file_path);
+				//bug_var(file_path);
 				file_name = file_path + "/" + val;
-				bug_var(file_name);
+				//bug_var(file_name);
 			}
-			bug_var(file_name);
+			//bug_var(file_name);
 			std::ifstream ifs(file_name);
 			if(!(ifs >> bot))
 				log("Failed to include: " << file_name);
@@ -716,9 +700,9 @@ void IrcBot::load_plugins()
 
 	str_vec plugin_dirs;
 
-	if(have("plugin_dir"))
+	if(have("plugin.dir"))
 	{
-		str_vec dirs = get_vec("plugin_dir");
+		str_vec dirs = get_vec("plugin.dir");
 		plugin_dirs.insert(plugin_dirs.end(), dirs.begin(), dirs.end());
 	}
 	plugin_dirs.push_back(DEFAULT_PLUGIN_DIR);
@@ -783,12 +767,29 @@ void IrcBot::load_plugins()
 
 void IrcBot::dispatch_msgevent(const message& msg)
 {
+//	bug_func();
 	time_t now = std::time(0);
 	lock_guard lock(msgevent_mtx);
-	msgevent_range mr = msgevents.equal_range(msg.cmd);
-	for(msgevent_itr mi = mr.first; mi != mr.second; mi = msgevents.erase(mi))
-		if(now - mi->second.when < int(mi->second.timeout))
-			mi->second.func(msg);
+//	bug_var(msgevents.size());
+
+	msgevent_map::iterator mei;
+	if((mei = msgevents.find(msg.cmd)) != msgevents.end())
+	{
+		msgevent_lst& lst = mei->second;
+		msgevent_lst::iterator li;
+		for(li = lst.begin(); li != lst.end();)
+		{
+			if(li->done)
+				li = lst.erase(li);
+			else if(now - li->when > li->timeout)
+				li = lst.erase(li);
+			else
+			{
+				li->func(msg);
+				++li;
+			}
+		}
+	}
 }
 
 bool IrcBot::init(const str& config_file)
@@ -820,14 +821,21 @@ bool IrcBot::init(const str& config_file)
 	config_loaded = std::time(0);
 
 	// =====================================
+	// CREATE CRITICAL RESOURCES
+	// =====================================
+
+	store = new BackupStore(getf(IRCBOT_STORE_FILE, IRCBOT_STORE_FILE_DEFAULT));
+	bug_var(store);
+
+	// =====================================
 	// OPEN LOG FILE
 	// =====================================
 
 	std::ofstream logfile;
 
-	if(has("log_file"))
+	if(has("log.file"))
 	{
-		logfile.open(getf("log_file"));
+		logfile.open(getf("log.file"));
 		if(logfile)
 		{
 			botlog(&logfile);
@@ -896,8 +904,12 @@ bool IrcBot::init(const str& config_file)
 	{
 		if(!irc.receive(line))
 		{
+			// signal pinger to reconnect
 			connected = false;
 			registered = false;
+
+			// wait for pinger to reconnect
+			// If pinger times/retries out done == true
 			while(!done && !connected)
 				std::this_thread::sleep_for(std::chrono::seconds(3));
 		}
@@ -945,8 +957,10 @@ bool IrcBot::init(const str& config_file)
 
 			for(str prop: get_vec(PROP_ON_CONNECT))
 				exec(replace(prop, "$me", nick));
-			for(const str& channel: get_vec(PROP_JOIN))
-				official_join(channel);
+			for(const str& chan: get_vec(PROP_JOIN))
+				official_join(chan);
+			for(const str& chan: store->get_set("invite"))
+				official_join(chan);
 			registered = true;
 		}
 		else if(msg.cmd == RPL_NAMREPLY)
@@ -960,7 +974,7 @@ bool IrcBot::init(const str& config_file)
 			iss.str(msg.text);
 			while(iss >> nick)
 				if(!nick.empty())
-					nicks[channel].insert((nick[0] == '@' || nick[0] == '+')?nick.erase(0, 1):nick);
+					nicks[channel].insert((nick[0] == '@' || nick[0] == '+') ? nick.substr(1) : nick);
 		}
 		else if(msg.cmd == ERR_NOORIGIN)
 		{
@@ -980,16 +994,53 @@ bool IrcBot::init(const str& config_file)
 				done = true;
 			}
 		}
+		else if(msg.cmd == RPL_WHOISCHANNELS)
+		{
+			BUG_MSG(msg, RPL_WHOISCHANNELS);
+		}
+		else if(msg.cmd == INVITE)
+		{
+			BUG_MSG(msg, INVITE);
+			// ===============================
+			// INVITE: INVITE
+			// -------------------------------
+			//                  from: SooKee!~SooKee@SooKee.users.quakenet.org
+			//                   cmd: INVITE
+			//                params: Skivvy00 #skivvy-test
+			//                    to: Skivvy00
+			//                  text:
+			// msg.from_channel()   : false
+			// msg.get_nick()       : SooKee
+			// msg.get_user()       : ~SooKee
+			// msg.get_host()       : SooKee.users.quakenet.org
+			// msg.get_userhost()   : ~SooKee@SooKee.users.quakenet.org
+			// msg.get_user_cmd()   :
+			// msg.get_user_params():
+			// msg.reply_to()       : SooKee
+			// -------------------------------
+
+			str who, chan;
+			siss(msg.params) >> who >> chan; // Skivvy00 #skivvy-test
+
+			if(who == nick)
+			{
+				official_join(chan);
+				irc.say(chan, "I was invited by " + msg.get_nick());
+				store->add("invite", chan);
+			}
+		}
 		else if(msg.cmd == JOIN)
 		{
-//			BUG_MSG(msg, JOIN);
+			BUG_MSG(msg, JOIN);
 			// track known nicks
 			const str who = msg.get_nick();
 			str_set& known = nicks[msg.params];
 			if(who != nick && known.find(who) == known.end())
-			{
 				known.insert(who);
-			}
+		}
+		else if(msg.cmd == PART)
+		{
+			BUG_MSG(msg, PART);
 		}
 		else if(msg.cmd == KICK)
 		{

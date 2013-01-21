@@ -26,6 +26,7 @@
 
 # Log to file rather than console
 #log_file: skivvy.log
+store.file: bot-store.txt // default store.txt
 
 # Configure server (server_host MUST be set)
 server_host: irc.quakenet.org

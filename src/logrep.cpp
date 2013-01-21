@@ -44,8 +44,6 @@ using namespace skivvy::ansi;
 using namespace skivvy::types;
 using namespace skivvy::string;
 
-size_t __scope__bomb__::indent = 0;
-
 void wait_on(std::function<bool()> test, time_t timeout, time_t rate)
 {
 	time_t now = std::time(0);
@@ -128,6 +126,10 @@ str get_col(const str& name, int seed = 0)
 	return m[name];
 }
 
+#ifdef DEBUG
+
+size_t __scope__bomb__::indent = 0;
+
 __scope__bomb__::__scope__bomb__(const char* name): name(name)
 {
 	++indent;
@@ -138,6 +140,8 @@ __scope__bomb__::~__scope__bomb__()
 	bug(get_col(name) << "<" << str(indent, '-') << name << ' ' << get_col(THREAD, 1) << THREAD << get_col(OBJECT, 2) << OBJECT << ansi_esc({NORM}));
 	--indent;
 }
+
+#endif
 
 int rand_int(int low, int high)
 {

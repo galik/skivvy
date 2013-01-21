@@ -520,7 +520,7 @@ void ChanopsIrcBotPlugin::event(const message& msg)
 		name_event(msg);
 	else if(msg.cmd == NICK)
 		nick_event(msg);
-	else if(msg.cmd == RPL_WHOISUSER)
+	else if(msg.cmd == RPL_WHOISUSER || msg.cmd == RPL_WHOISCHANNELS || msg.cmd == RPL_WHOISOPERATOR)
 		whoisuser_event(msg);
 	else if(msg.cmd == "JOIN")
 		join_event(msg);

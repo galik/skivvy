@@ -871,7 +871,7 @@ void OAStatsIrcBotPlugin::regular_stats(const str& channel)
 
 bool OAStatsIrcBotPlugin::initialize()
 {
-	if(!bot.has_plugin("OA Player Finder", "0.1"))
+	if(!bot.has_plugin("pfinder", "0.1"))
 	{
 		log("DEPENDENCY ERROR: Require plugin 'OA Player Finder'.");
 		return false;

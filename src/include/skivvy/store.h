@@ -32,6 +32,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 '-----------------------------------------------------------------*/
 
 #include <skivvy/types.h>
+#include <skivvy/logrep.h>
 
 #include <istream>
 #include <ostream>
@@ -49,6 +50,7 @@ namespace skivvy { namespace utils {
 
 using namespace skivvy::types;
 using namespace skivvy::string;
+using namespace skivvy::utils;
 
 class Store
 {
@@ -694,58 +696,15 @@ public:
 
 // Container serialization
 
-std::istream& getobject(std::istream& is, str& o)
-{
-	char c;
-	if(is.peek() != '{') // protocol error
-		is.clear(std::ios::failbit | is.rdstate());
-	else
-	{
-		is.ignore(); // skip '{'
-		siz d = 1;
-		o.clear();
-		while(d && is.get(c))
-		{
-			if(c == '{')
-				++d;
-			else if(c == '}')
-				--d;
-			if(d)
-				o += c;
-		}
-	}
-	return is;
-}
+std::istream& getobject(std::istream& is, str& o);
 
 template<typename T>
-void escape(T&)
-{
-//	bug_func();
-}
-
-void escape(str& s)
-{
-//	bug_func();
-	replace(s, "\\", "\\0"); // escape delimiters
-	replace(s, "{", "\\1");
-	replace(s, "}", "\\2");
-	replace(s, ",", "\\3");
-}
+void escape(T&) {}
+void escape(str& s);
 
 template<typename T>
-void unescape(T&)
-{
-//	bug_func();
-}
-
-void unescape(str& s)
-{
-//	bug_func();
-	replace(s, "\\3", ",");
-	replace(s, "\\2", "}");
-	replace(s, "\\1", "{");
-	replace(s, "\\0", "\\");
-}
+void unescape(T&) {}
+void unescape(str& s);
 
 // {{value_type1}{value_type2}}
 template<typename Container>
@@ -781,19 +740,9 @@ std::istream& extract(std::istream&& is, T& t)
 	return extract(is, t);
 }
 
-std::istream& extract(std::istream& is, str& s)
-{
-//	bug_func();
-	if(sgl(is, s))
-		unescape(s);
-	return is;
-}
+std::istream& extract(std::istream& is, str& s);
 
-std::istream& extract(std::istream&& is, str& s)
-{
-//	bug_func();
-	return extract(is, s);
-}
+std::istream& extract(std::istream&& is, str& s);
 
 // {{value_type1}{value_type2}}
 template<typename Container>
