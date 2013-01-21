@@ -879,7 +879,8 @@ class IrcBotPluginHandle
 	PluginPtr plugin;// = 0;
 	time_t plugin_load_time = 0;
 
-	static Plugin null_plugin;
+//	static IrcBot null_bot;
+//	static Plugin null_plugin;
 
 public:
 
@@ -913,7 +914,6 @@ public:
 		if(!plugin.get())
 		{
 			log("ERROR: Bad IrcBotPluginHandle: " << this);
-			return *null_plugin;
 		}
 		return *plugin;
 	}
@@ -925,7 +925,6 @@ public:
 		if(!plugin.get())
 		{
 			log("ERROR: Bad IrcBotPluginHandle: " << this);
-			return &null_plugin;
 		}
 		return plugin.get();
 	}
