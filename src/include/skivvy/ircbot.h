@@ -67,6 +67,7 @@ const str DATA_DIR = "data_dir";
  */
 struct message
 {
+	str line; // original message line
 	str from; // ":Nick!user@network"
 	str cmd; // "PRIVMSG"
 	str params; // not same as user_params()

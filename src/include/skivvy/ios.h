@@ -36,6 +36,8 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <istream>
 #include <ostream>
 
+#include <dirent.h>
+
 namespace skivvy { namespace ios {
 
 using namespace skivvy::types;
@@ -43,6 +45,29 @@ using namespace skivvy::types;
 std::istream& getstring(std::istream& is, str& s);
 inline
 std::istream& getstring(std::istream&& is, str& s) { return getstring(is, s); }
+
+/**
+ * Get directory listing.
+ * @return errno
+ */
+inline
+int ls(const str& folder, str_vec &files)
+{
+    DIR* dir;
+	dirent* dirp;
+
+	if(!(dir = opendir(folder.c_str())))
+		return errno;
+
+	files.clear();
+	while((dirp = readdir(dir)))
+		files.push_back(dirp->d_name);
+
+	if(closedir(dir))
+		return errno;
+
+	return 0;
+}
 
 inline
 bool getargs(std::istream&) { return true; }

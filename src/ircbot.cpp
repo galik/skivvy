@@ -94,16 +94,15 @@ static const siz FLOOD_TIME_BETWEEN_EVENTS_DEFAULT = 1600;
 // :port80a.se.quakenet.org 353 Skivvy = #oa-ictf :Skivvy @SooKee pet @Q
 std::istream& parsemsg(std::istream&& is, message& m)
 {
-	str line;
-	std::getline(is, line);
-
+	std::getline(is, m.line);
+	trim(m.line);
 	// :SooKee!~SooKee@SooKee.users.quakenet.org MODE #skivvy-admin +o Zim-blackberry
 
-	if(!line.empty())
+	if(!m.line.empty())
 	{
-		if(line[0] == ':')
+		if(m.line[0] == ':')
 		{
-			std::istringstream iss(line.substr(1));
+			siss iss(m.line.substr(1));
 			iss >> m.from >> m.cmd;
 			std::getline(iss, m.params, ':');
 			std::getline(iss, m.text);
@@ -113,7 +112,7 @@ std::istream& parsemsg(std::istream&& is, message& m)
 		}
 		else
 		{
-			std::istringstream iss(line);
+			siss iss(m.line);
 			iss >> m.cmd;
 			std::getline(iss, m.params, ':');
 			std::getline(iss, m.text);
@@ -134,6 +133,7 @@ std::istream& parsemsg(std::istream&& is, message& m)
 
 std::ostream& printmsg(std::ostream& os, const message& m)
 {
+	os << "//                  line: " << m.line << '\n';
 	os << "//                  from: " << m.from << '\n';
 	os << "//                   cmd: " << m.cmd << '\n';
 	os << "//                params: " << m.params << '\n';
@@ -152,6 +152,7 @@ std::ostream& printmsg(std::ostream& os, const message& m)
 
 std::istream& operator>>(std::istream& is, message& m)
 {
+	std::getline(is, m.line);
 	std::getline(is, m.from);
 	std::getline(is, m.cmd);
 	std::getline(is, m.params);
@@ -162,6 +163,7 @@ std::istream& operator>>(std::istream& is, message& m)
 
 std::ostream& operator<<(std::ostream& os, const message& m)
 {
+	os << m.line << '\n';
 	os << m.from << '\n';
 	os << m.cmd << '\n';
 	os << m.params << '\n';
@@ -667,26 +669,6 @@ void IrcBot::official_join(const str& channel)
 // LOAD DYNAMIC PLUGINS
 // =====================================
 
-/**
- * Get directory listing.
- */
-int ls(const str& folder, str_vec &files)
-{
-    DIR* dir;
-	dirent* dirp;
-
-	if(!(dir = opendir(folder.c_str())))
-		return errno;
-
-	while((dirp = readdir(dir)))
-		files.push_back(dirp->d_name);
-
-	if(closedir(dir))
-		return errno;
-
-	return 0;
-}
-
 #ifndef DEFAULT_PLUGIN_DIR
 #define DEFAULT_PLUGIN_DIR "/usr/local/share/skivvy/plugins"
 #endif
@@ -726,7 +708,7 @@ void IrcBot::load_plugins()
 			log("Searching plugin dir: " << plugin_dir);
 
 			str_vec files;
-			if(int e = ls(plugin_dir, files))
+			if(int e = ios::ls(plugin_dir, files))
 			{
 				log(strerror(e));
 				continue;
@@ -1390,7 +1372,10 @@ static void prompt(std::ostream& os, size_t delay)
 
 void IrcBot::exec(const std::string& cmd, std::ostream* os)
 {
-	std::string line = cmd;
+	bug_func();
+	bug_var(cmd);
+	bug_var(os);
+	str line = cmd;
 
 	if(line[0] == '/')
 	{
@@ -1400,15 +1385,19 @@ void IrcBot::exec(const std::string& cmd, std::ostream* os)
 		cmd = lowercase(cmd);
 		if(cmd == "/say")
 		{
-			str channel;
-			iss >> channel >> std::ws;
-			if(!trim(channel).empty() && channel[0] == '#')
+			str chan;
+			iss >> chan >> std::ws;
+			bug_var(chan);
+			if(!trim(chan).empty())// && chan[0] == '#')
 			{
-				std::getline(iss, line);
-				irc.say(channel, line);
-				if(os) (*os) << "OK";
+				sgl(iss, line);
+				bug_var(line);
+				irc.say(chan, line);
+				if(os)
+					(*os) << "OK";
 			}
-			else if(os) (*os) << "ERROR: /say #channel then some dialogue.\n";
+			else if(os)
+				(*os) << "ERROR: /say #channel then some dialogue.\n";
 		}
 		else if(cmd == "/raw")
 		{
