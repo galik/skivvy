@@ -431,6 +431,17 @@ bool ChanopsIrcBotPlugin::reclaim(const message& msg)
 	return true;
 }
 
+str col(const str& fg, const str& bg)
+{
+	return IRC_COLOR + fg + "," + bg;
+}
+
+str red = IRC_COLOR + IRC_Red + "," + IRC_White;
+str black = IRC_COLOR + IRC_Black + "," + IRC_White;
+str blue = IRC_COLOR + IRC_Navy_Blue + "," + IRC_White;
+str green = IRC_COLOR + IRC_Green + "," + IRC_White;
+str bold = IRC_BOLD;
+
 bool ChanopsIrcBotPlugin::votekick(const message& msg)
 {
 	BUG_COMMAND(msg);
@@ -455,16 +466,23 @@ bool ChanopsIrcBotPlugin::votekick(const message& msg)
 		return bot.cmd_error(msg, "usege: !votekick <nick> <reason> *(<duration>)");
 
 	siz secs = 60;
-	iss >> secs; // optional
+	//iss >> secs; // optional
 
 	//str bg = IRC_White;
 
-	bot.fc_reply(msg, IRC_BOLD + IRC_COLOR + IRC_Red + "VOTE-KICK: " + IRC_COLOR + IRC_Royal_Blue
-		+ "Please vote if you think we should kick " + nick	+ " from this channel!");
-	bot.fc_reply(msg, IRC_BOLD + IRC_COLOR + IRC_Red + "VOTE-KICK: " + IRC_COLOR + IRC_Royal_Blue
-		+ "Reason: " + IRC_COLOR + IRC_Green + reason + IRC_COLOR + IRC_Black + " !f1 = YES, !f2 = NO");
-	bot.fc_reply(msg, IRC_BOLD + IRC_COLOR + IRC_Red + "VOTE-KICK: " + IRC_COLOR + IRC_Royal_Blue
-		+ "You have " + std::to_string(secs) + " seconds to comply.");
+//	bot.fc_reply(msg, IRC_BOLD + IRC_COLOR + IRC_Red + "VOTE-KICK: " + IRC_COLOR + IRC_Royal_Blue
+//		+ "Please vote if you think we should kick " + nick	+ " from this channel!");
+//	bot.fc_reply(msg, IRC_BOLD + IRC_COLOR + IRC_Red + "VOTE-KICK: " + IRC_COLOR + IRC_Royal_Blue
+//		+ "Reason: " + IRC_COLOR + IRC_Green + reason + IRC_COLOR + IRC_Black + " !f1 = YES, !f2 = NO");
+//	bot.fc_reply(msg, IRC_BOLD + IRC_COLOR + IRC_Red + "VOTE-KICK: " + IRC_COLOR + IRC_Royal_Blue
+//		+ "You have " + std::to_string(secs) + " seconds to comply.");
+
+	bot.fc_reply(msg, bold + red + "VOTE-KICK: " + black + "Vote" + blue +
+		+ " if you think we should kick " + black + nick + blue + " from this channel!");
+	bot.fc_reply(msg, bold + red + "VOTE-KICK: " + blue
+		+ "Reason: " + red + reason + black + " !f1 = YES, !f2 = NO");
+	bot.fc_reply(msg, bold + red + "VOTE-KICK: " + blue
+		+ "You have " + black + std::to_string(secs) + blue + " seconds to comply.");
 
 	vote_f1[chan] = 0;
 	vote_f2[chan] = 0;
@@ -493,7 +511,8 @@ bool ChanopsIrcBotPlugin::f1(const message& msg)
 		return bot.cmd_error(msg, "There is no vote in progress.", true);
 
 	if(voted[chan].count(msg.get_userhost()))
-		bot.fc_reply(msg, "Sorry " + msg.get_nick() + ", you can only vote once.");
+		bot.fc_reply(msg, bold + red + "VOTE-KICK: " + blue
+			+ "Sorry " + black + msg.get_nick() + blue + ", you can only vote once.");
 	else
 	{
 		++vote_f1[chan];
@@ -518,7 +537,8 @@ bool ChanopsIrcBotPlugin::f2(const message& msg)
 		return bot.cmd_error(msg, "There is no vote in progress.", true);
 
 	if(voted[chan].count(msg.get_userhost()))
-		bot.fc_reply(msg, "Sorry " + msg.get_nick() + ", you can only vote once.");
+		bot.fc_reply(msg, bold + red + "VOTE-KICK: " + blue
+			+ "Sorry " + black + msg.get_nick() + blue + ", you can only vote once.");
 	else
 	{
 		++vote_f2[chan];
@@ -539,14 +559,16 @@ bool ChanopsIrcBotPlugin::ballot(const str& chan, const str& nick, const st_time
 	bug_var(vote_f2[chan]);
 	if(vote_f1[chan] > vote_f2[chan])
 	{
-		irc->say(chan, nick + " : The people have spoken and it was not good "
-			+ IRC_BOLD + std::to_string(vote_f1[chan]) + " - "
-			+ std::to_string(vote_f2[chan]) + IRC_NORMAL + " to kick!"
-			+ IRC_BOLD + " :'(");
+		irc->say(chan, bold + red + "VOTE-KICK: " + black
+			+ nick + blue + " : The people have spoken and it was not good "
+			+ black + std::to_string(vote_f1[chan]) + " - "
+			+ std::to_string(vote_f2[chan]) + blue + " to kick!"
+			+ black + " :'(");
 		irc->kick({chan}, {nick}, "You are the weakest link.... goodby!");
 	}
 	else
-		irc->say(chan, "The scrawney life of " + nick + " has been saved by the people!");
+		irc->say(chan, bold + red + "VOTE-KICK: " + blue + "The scrawney life of "
+			+ black + nick + blue + " has been saved by the people!");
 	vote_in_progress[chan] = false;
 
 	return true;

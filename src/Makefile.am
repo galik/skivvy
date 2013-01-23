@@ -123,6 +123,7 @@ libskivvy_la_SOURCES = \
 	types.cpp
 	
 libskivvy_la_LIBADD = -lreadline
+libskivvy_la_LDFLAGS = -version-info 0:0:0
 
 # IrcBot plugins
 skivvy_plugin_artibot_la_SOURCES = plugin-artibot.cpp mh/megahal.cpp
