@@ -93,7 +93,7 @@ bool aocom(const str& cmd, str_vec& packets, const str& host, int port)
 	// keep out all threads for the same server:port until the minimum time
 	// has elapsed
 	lock_guard lock(*mtxs[key]);
-	time_point pause = steady_clock::now() + std::chrono::milliseconds(1000);
+	st_time_point pause = st_clk::now() + std::chrono::milliseconds(1000);
 
 	const str msg = "\xFF\xFF\xFF\xFF" + cmd;
 

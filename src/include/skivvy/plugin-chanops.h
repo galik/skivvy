@@ -141,6 +141,19 @@ private:
 	bool signup(const message& msg);
 	bool email_signup(const message& msg);
 
+	std::mutex vote_mtx;
+	std::map<str, bool> vote_in_progress;
+//	str_map vote_nick;
+	std::map<str, std::future<void>> vote_fut;
+	str_siz_map vote_f1;
+	str_siz_map vote_f2;
+	str_set_map voted; // who already voted
+
+	bool votekick(const message& msg);
+	bool f1(const message& msg);
+	bool f2(const message& msg);
+	bool ballot(const str& chan, const str& nick, const st_time_point& end);
+
 	bool login(const message& msg);
 	//void apply_acts(const str& id);
 	void apply_acts(const user_t& u);

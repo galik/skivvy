@@ -38,6 +38,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <skivvy/str.h>
 #include <skivvy/ios.h>
 #include <skivvy/irc-constants.h>
+#include <skivvy/irc.h>
 
 namespace skivvy { namespace ircbot {
 
@@ -430,6 +431,126 @@ bool ChanopsIrcBotPlugin::reclaim(const message& msg)
 	return true;
 }
 
+bool ChanopsIrcBotPlugin::votekick(const message& msg)
+{
+	BUG_COMMAND(msg);
+	if(!permit(msg))
+		return false;
+
+	if(!msg.from_channel())
+		return bot.cmd_error(msg, "You can only call a vote from a channel.");
+
+	str chan = msg.to;
+
+	lock_guard lock(vote_mtx);
+
+	if(vote_in_progress[chan])
+		return bot.cmd_error(msg, "Vote already in progress.", true);
+	vote_in_progress[chan] = true;
+
+	str nick;
+	str reason;
+	siss iss(msg.get_user_params());
+	if(!(sgl(iss >> nick >> std::ws, reason)))
+		return bot.cmd_error(msg, "usege: !votekick <nick> <reason> *(<duration>)");
+
+	siz secs = 60;
+	iss >> secs; // optional
+
+	//str bg = IRC_White;
+
+	bot.fc_reply(msg, IRC_BOLD + IRC_COLOR + IRC_Red + "VOTE-KICK: " + IRC_COLOR + IRC_Royal_Blue
+		+ "Please vote if you think we should kick " + nick	+ " from this channel!");
+	bot.fc_reply(msg, IRC_BOLD + IRC_COLOR + IRC_Red + "VOTE-KICK: " + IRC_COLOR + IRC_Royal_Blue
+		+ "Reason: " + IRC_COLOR + IRC_Green + reason + IRC_COLOR + IRC_Black + " !f1 = YES, !f2 = NO");
+	bot.fc_reply(msg, IRC_BOLD + IRC_COLOR + IRC_Red + "VOTE-KICK: " + IRC_COLOR + IRC_Royal_Blue
+		+ "You have " + std::to_string(secs) + " seconds to comply.");
+
+	vote_f1[chan] = 0;
+	vote_f2[chan] = 0;
+	voted[chan].clear();
+
+//	st_time_point
+//	vote_end[chan] = st_clk::now() + std::chrono::seconds(secs);
+
+//	std::async(std::launch::async, [&]{ ballot(); });
+	vote_fut[chan] = std::async(std::launch::async, [=]{ ballot(chan, nick, st_clk::now() + std::chrono::seconds(secs)); });
+
+	return true;
+}
+
+bool ChanopsIrcBotPlugin::f1(const message& msg)
+{
+	BUG_COMMAND(msg);
+
+	if(!msg.from_channel())
+		return bot.cmd_error(msg, "You can only vote from a channel.");
+
+	str chan = msg.to;
+	lock_guard lock(vote_mtx);
+
+	if(!vote_in_progress[chan])
+		return bot.cmd_error(msg, "There is no vote in progress.", true);
+
+	if(voted[chan].count(msg.get_userhost()))
+		bot.fc_reply(msg, "Sorry " + msg.get_nick() + ", you can only vote once.");
+	else
+	{
+		++vote_f1[chan];
+		voted[chan].insert(msg.get_userhost());
+		log("votekick: " << msg.get_userhost() << " voted f1");
+	}
+
+	return true;
+}
+
+bool ChanopsIrcBotPlugin::f2(const message& msg)
+{
+	BUG_COMMAND(msg);
+
+	if(!msg.from_channel())
+		return bot.cmd_error(msg, "You can only vote from a channel.");
+
+	str chan = msg.to;
+	lock_guard lock(vote_mtx);
+
+	if(!vote_in_progress[chan])
+		return bot.cmd_error(msg, "There is no vote in progress.", true);
+
+	if(voted[chan].count(msg.get_userhost()))
+		bot.fc_reply(msg, "Sorry " + msg.get_nick() + ", you can only vote once.");
+	else
+	{
+		++vote_f2[chan];
+		voted[chan].insert(msg.get_userhost());
+		log("votekick: " << msg.get_userhost() << " voted f2");
+	}
+
+	return true;
+}
+
+bool ChanopsIrcBotPlugin::ballot(const str& chan, const str& nick, const st_time_point& end)
+{
+	while(st_clk::now() < end)
+		std::this_thread::sleep_until(end);
+	lock_guard lock(vote_mtx);
+	bug_var(chan);
+	bug_var(vote_f1[chan]);
+	bug_var(vote_f2[chan]);
+	if(vote_f1[chan] > vote_f2[chan])
+	{
+		irc->say(chan, nick + " : The people have spoken and it was not good "
+			+ IRC_BOLD + std::to_string(vote_f1[chan]) + " - "
+			+ std::to_string(vote_f2[chan]) + IRC_NORMAL + " to kick!"
+			+ IRC_BOLD + " :'(");
+		irc->kick({chan}, {nick}, "You are the weakest link.... goodby!");
+	}
+	else
+		irc->say(chan, "The scrawney life of " + nick + " has been saved by the people!");
+	vote_in_progress[chan] = false;
+
+	return true;
+}
 // every function belongs to a group
 
 // INTERFACE: BasicIrcBotPlugin
@@ -442,6 +563,7 @@ bool ChanopsIrcBotPlugin::initialize()
 		{"!users", G_USER}
 		, {"!reclaim", G_USER}
 		, {"!ban", G_OPER}
+		, {"!votekick", G_OPER}
 	};
 
 	// chanops.init.user: <user> <pass> <PERM> *( "," <PERM> )
@@ -477,6 +599,24 @@ bool ChanopsIrcBotPlugin::initialize()
 		"register" // no ! indicated PM only command
 		, "register <username> <password> <password>"
 		, [&](const message& msg){ email_signup(msg); }
+	});
+	add
+	({
+		"!votekick"
+		, "!votekick <nick> <reason>"
+		, [&](const message& msg){ votekick(msg); }
+	});
+	add
+	({
+		"!f1"
+		, "!f1 means vote YES during !votekick"
+		, [&](const message& msg){ f1(msg); }
+	});
+	add
+	({
+		"!f2"
+		, "!f2 means vote NO during !votekick"
+		, [&](const message& msg){ f2(msg); }
 	});
 	add
 	({

@@ -88,9 +88,18 @@ typedef std::map<const str, str_vec> str_vec_map;
 typedef std::pair<const str, str_vec> str_vec_pair;
 
 typedef std::lock_guard<std::mutex> lock_guard;
-typedef std::chrono::steady_clock steady_clock;
-typedef steady_clock::period period;
-typedef steady_clock::time_point time_point;
+//typedef std::chrono::steady_clock steady_clock;
+//typedef steady_clock::period period;
+//typedef steady_clock::time_point time_point;
+
+// time
+typedef std::chrono::steady_clock st_clk;
+typedef st_clk::period st_period;
+typedef st_clk::time_point st_time_point;
+
+typedef std::chrono::high_resolution_clock hr_clk;
+typedef hr_clk::period hr_period;
+typedef hr_clk::time_point hr_time_point;
 
 typedef std::stringstream sss;
 typedef std::istringstream siss;
@@ -125,8 +134,8 @@ struct delay
 
 	bool parse(const str& s);
 
-	operator siz() { return d; }
-	operator int() { return int(d); }
+	operator siz() const { return d; }
+	operator int() const { return int(d); }
 
 	bool operator<(const delay& d) const { return this->d < d.d; }
 	bool operator<(int i) const { return (int)this->d < i; }

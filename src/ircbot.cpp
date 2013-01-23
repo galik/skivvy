@@ -1399,6 +1399,9 @@ void IrcBot::exec(const std::string& cmd, std::ostream* os)
 			else if(os)
 				(*os) << "ERROR: /say #channel then some dialogue.\n";
 		}
+		else if(cmd == "/nop") // do nothing
+		{
+		}
 		else if(cmd == "/raw")
 		{
 			str raw;
