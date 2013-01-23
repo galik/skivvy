@@ -25,18 +25,10 @@ skivvydir = $(prefix)/include/skivvy
 plugindir = $(datadir)/skivvy/plugins
 docsdir = $(datadir)/skivvy
 
-# Required for GCC on some systems it seems 
-#	-D _GLIBCXX_USE_NANOSLEEP
-#	-D __GXX_EXPERIMENTAL_CXX0X__
-#	-D _GLIBCXX_USE_SCHED_YIELD
-
 DEF_FLAGS = \
 	-D _GLIBCXX_USE_NANOSLEEP \
 	-D _GLIBCXX_USE_SCHED_YIELD \
 	-D STAMP=\"$(shell date +%Y%m%d-%H%M%S)\" \
-	-D DEV=\"$(shell git diff --quiet || echo -dev)\" \
-	-D COMMITS=\"$(shell printf %04d \"$(git log --after={yesterday} --pretty=oneline|wc -l)\")\" \
-	-D REVISION=\"$(shell git log -n 1 --pretty=format:%h|tr [:lower:] [:upper:])\" \
 	-D DEFAULT_PLUGIN_DIR=\"$(plugindir)\"
 
 GEN_FLAGS = -Wl,-E -Wfatal-errors -Wall -Wextra -Winit-self -ansi -pedantic -pipe -pthread \
@@ -46,8 +38,6 @@ LIBXML2_FLAG = $(shell xml2-config --cflags)
 LIBXML2_LIBS = $(shell xml2-config --libs)
 	
 AM_CXXFLAGS = -std=gnu++11 $(GEN_FLAGS) $(DEF_FLAGS) $(LIBXML2_FLAG)
-
-#BOOST_LIBS = -lboost_regex-mt
 
 skivvy_HEADERS = \
 	$(srcdir)/include/skivvy/bits/rpc.tcc \
