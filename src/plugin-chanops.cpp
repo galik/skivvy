@@ -87,7 +87,6 @@ const str CHANOPS_PCRE_PROTECT_VEC = "chanops.pcre.protect";
 
 const str CHANOPS_WILD_KICK_VEC = "chanops.wild.kick";
 const str CHANOPS_PCRE_KICK_VEC = "chanops.pcre.kick";
-
 const str CHANOPS_WILD_BAN_VEC = "chanops.wild.ban";
 const str CHANOPS_PCRE_BAN_VEC = "chanops.pcre.ban";
 
@@ -241,7 +240,7 @@ bool ChanopsIrcBotPlugin::email_signup(const message& msg)
 	bug("email2: " << email2);
 
 	if(!bot.preg_match("\\w+@[^.]+\\.[\\w.]+", email, true))
-		return bot.cmd_error_pm(msg, "ERROR: Invalis email address: " + email);
+		return bot.cmd_error_pm(msg, "ERROR: Invalid email address: " + email);
 
 	if(email != email2)
 		return bot.cmd_error_pm(msg, "ERROR: Email addresses don't match.");
@@ -331,7 +330,14 @@ bool ChanopsIrcBotPlugin::login(const message& msg)
 
 	users.insert(u);
 
-	bot.fc_reply_pm(msg, "You are now logged in to " + bot.nick);
+	str sep;
+	soss oss;
+	for(const str& group: u.groups)
+	{
+		oss << sep << group;
+		sep = ", ";
+	}
+	bot.fc_reply_pm(msg, "You are now logged in to " + bot.nick + ": " + oss.str());
 
 	apply_acts(u);
 
@@ -373,8 +379,6 @@ bool ChanopsIrcBotPlugin::ban(const message& msg)
 {
 	BUG_COMMAND(msg);
 
-	// MODE #skivvy +b *!*Skivvy@*.users.quakenet.org
-	// MODE #skivvy -b *!*Skivvy@*.users.quakenet.org
 	if(!permit(msg))
 		return false;
 
@@ -466,16 +470,6 @@ bool ChanopsIrcBotPlugin::votekick(const message& msg)
 		return bot.cmd_error(msg, "usege: !votekick <nick> <reason> *(<duration>)");
 
 	siz secs = 60;
-	//iss >> secs; // optional
-
-	//str bg = IRC_White;
-
-//	bot.fc_reply(msg, IRC_BOLD + IRC_COLOR + IRC_Red + "VOTE-KICK: " + IRC_COLOR + IRC_Royal_Blue
-//		+ "Please vote if you think we should kick " + nick	+ " from this channel!");
-//	bot.fc_reply(msg, IRC_BOLD + IRC_COLOR + IRC_Red + "VOTE-KICK: " + IRC_COLOR + IRC_Royal_Blue
-//		+ "Reason: " + IRC_COLOR + IRC_Green + reason + IRC_COLOR + IRC_Black + " !f1 = YES, !f2 = NO");
-//	bot.fc_reply(msg, IRC_BOLD + IRC_COLOR + IRC_Red + "VOTE-KICK: " + IRC_COLOR + IRC_Royal_Blue
-//		+ "You have " + std::to_string(secs) + " seconds to comply.");
 
 	bot.fc_reply(msg, bold + red + "VOTE-KICK: " + black + "Vote" + blue +
 		+ " if you think we should kick " + black + nick + blue + " from this channel!");
@@ -488,10 +482,6 @@ bool ChanopsIrcBotPlugin::votekick(const message& msg)
 	vote_f2[chan] = 0;
 	voted[chan].clear();
 
-//	st_time_point
-//	vote_end[chan] = st_clk::now() + std::chrono::seconds(secs);
-
-//	std::async(std::launch::async, [&]{ ballot(); });
 	vote_fut[chan] = std::async(std::launch::async, [=]{ ballot(chan, nick, st_clk::now() + std::chrono::seconds(secs)); });
 
 	return true;
@@ -591,20 +581,22 @@ bool ChanopsIrcBotPlugin::initialize()
 	// chanops.init.user: <user> <pass> <PERM> *( "," <PERM> )
 	for(const str& init: bot.get_vec("chanops.init.user"))
 	{
-		str user, pass, list;
+		str user, pass, email, list;
 
-		sgl(siss(init) >> user >> pass >> std::ws, list);
+		if(!sgl(siss(init) >> user >> pass >> email >> std::ws, list))
+			continue;
 
 		if(!store.has("user." + user))
 		{
 			user_r ur;
-			ur.user = bot.get("chanops.init.user", "root");
+			ur.user = user;
 			ur.sum = checksum(pass);
+			ur.email = email;
 
-			str perm;
+			str group;
 			siss iss(list);
-			while(sgl(iss, perm, ','))
-				ur.groups.insert(trim(perm));
+			while(sgl(iss, group, ','))
+				ur.groups.insert(trim(group));
 
 			store.set("user." + user, ur);
 		}
