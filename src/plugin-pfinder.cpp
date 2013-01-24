@@ -565,7 +565,20 @@ void PFinderIrcBotPlugin::cvar(const message& msg)
 {
 	BUG_COMMAND(msg);
 
-	str var = lowercase(msg.get_user_params());
+	static const str prompt = IRC_BOLD + IRC_COLOR + IRC_Purple + "cvar"
+		+ IRC_COLOR + IRC_Black + ": " + IRC_NORMAL;
+
+	// !cvar <wild> #n
+
+	str skip,var;// = lowercase(msg.get_user_params());
+	siz n = 1;
+	siss iss(msg.get_user_params());
+	ios::getstring(iss, var);
+	sgl(iss, skip, '#') >> n;
+
+	if(!n) n = 1;
+
+
 
 	std::ifstream ifs(bot.getf(CVAR_FILE, CVAR_FILE_DEFAULT));
 
@@ -576,25 +589,38 @@ void PFinderIrcBotPlugin::cvar(const message& msg)
 		if(bot.wild_match("*" + var + "*", lowercase(cvar.name)))
 			cvars.insert(cvar);
 
-	siz max_results = bot.get(CVAR_MAX_RESULTS, CVAR_MAX_RESULTS_DEFAULT);
+	siz max_results = 10;//bot.get(CVAR_MAX_RESULTS, CVAR_MAX_RESULTS_DEFAULT);
 
 	if(cvars.empty())
 		bot.fc_reply(msg, msg.get_user_params() + " did not match any cvar");
 	else
 	{
+		const siz size = cvars.size();
+		const siz start = (n - 1) * 10;
+		const siz end = (start + 10) > size ? size : (start + 10);
+
+	//	if(end - start > 9)
+			bot.fc_reply(msg, prompt + "Listing #" + std::to_string(n)
+				+ " of " + std::to_string((size + 9)/10)
+				+ " (from " + std::to_string(start + 1) + " to "
+				+ std::to_string(end) + " of " + std::to_string(size) + ")");
+
 		siz i = 0;
 		for(const cvar_t& cvar: cvars)
 		{
-			bot.fc_reply(msg, cvar.name + ": " + cvar.desc);
-			if(++i == max_results)
+			if(i++ < start) // skip to batch #n
+				continue;
+			if(i > end) // end of batch
 				break;
+
+			bot.fc_reply(msg, cvar.name + ": " + cvar.desc);
 		}
 
-		if(cvars.size() > i)
-		{
-			str n = std::to_string(cvars.size() - i - 1);
-			bot.fc_reply(msg, var + " also matches "  + n + " other cvars, you may want to be more specific.");
-		}
+//		if(cvars.size() > i)
+//		{
+//			str n = std::to_string(cvars.size() - i - 1);
+//			bot.fc_reply(msg, var + " also matches "  + n + " other cvars, you may want to be more specific.");
+//		}
 	}
 }
 
