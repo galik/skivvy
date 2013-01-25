@@ -613,14 +613,8 @@ void PFinderIrcBotPlugin::cvar(const message& msg)
 			if(i > end) // end of batch
 				break;
 
-			bot.fc_reply(msg, cvar.name + ": " + cvar.desc);
+			bot.fc_reply(msg, prompt + cvar.name + ": " + cvar.desc);
 		}
-
-//		if(cvars.size() > i)
-//		{
-//			str n = std::to_string(cvars.size() - i - 1);
-//			bot.fc_reply(msg, var + " also matches "  + n + " other cvars, you may want to be more specific.");
-//		}
 	}
 }
 
@@ -1189,7 +1183,8 @@ bool PFinderIrcBotPlugin::initialize()
 	add
 	({
 		"!cvar"
-		, "!cvar <cvar> Match <cvar> as part of an OpenArena cvar, providing info."
+		, "!cvar <cvar> [#n] - Match <cvar> as part of an OpenArena cvar, providing info."
+			"\nOptional #n where n is the batch number if there are more than 10 results."
 		, [&](const message& msg){ cvar(msg); }
 	});
 	add

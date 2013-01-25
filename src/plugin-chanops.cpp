@@ -774,7 +774,8 @@ bool ChanopsIrcBotPlugin::name_event(const message& msg)
 
 			if(nicks.find(nick) == nicks.end())
 			{
-				irc->whois(nick); // initiate request, see whois_event() for response
+				// TODO: re-add this when I actually use the info.
+				//irc->whois(nick); // initiate request, see whois_event() for response
 				nicks[nick];
 			}
 		}

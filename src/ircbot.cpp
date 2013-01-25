@@ -81,6 +81,8 @@ static const str PROP_ON_CONNECT = "on_connect";
 static const str PROP_SERVER_PASSWORD = "server.password";
 static const str PROP_SERVER_RETRIES = "server.retries";
 static const str PROP_JOIN = "join";
+static const str PROP_JOIN_DELAY = "join.delay";
+static const siz PROP_JOIN_DELAY_DEFAULT = 10; // seconds
 
 static const str IRCBOT_STORE_FILE = "store.file";
 static const str IRCBOT_STORE_FILE_DEFAULT = "store.txt";
@@ -647,7 +649,7 @@ str IrcBot::get_version() const { return VERSION; }
 
 void IrcBot::official_join(const str& channel)
 {
-	std::this_thread::sleep_for(std::chrono::seconds(2));
+	std::this_thread::sleep_for(std::chrono::seconds(get(PROP_JOIN_DELAY, PROP_JOIN_DELAY_DEFAULT)));
 
 	if(!irc.join(channel))
 		return;
