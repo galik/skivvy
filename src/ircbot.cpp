@@ -94,7 +94,7 @@ static const siz FLOOD_TIME_BETWEEN_EVENTS_DEFAULT = 1600;
 
 
 // :port80a.se.quakenet.org 353 Skivvy = #oa-ictf :Skivvy @SooKee pet @Q
-std::istream& parsemsg(std::istream&& is, message& m)
+std::istream& parsemsg(std::istream& is, message& m)
 {
 	std::getline(is, m.line);
 	trim(m.line);
@@ -133,6 +133,11 @@ std::istream& parsemsg(std::istream&& is, message& m)
 	return is;
 }
 
+std::istream& parsemsg(std::istream&& is, message& m)
+{
+	return parsemsg(is, m);
+}
+
 std::ostream& printmsg(std::ostream& os, const message& m)
 {
 	os << "//                  line: " << m.line << '\n';
@@ -154,24 +159,31 @@ std::ostream& printmsg(std::ostream& os, const message& m)
 
 std::istream& operator>>(std::istream& is, message& m)
 {
-	std::getline(is, m.line);
-	std::getline(is, m.from);
-	std::getline(is, m.cmd);
-	std::getline(is, m.params);
-	std::getline(is, m.to);
-	std::getline(is, m.text);
+	str o;
+	if(!getobject(is, o))
+		return is;
+	if(!parsemsg(siss(unescaped(o)), m))
+		is.setstate(std::ios::failbit); // protocol error
 	return is;
+
+//	std::getline(is, m.line);
+//	std::getline(is, m.from);
+//	std::getline(is, m.cmd);
+//	std::getline(is, m.params);
+//	std::getline(is, m.to);
+//	std::getline(is, m.text);
+//	return is;
 }
 
 std::ostream& operator<<(std::ostream& os, const message& m)
 {
-	os << m.line << '\n';
-	os << m.from << '\n';
-	os << m.cmd << '\n';
-	os << m.params << '\n';
-	os << m.to << '\n';
-	os << m.text;
-	return os;
+	return os << '{' << escaped(m.line) << '}';// << '\n';
+//	os << m.from << '\n';
+//	os << m.cmd << '\n';
+//	os << m.params << '\n';
+//	os << m.to << '\n';
+//	os << m.text;
+//	return os;
 }
 
 // MyNick!~User@server.com

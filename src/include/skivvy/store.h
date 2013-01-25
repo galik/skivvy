@@ -218,6 +218,8 @@ class BackupStore
 : public MappedStore
 {
 private:
+	static const str VERSION_KEY;
+
 	std::mutex mtx;
 	const str file;
 
@@ -259,7 +261,7 @@ private:
 	}
 
 public:
-	BackupStore(const str& file): file(file) { reload(); }
+	BackupStore(const str& file): file(file) { reload(); store[VERSION_KEY].push_back("0.0"); }
 
 	void reload()
 	{
@@ -705,6 +707,9 @@ void escape(str& s);
 template<typename T>
 void unescape(T&) {}
 void unescape(str& s);
+
+str escaped(const str& cs);
+str unescaped(const str& cs);
 
 // {{value_type1}{value_type2}}
 template<typename Container>

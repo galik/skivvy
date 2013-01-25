@@ -220,6 +220,10 @@ void DictionIrcBotPlugin::trans(const message& msg)
 		return;
 	}
 
+//	<div class="translateTxt" >
+//	or is the rabbit
+//	</div>
+
 //	std::ofstream ofs("dump.html");
 //	ofs.write(html.c_str(), html.size());
 //	ofs.close();

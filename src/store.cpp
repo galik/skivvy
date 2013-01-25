@@ -35,29 +35,43 @@ namespace skivvy { namespace utils {
 sifs CacheStore::ifs;
 sofs CacheStore::ofs;
 
+const str BackupStore::VERSION_KEY = "BackupStore-Version";
+
 void escape(str& s)
 {
-//	bug_func();
 	replace(s, "\\", "\\0"); // escape delimiters
 	replace(s, "{", "\\1");
 	replace(s, "}", "\\2");
 	replace(s, ",", "\\3");
 }
 
+str escaped(const str& cs)
+{
+	str s = cs;
+	escape(s);
+	return s;
+}
+
 void unescape(str& s)
 {
-//	bug_func();
 	replace(s, "\\3", ",");
 	replace(s, "\\2", "}");
 	replace(s, "\\1", "{");
 	replace(s, "\\0", "\\");
 }
 
+str unescaped(const str& cs)
+{
+	str s = cs;
+	unescape(s);
+	return s;
+}
+
 std::istream& getobject(std::istream& is, str& o)
 {
 	char c;
 	if(is.peek() != '{') // protocol error
-		is.clear(std::ios::failbit | is.rdstate());
+		is.setstate(std::ios::failbit);
 	else
 	{
 		is.ignore(); // skip '{'

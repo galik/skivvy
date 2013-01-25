@@ -7,23 +7,18 @@ A - Addition
 F - FIXED
 X - Won't fix
 
-M Per channel plugin activation
+A Remote plugin connector aka rawplug.
+R !todo - todo list command
+R !bug - bug reporting/feature request command
 B Grabber needs to be channel aware.
 M Make !oastat accept multiple palayers and multiple types (pw ck)
-A Add a Persistant Storage Service to IrcBot for session management
-B Segfault on reconnecting
-M integrate !oafind and !oaserver to maintain server UID file
 A Write docs {0.5}
-M Make plugins run async and make them threadsafe {1.0}
 M Sort out rpc (varidic templates/function?) {1.0}
 M Rewrite core control loop {1.0}
-A Make plugins operate only on specific channels {1.0}
 M normalise property names to 'pluginname.key: value' {1.0}
 B ensure skivvy.conf.example is complete {1.0}
 A Command plugin to take over command line processing {1.0}
 A Finish ChoiceListener !1 !2 !3 {1.0}
-M Make config file re-readable {1.0}
-M Add config options for rserver {1.0}
 M Finish ChanOps plugin {1.0}
  -> F !register <pass>
  -> F !login <pass>
@@ -33,7 +28,7 @@ M Finish ChanOps plugin {1.0}
  -> !seen <nick>
  -> !note <nick> <message>
  -> !stats <nick>
-A !oaserver <servername> - list playes on matching server {1.1}
+B !oaserver <servername> - rewrite this {1.1}
 B !dict parser is rubbish {1.1}
 R !grab BioxidE_ b12 A|I|M 4-15 conversations between specified people and lines. {1.5} 
 M Finish trivia quiz plugin ircbot-trivial.cpp {1.5}
@@ -46,6 +41,11 @@ A User interface {1.5}
 
 = Completed =
 
+F Add config options for rserver {1.0}
+F Make config file re-readable {1.0} | use /reconfigure
+F Make plugins operate only on specific channels {1.0}
+F Make plugins run async and make them threadsafe {1.0}
+F Add a Persistent Storage Service to IrcBot for session management
 F Make build system distro ready
  -> F Make plugins external.
  -> F Make compiler flags external
