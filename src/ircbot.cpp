@@ -246,9 +246,8 @@ bool RemoteIrcServer::send(const str& cmd)
 
 bool RemoteIrcServer::send_unlogged(const str& cmd)
 {
-	mtx_ss.lock();
+	lock_guard lock(mtx_ss);
 	ss << cmd.substr(0, 510) << "\r\n" << std::flush;
-	mtx_ss.unlock();
 	if(!ss)
 		log("ERROR: send failed.");
 	return ss;
