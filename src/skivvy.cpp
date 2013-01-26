@@ -59,7 +59,6 @@ void handler(int sig)
 	str obj, func;
 	for(siz i = 0; i < size; ++i)
 	{
-		// /home/gareth/dev/cpp/skivvy/build/src/.libs/libskivvy.so.0(_ZN6skivvy6ircbot11RandomTimer5timerEv+0x85)[0x4e2ead]
 		sgl(sgl(siss(trace[i]), obj, '('), func, '+');
 
 		cstring_uptr func_name(abi::__cxa_demangle(func.c_str(), 0, 0, &status));
