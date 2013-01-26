@@ -43,8 +43,8 @@ std::istream& delay::parse(std::istream& is)
 	is >> d;
 	if(is >> f)
 	{
-		if((is.peek() == EOF || std::isspace(is.peek())))
-		{
+//		if((is.peek() == EOF || std::isspace(is.peek())))
+//		{
 			switch(f)
 			{
 				case 's': d *= 1; break;
@@ -56,14 +56,14 @@ std::istream& delay::parse(std::istream& is)
 				log("UNKNOWN DELAY FACTOR: " << f);
 				is.clear(is.rdstate() | std::ios::failbit);
 			}
-		}
-		else
-		{
-			str rest;
-			is >> rest;
-			log("BAD DELAY FACTOR: " << f << rest);
-			is.clear(is.rdstate() | std::ios::failbit);
-		}
+//		}
+//		else
+//		{
+//			str rest;
+//			is >> rest;
+//			log("BAD DELAY FACTOR: " << f << rest);
+//			is.clear(is.rdstate() | std::ios::failbit);
+//		}
 	}
 	else
 	{

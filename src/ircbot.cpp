@@ -165,25 +165,11 @@ std::istream& operator>>(std::istream& is, message& m)
 	if(!parsemsg(siss(unescaped(o)), m))
 		is.setstate(std::ios::failbit); // protocol error
 	return is;
-
-//	std::getline(is, m.line);
-//	std::getline(is, m.from);
-//	std::getline(is, m.cmd);
-//	std::getline(is, m.params);
-//	std::getline(is, m.to);
-//	std::getline(is, m.text);
-//	return is;
 }
 
 std::ostream& operator<<(std::ostream& os, const message& m)
 {
-	return os << '{' << escaped(m.line) << '}';// << '\n';
-//	os << m.from << '\n';
-//	os << m.cmd << '\n';
-//	os << m.params << '\n';
-//	os << m.to << '\n';
-//	os << m.text;
-//	return os;
+	return os << '{' << escaped(m.line) << '}';
 }
 
 // MyNick!~User@server.com
