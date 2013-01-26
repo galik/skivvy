@@ -1,8 +1,5 @@
 #!/bin/sh
 
-GCC_HOME=${HOME}/app/gcc-4.7.0
-BOOST_HOME=${HOME}/app/boost-1.52
-
 top_dir=$(pwd)
 
 DBG_FLAGS="-D DEBUG"
@@ -13,9 +10,7 @@ DBG_FLAGS="$DBG_FLAGS -fno-eliminate-unused-debug-types"
 DBG_FLAGS="$DBG_FLAGS -g3"
 DBG_FLAGS="$DBG_FLAGS -O0"
 
-export CXX="${GCC_HOME}/bin/g++"
 export CXXFLAGS="$DBG_FLAGS -std=gnu++11"
-export LDFLAGS="-L$BOOST_HOME/lib"
 
 mkdir -p $top_dir/build
 cd $top_dir/build
