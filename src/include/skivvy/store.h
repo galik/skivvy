@@ -116,7 +116,7 @@ public:
 	void set_at(const str& k, siz n, const T& v)
 	{
 		std::ostringstream oss;
-		oss << v;
+		oss <<  std::boolalpha << v;
 		set_at(k, n, oss.str());
 	}
 
