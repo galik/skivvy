@@ -45,6 +45,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <skivvy/stl.h>
 #include <skivvy/str.h>
 #include <skivvy/network.h>
+#include <skivvy/openarena.h>
 
 namespace skivvy { namespace ircbot {
 
@@ -52,6 +53,7 @@ IRC_BOT_PLUGIN(OAStatsIrcBotPlugin);
 PLUGIN_INFO("oastats", "OA Stats Reporter", "0.1");
 
 using namespace skivvy;
+using namespace skivvy::oa;
 using namespace skivvy::irc;
 using namespace skivvy::types;
 using namespace skivvy::utils;
@@ -601,28 +603,6 @@ str html_handle_to_oa(str html)
 	return net::fix_entities(html);
 }
 
-str oa_handle_to_irc(str oa)
-{
-	static str BACK = "," + IRC_Black;
-	static str_map subs =
-	{
-		{"^0", IRC_COLOR + IRC_Black + BACK}
-		, {"^1", IRC_COLOR + IRC_Red + BACK}
-		, {"^2", IRC_COLOR + IRC_Lime_Green + BACK}
-		, {"^3", IRC_COLOR + IRC_Yellow + BACK}
-		, {"^4", IRC_COLOR + IRC_Navy_Blue + BACK}
-		, {"^5", IRC_COLOR + IRC_Royal_Blue + BACK}
-		, {"^6", IRC_COLOR + IRC_Purple + BACK}
-		, {"^7", IRC_COLOR + IRC_White + BACK}
-		, {"^8", IRC_COLOR + IRC_Brown + BACK}
-	};
-	size_t pos = 0;
-	for(str_pair& p: subs)
-		while((pos = oa.find(p.first)) != str::npos)
-			oa.replace(pos, p.first.size(), p.second);
-	return oa;
-
-}
 str dtos(double d, siz dp = 2)
 {
 	std::ostringstream oss;

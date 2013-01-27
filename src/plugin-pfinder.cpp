@@ -40,15 +40,17 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <functional>
 #include <mutex>
 #include <ctime>
+#include <chrono>
 
 #include <skivvy/ios.h>
 #include <skivvy/irc.h>
 #include <skivvy/stl.h>
 #include <skivvy/str.h>
+#include <skivvy/types.h>
 #include <skivvy/ircbot.h>
 #include <skivvy/logrep.h>
 #include <skivvy/network.h>
-//#include <skivvy/rcon.h>
+#include <skivvy/openarena.h>
 
 namespace skivvy { namespace ircbot {
 
@@ -56,6 +58,7 @@ IRC_BOT_PLUGIN(PFinderIrcBotPlugin);
 PLUGIN_INFO("pfinder", "OA Player Finder", "0.1");
 
 using namespace skivvy;
+using namespace skivvy::oa;
 using namespace skivvy::irc;
 using namespace skivvy::oacom;
 using namespace skivvy::types;
@@ -259,36 +262,6 @@ bool PFinderIrcBotPlugin::match_player(bool subst, const str& name1, const str& 
 
 std::mutex uidfile_mtx;
 
-bool PFinderIrcBotPlugin::server_uidfile_is_old() const
-{
-	lock_guard lock(uidfile_mtx);
-	std::ifstream ifs(bot.getf(SERVER_UID_FILE, SERVER_UID_FILE_DEFAULT));
-	std::time_t last;
-	if(!ifs || ((ifs >> last) && std::time(0) - last > 24 * 60 * 60)) // daily
-		return true;
-	return false;
-}
-
-void PFinderIrcBotPlugin::write_server_uidfile(std::map<str, scache>& servers, siz uid) const
-{
-	lock_guard lock(uidfile_mtx);
-	std::ofstream ofs(bot.getf(SERVER_UID_FILE, SERVER_UID_FILE_DEFAULT));
-	if(!ofs)
-	{
-		log("Unable to open server uid file: " << bot.getf(SERVER_UID_FILE, SERVER_UID_FILE_DEFAULT));
-		return;
-	}
-
-	// header
-	ofs << time(0) << '\n';
-	ofs << uid << '\n';
-
-//	stl::sort(servers);
-//	size_t i = 1;
-	for(const std::pair<const str, scache>& p: servers)
-		ofs << p.second << '\n';
-}
-
 str::size_type PFinderIrcBotPlugin::extract_server(const str& line, server& s, str::size_type pos) const
 {
 	server n;
@@ -402,35 +375,29 @@ std::vector<str> PFinderIrcBotPlugin::oafind(const str handle)
 			// players
 			for(const str& line: lines)
 			{
-				if(sgl(siss(line) >> p.frags >> p.ping >> std::ws, p.handle))
+				if(!sgl(siss(line) >> p.frags >> p.ping >> std::ws, p.handle))
+					continue;
+				bug("Found player: " << p.handle);
+				for(str h: handles)
 				{
-					bug("Found player: " << p.handle);
-					for(str h: handles)
-					{
-						bug_var(h);
-						bug_var(p.handle);
-						if(match_player(subst, net::html_to_text(p.handle), h))
-						{
-							oss.clear();
-							oss.str("");
-							oss << IRC_BOLD << net::html_to_text(s.name) << IRC_NORMAL;
-							oss << ": " << s.map;
-							oss << " (" << IRC_BOLD << html_handle_to_irc(p.handle) << IRC_NORMAL
-								<< " " << p.frags << ")";
-							oss << "-> " << IRC_BOLD << s.address << IRC_NORMAL;
-							oss << " [" << IRC_COLOR << IRC_Red << s.players << IRC_NORMAL << "]";
-							found.push_back(oss.str());
-							++matches;
-						}
-					}
+					bug_var(h);
+					bug_var(p.handle);
+					if(!match_player(subst, net::html_to_text(p.handle), h))
+						continue;
+					oss.clear();
+					oss.str("");
+					oss << IRC_BOLD << net::html_to_text(s.name) << IRC_NORMAL;
+					oss << ": " << s.map;
+					oss << " (" << IRC_BOLD << html_handle_to_irc(p.handle) << IRC_NORMAL
+						<< " " << p.frags << ")";
+					oss << "-> " << IRC_BOLD << s.address << IRC_NORMAL;
+					oss << " [" << IRC_COLOR << IRC_Red << s.players << IRC_NORMAL << "]";
+					found.push_back(oss.str());
+					++matches;
 				}
 			}
 		}
 	}
-
-	// refresh server UID file
-	write_server_uidfile(servers, uid);
-
 
 	return found;
 }
@@ -444,8 +411,6 @@ std::vector<str> PFinderIrcBotPlugin::xoafind(const str handle)
 
 	// The supplied parameter may resolve into a list of handles
 	// or just one
-//	bool subst = false;
-//	str_set handles;
 
 	static std::map<str, str_set> handle_map;
 	static std::map<str, bool> subst_map;
@@ -480,21 +445,7 @@ std::vector<str> PFinderIrcBotPlugin::xoafind(const str handle)
 	bool do_players = false;
 	std::ostringstream oss;
 
-	//std::vector<server> servers; // rebuild server uid file
-	const str uidfile = bot.getf(SERVER_UID_FILE, SERVER_UID_FILE_DEFAULT);
-	siz uid = 0;
-	std::map<str, scache> servers;
-	{
-		lock_guard lock(uidfile_mtx);
-		std::ifstream ifs(uidfile);
-
-		scache s;
-		std::time_t time;
-		// skip time
-		ifs >> time >> uid >> std::ws;
-		while(ifs >> s)
-			servers[s.name] = s;
-	}
+	std::vector<server> servers; // rebuild server uid file
 
 	str_set matched_set; // definite no-matches on player
 	while(std::getline(ss, line))
@@ -504,57 +455,41 @@ std::vector<str> PFinderIrcBotPlugin::xoafind(const str handle)
 			if(extract_player(line, p) == str::npos)
 				do_players = false;
 
-			if(do_players && matched_set.find(p.handle) == matched_set.end())
+			if(!do_players || matched_set.find(p.handle) != matched_set.end())
+				continue;
+
+			bool matched = false;
+			for(str h: handles)
 			{
-				bool matched = false;
-				for(str h: handles)
-				{
-					if(match_player(subst, net::html_to_text(p.handle), h))
-					{
-						matched = true;
-						oss.clear();
-						oss.str("");
-						oss << IRC_BOLD << net::html_to_text(s.name) << IRC_NORMAL;
-						oss << ": " << s.map;
-						oss << " (" << IRC_BOLD << html_handle_to_irc(p.handle) << IRC_NORMAL
-							<< " " << p.frags << ")";
-						oss << "-> " << IRC_BOLD << s.address << IRC_NORMAL;
-						oss << " [" << IRC_COLOR << IRC_Red << s.players << IRC_NORMAL << "]";
-						found.push_back(oss.str());
-						++matches;
-					}
-				}
-				if(!matched) // ditch p.handle
-					matched_set.insert(p.handle);
+				if(!match_player(subst, net::html_to_text(p.handle), h))
+					continue;
+
+				matched = true;
+				oss.clear();
+				oss.str("");
+				oss << IRC_BOLD << net::html_to_text(s.name) << IRC_NORMAL;
+				oss << ": " << s.map;
+				oss << " (" << IRC_BOLD << html_handle_to_irc(p.handle) << IRC_NORMAL
+					<< " " << p.frags << ")";
+				oss << "-> " << IRC_BOLD << s.address << IRC_NORMAL;
+				oss << " [" << IRC_COLOR << IRC_Red << s.players << IRC_NORMAL << "]";
+				found.push_back(oss.str());
+				++matches;
 			}
+			if(!matched) // ditch p.handle
+				matched_set.insert(p.handle);
 		}
 		else
 		{
 			// Record the last found server in s
-			server srv;
-			if(extract_server(line, srv) != str::npos)
-			{
-				s = srv;
-				if(servers.count(s.name))
-					s.uid = servers[s.name].uid;
-				else
-					s.uid = ++uid;
-				servers[s.name] = s;
-			}
-//			else if(line.find(R"(<div id="ping">PING</div>)") != npos
-//			&& line.find(R"(<div id="frags">FRAGS</div>)") != npos
-//			&& line.find(R"(<div id="handle">NAME</div>)") != npos)
-//				do_players = true;
-			else if(line.find("PING") != npos
+			if(extract_server(line, s) != str::npos)
+				continue;
+			if(line.find("PING") != npos
 			&& line.find("FRAGS") != npos
 			&& line.find("NAME") != npos)
 				do_players = true;
 		}
 	}
-
-	// refresh server UID file
-	write_server_uidfile(servers, uid);
-
 
 	return found;
 }
@@ -576,9 +511,8 @@ void PFinderIrcBotPlugin::cvar(const message& msg)
 	ios::getstring(iss, var);
 	sgl(iss, skip, '#') >> n;
 
-	if(!n) n = 1;
-
-
+	if(!n)
+		n = 1;
 
 	std::ifstream ifs(bot.getf(CVAR_FILE, CVAR_FILE_DEFAULT));
 
@@ -589,8 +523,6 @@ void PFinderIrcBotPlugin::cvar(const message& msg)
 		if(bot.wild_match("*" + var + "*", lowercase(cvar.name)))
 			cvars.insert(cvar);
 
-	siz max_results = 10;//bot.get(CVAR_MAX_RESULTS, CVAR_MAX_RESULTS_DEFAULT);
-
 	if(cvars.empty())
 		bot.fc_reply(msg, msg.get_user_params() + " did not match any cvar");
 	else
@@ -599,11 +531,10 @@ void PFinderIrcBotPlugin::cvar(const message& msg)
 		const siz start = (n - 1) * 10;
 		const siz end = (start + 10) > size ? size : (start + 10);
 
-	//	if(end - start > 9)
-			bot.fc_reply(msg, prompt + "Listing #" + std::to_string(n)
-				+ " of " + std::to_string((size + 9)/10)
-				+ " (from " + std::to_string(start + 1) + " to "
-				+ std::to_string(end) + " of " + std::to_string(size) + ")");
+		bot.fc_reply(msg, prompt + "Listing #" + std::to_string(n)
+			+ " of " + std::to_string((size + 9)/10)
+			+ " (from " + std::to_string(start + 1) + " to "
+			+ std::to_string(end) + " of " + std::to_string(size) + ")");
 
 		siz i = 0;
 		for(const cvar_t& cvar: cvars)
@@ -619,133 +550,251 @@ void PFinderIrcBotPlugin::cvar(const message& msg)
 }
 
 // list server
-// !oaserver <subs> // list server matches + their UID
+// !oaserver <wild> // list server matches + their UID
 // !oaserver UID // list server's players
 
-void PFinderIrcBotPlugin::oaserver(const message& msg)
+// !oaslist <wild> #n
+// !oasinfo UID|<name>
+// !oasname UID <name>
+
+str remove_oa_codes(const str& name)
+{
+	str s = name;
+	for(siz i = 1; i < s.size(); ++i)
+		if(s[i - 1] == '^' && std::isdigit(s[i]))
+			replace(s, str(s.c_str() + i - 1, 2), "");
+	return s;
+}
+
+bool PFinderIrcBotPlugin::oaslist(const message& msg)
 {
 	BUG_COMMAND(msg);
-	bot.fc_reply(msg, "!oaserver function is officially off-line until some idiot fixed it.");
-	return;
 
-	str param = msg.get_user_params();
+	static const str prompt = IRC_BOLD + IRC_COLOR + IRC_Green + "oaslist"
+		+ IRC_COLOR + IRC_Black + ": " + IRC_NORMAL;
 
-	const str EDIV = R"(</div>)";
-	str uidfile = bot.getf(SERVER_UID_FILE, SERVER_UID_FILE_DEFAULT);
+	str wild;
+	siz batch = 1; // batch
+	siss iss(msg.get_user_params());
 
-	scache s;
+	if(!(iss >> wild))
+		return bot.cmd_error(msg, "!oalist <wildcard> *(#n)");
+
+	bug_var(wild);
+
+	str skip;
+	if(sgl(iss, skip, '#') && !(iss >> batch))
+		return bot.cmd_error(msg, "Number expected: !oalist <wildcard> *(#n)");
+
+	bug_var(batch);
+
+	oa_server_vec servers;
+	if(!getservers(servers))
+		return bot.cmd_error(msg, "There was a problem contacting master server.");
+
+	bug_var(servers.size());
+
+	// prospective servers
+//	siz size = servers.size();
+//	siz start = (n - 1) * 10;
+//	siz end = (start + 10) > size ? size : (start + 10);
+
+	struct oasdata
+	{
+		str host;
+		siz port;
+		siz uid;
+		str name;
+		str sv_hostname;
+		str hostname; // OA colors removed from sv_hostname
+		str mapname;
+		siz g_gametype;
+		siz g_humanplayers;
+		siz g_maxGameClients;
+
+		bool operator<(const oasdata& oasd) const
+		{
+			return uid < oasd.uid;
+		}
+		bool operator==(const oasdata& oasd) const
+		{
+			return uid == oasd.uid;
+		}
+	};
+
 	siz uid = 0;
-	str line;
-	std::time_t time;
+	oasdata oasd;
+	std::map<str, oasdata> oasds; // ip:port -> oasdata;
 
-	if(server_uidfile_is_old())
+	// load cache
+	// PFINDER_OASLIST: 0.0
+	// host:port UID name "sv_hostname" "hostname" mapname g_gametype g_humanplayers g_maxGameClients
+	const str uidfile = bot.getf(SERVER_UID_FILE, SERVER_UID_FILE_DEFAULT);
+
+	str version, line;
+	sifs ifs(uidfile);
+	if(sgl(ifs, version) && version == "PFINDER_OASLIST: 0.0")
 	{
-		bot.fc_reply(msg, "Building server list.");
-
-		std::map<str, scache> servers;
+		// something to recover
+		if(!(ifs >> uid >> std::ws))
+			uid = 0;
+		while(sgl(ifs, line))
 		{
-			lock_guard lock(uidfile_mtx);
-			std::ifstream ifs(uidfile);
+			siss iss(line);
+			sgl(iss, oasd.host, ':');
+			iss >> oasd.port >> oasd.uid;// >> oasd.name >> std::ws;
+			sgl(sgl(iss, oasd.name, '"'), oasd.name, '"');
+			sgl(sgl(iss, oasd.sv_hostname, '"'), oasd.sv_hostname, '"');
+			sgl(sgl(iss, oasd.hostname, '"'), oasd.hostname, '"');
+			sgl(sgl(iss, oasd.mapname, '"'), oasd.mapname, '"');
+			iss >> oasd.g_gametype >> oasd.g_humanplayers >> oasd.g_maxGameClients;
 
-			// skip time
-			ifs >> time >> uid >> std::ws;
-			while(ifs >> s)
-			{
-				bug("reloading: " << s.name);
-				servers[s.name] = s;
-			}
+			if(iss)
+				oasds[oasd.host + std::to_string(oasd.port)] = oasd;
 		}
-
-		// basic HTTP GET
-		net::socketstream ss;
-		ss.open("dpmaster.deathmask.net", 80);
-		ss << "GET " << "http://dpmaster.deathmask.net/?game=openarena";
-		ss << "\r\n" << std::flush;
-
-//		std::ofstream xx("dpmaster.html");
-
-		//std::vector<server> servers;
-		while(std::getline(ss, line))
-		{
-//			xx << line << '\n';
-			server srv;
-			if(extract_server(line, srv) != str::npos)
-			{
-				s = srv;
-				if(servers.count(s.name))
-					s.uid = servers[s.name].uid;
-				else
-					s.uid = ++uid;
-				servers[s.name] = s;
-			}
-		}
-		write_server_uidfile(servers, uid);
 	}
 
-	std::ifstream ifs(uidfile);
-	if(!ifs)
+
+	if(st_clk::now() - servers_cached > std::chrono::minutes(3))
 	{
-		bot.fc_reply(msg, "Unable to open server file.");
-		return;
-	}
-
-	str_vec found;
-
-	siz match_uid = 0;
-	std::istringstream(param) >> match_uid;
-	bug("match_uid: " << match_uid);
-
-	// header
-	ifs >> time >> std::ws;//std::getline(ifs, time); // skip time stamp
-	ifs >> uid >> std::ws;//std::getline(ifs, uid); // skip uid
-
-	bug_var(time);
-	bug_var(uid);
-	bug_var(ifs);
-
-	siz n = 0;
-	while(ifs >> s)
-	{
-		if(!match_uid)
+		str status;
+		for(const oa_server_t& server: servers)
 		{
-			// NOTE: Add proper batching with #<batch number>
-			bug("matching: " << s.match);
-			if(bot.wild_match("*" + lowercase(param) + "*", lowercase(s.match)))
+			if(!getstatus(server.host, server.port, status))
+				continue; // don't count unreachable servers
+
+			oasd.host = server.host;
+			oasd.port = server.port;
+
+			// allocate uid if necessary
+			str oasd_key = oasd.host + std::to_string(oasd.port);
+			if(oasds.find(oasd_key) != oasds.end())
+				oasd.uid = oasds[oasd_key].uid;
+			else
+				oasd.uid = uid++;
+
+			str info;
+			siss iss(status);
+			sgl(iss, info);
+			//bug_var(info);
+			iss.clear();
+			iss.str(info);
+			str key, val;
+			if(!sgl(iss, skip, '\\')) // remove initial '\\'
+				continue;
+			while(sgl(sgl(iss, key, '\\'), val, '\\'))
 			{
-				if(++n < 8)
-				{
-					std::ostringstream oss;
-					oss << s.uid << ' ' << s.print << ' ' << s.gametype;
-					bot.fc_reply(msg, oss.str());
-				}
+				if(key == "sv_hostname")
+					oasd.sv_hostname = val;
+				else if(key == "mapname")
+					oasd.mapname = val;
+				else if(key == "g_gametype")
+					siss(val) >> oasd.g_gametype;
+				else if(key == "g_humanplayers")
+					siss(val) >> oasd.g_humanplayers;
+				else if(key == "g_maxGameClients")
+					siss(val) >> oasd.g_maxGameClients;
 			}
-		}
-		else if(s.uid == match_uid)
-		{
-			bot.fc_reply(msg, IRC_BOLD + s.print + IRC_NORMAL);
 
-			// basic HTTP GET
-			net::socketstream ss;
-			ss.open("dpmaster.deathmask.net", 80);
-			ss << "GET " << "http://dpmaster.deathmask.net/?game=openarena&server=" << s.address;
-			ss << "\r\n" << std::flush;
+			oasd.hostname = remove_oa_codes(oasd.sv_hostname);
 
-			bool ignore = true;
-			player p;
-			siz ping = 0;
-			while(sgl(ss, line))
-				if(extract_player(line, p) != str::npos)
-				{
-					ping = 0;
-					siss(p.ping) >> ping;
-					if(!ignore && ping) // ignore heading & bots (zero ping)
-						bot.fc_reply(msg, IRC_BOLD + html_handle_to_irc(p.handle) + IRC_NORMAL
-							+ " " + p.frags + " frags");
-					ignore = false;
-				}
-			return;
+//			if(!bot.wild_match("*" + lowercase(wild) + "*", lowercase(oasd.hostname)))
+//				continue; // don't count non-matching servers
+//
+			oasds[oasd_key] = oasd;
+
+			struct oas
+			{
+				siz uid;
+				str name;
+				str host;
+				siz port;
+				st_time_point when;
+			};
 		}
+		servers_cached = st_clk::now();
 	}
+
+	std::vector<oasdata> oasdv;
+
+	str sep;
+	sofs ofs(uidfile);
+	ofs << sep << "PFINDER_OASLIST: 0.0";
+	sep = "\n";
+	ofs << sep << uid;
+	for(const std::pair<const str, oasdata>& oasdp: oasds)
+//	for(const oasdata& oasd: oasds)
+	{
+		const oasdata& oasd = oasdp.second;
+		// host:port UID name "sv_hostname" "hostname" mapname g_gametype g_humanplayers g_maxGameClients
+		ofs << sep << oasd.host << ":" << oasd.port;
+		ofs << " " << oasd.uid;
+		ofs << " \"" << oasd.name << "\"";
+		ofs << " \"" << oasd.sv_hostname << "\"";
+		ofs << " \"" << oasd.hostname << "\"";
+		ofs << " \"" << oasd.mapname << "\"";
+		ofs << " " << oasd.g_gametype;
+		ofs << " " << oasd.g_humanplayers;
+		ofs << " " << oasd.g_maxGameClients;
+
+		if(bot.wild_match("*" + lowercase(wild) + "*", lowercase(oasd.hostname)))
+			oasdv.push_back(oasd);
+
+	}
+	ofs.close();
+
+	stl::sort(oasdv);
+
+	// actual servers after communications
+	siz size = oasdv.size();
+	siz start = (batch - 1) * 10;
+	siz end = (start + 10) > size ? size : (start + 10);
+
+	bug_var(batch);
+	bug_var(size);
+	bug_var(start);
+	bug_var(end);
+
+	if(((batch - 1) * 10) > size)
+		return bot.cmd_error(msg, "Batch number too high.");
+
+	bot.fc_reply(msg, prompt + "Listing #" + std::to_string(batch)
+		+ " of " + std::to_string((size + 9)/10)
+		+ " (from " + std::to_string(start + 1) + " to "
+		+ std::to_string(end) + " of " + std::to_string(size) + ")");
+
+	siz i = 0;
+	for(const oasdata& oasd: oasdv)
+	{
+		if(i++ < start) // skip to batch #n
+			continue;
+		if(i > end) // end of batch
+			break;
+
+		str id = oasd.name.empty() ? std::to_string(oasd.uid) : oasd.name;
+		bot.fc_reply(msg, "oaslist: " + id + ": " + oa_handle_to_irc(oasd.sv_hostname) + " " + oasd.mapname);
+
+	}
+
+	return true;
+}
+
+bool PFinderIrcBotPlugin::oasinfo(const message& msg)
+{
+	BUG_COMMAND(msg);
+	return true;
+}
+
+bool PFinderIrcBotPlugin::oasname(const message& msg)
+{
+	BUG_COMMAND(msg);
+	return true;
+}
+
+bool PFinderIrcBotPlugin::oaserver(const message& msg)
+{
+	BUG_COMMAND(msg);
+	return true;
 }
 
 void PFinderIrcBotPlugin::oafind(const message& msg)
@@ -1195,9 +1244,9 @@ bool PFinderIrcBotPlugin::initialize()
 	});
 	add
 	({
-		"!oaserver"
-		, "!oaserver <name>|<uid> List servers matching <name> or players on server <uid>."
-		, [&](const message& msg){ oaserver(msg); }
+		"!oaslist"
+		, "!oaslist <wildcard> ?(#n) - List ,batch number n, the servers matching <wildcard>."
+		, [&](const message& msg){ oaslist(msg); }
 	});
 	bot.add_rpc_service(*this);
 	fut = std::async(std::launch::async, [&]{ tell_runner([&]{check_tell();}); });

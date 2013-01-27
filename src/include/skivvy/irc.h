@@ -1,6 +1,6 @@
 #pragma once
-#ifndef _SOOKEE_IRC_H_
-#define _SOOKEE_IRC_H_
+#ifndef _SKIVVY_IRC_H_
+#define _SKIVVY_IRC_H_
 
 /*
  * irc.h
@@ -95,6 +95,7 @@ size_t distance(const color& c1, const color& c2);
 size_t closest_color(const color& c);
 
 str oa_to_IRC(const char* msg);
+str oa_to_IRC(const str& msg);
 
-}} // sookee::irc
-#endif /* _SOOKEE_IRC_H_ */
+}} // skivvy::irc
+#endif /* _SKIVVY_IRC_H_ */

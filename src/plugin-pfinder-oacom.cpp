@@ -46,6 +46,9 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <skivvy/plugin-pfinder-oacom.h>
 #include <skivvy/types.h>
 
+#define TIMEOUT 200
+#define MASTER_TIMEOUT 200
+
 namespace skivvy { namespace oacom {
 
 using namespace skivvy;
@@ -63,6 +66,14 @@ bool aocom(const str& cmd, str_vec& packets, const str& host, int port)
 	static std::map<str, std::unique_ptr<std::mutex>> mtxs;
 
 	int cs = socket(PF_INET, SOCK_DGRAM, 0);
+	int cs_flags = fcntl(cs, F_GETFL, 0);
+
+//    struct timeval timeout;
+//    timeout.tv_sec = 3;
+//    timeout.tv_usec = 0;
+
+//    if(setsockopt(cs, SOL_SOCKET,  SO_SNDTIMEO, (char *)&timeout, sizeof(timeout)) < 0)
+//    	log(strerror(errno));
 
 	if(cs <= 0)
 	{
@@ -77,47 +88,82 @@ bool aocom(const str& cmd, str_vec& packets, const str& host, int port)
 	sin.sin_family = AF_INET;
 	sin.sin_port = htons(port);
 
-	if(connect(cs, reinterpret_cast<sockaddr*>(&sin), sizeof(sin)) < 0)
+	bug("Setting non-blocking");
+	fcntl(cs, F_SETFL, cs_flags | O_NONBLOCK);
+
+	bug("connecting to : " << host << ":" << port);
+
+	st_time_point timeout = st_clk::now() + std::chrono::milliseconds(MASTER_TIMEOUT);
+
+	int n = 0;
+	while((n = connect(cs, (struct sockaddr *) &sin, sizeof(sin))) < 0 && errno == EINPROGRESS)
 	{
-		log(strerror(errno));
+		if(st_clk::now() > timeout)
+		{
+			log("socket timed out connecting to: " << host << ":" << port);
+			return false;
+		}
+		std::this_thread::yield();
+	}
+
+	if(n < 0)
+	{
+		log(strerror(errno) << ": " << host << ":" << port);
 		return false;
 	}
 
-	fcntl(cs, F_SETFL, O_NONBLOCK);
+	bug("Non-blocking off");
+	fcntl(cs, F_SETFL, cs_flags);
 
-	const str key = host + ":" + std::to_string(port);
 
-	if(!mtxs[key].get())
-		mtxs[key].reset(new std::mutex);
+//	bug("Setting non-blocking");
+//	fcntl(cs, F_SETFL, O_NONBLOCK);
+
+//	const str key = host + ":" + std::to_string(port);
+
+//	if(!mtxs[key].get())
+//		mtxs[key].reset(new std::mutex);
 
 	// keep out all threads for the same server:port until the minimum time
 	// has elapsed
-	lock_guard lock(*mtxs[key]);
-	st_time_point pause = st_clk::now() + std::chrono::milliseconds(1000);
+//	lock_guard lock(*mtxs[key]);
+//	st_time_point pause = st_clk::now() + std::chrono::milliseconds(1000);
 
 	const str msg = "\xFF\xFF\xFF\xFF" + cmd;
 
-	int len;
-	if(send(cs, msg.c_str(), msg.size(), 0) < 1)
+	bug("about to send...");
+	if((n = send(cs, msg.c_str(), msg.size(), 0)) < 0 || n < msg.size())
 	{
 		log("cs send: " << strerror(errno));
 		return false;
 	}
+	bug("done!");
 
 	packets.clear();
 
 	char buf[1024];
 
-	while((len = recv(cs, buf, 1024, MSG_DONTWAIT)) ==  -1 && (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR))
-		std::this_thread::sleep_for(std::chrono::milliseconds(100));
-	if(len < 0)
+	bug("about to recv...");
+	timeout = st_clk::now() + std::chrono::milliseconds(TIMEOUT);
+	while((n = recv(cs, buf, 1024, MSG_DONTWAIT)) ==  -1 && (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR))
+	{
+		if(st_clk::now() > timeout)
+		{
+			log("socket timed out connecting to: " << host << ":" << port);
+			return false;
+		}
+		std::this_thread::yield();
+	}
+//		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+	if(n < 0)
 		log("cs recv: " << strerror(errno));
-	if(len > 0)
-		packets.push_back(str(buf, len));
+	if(n > 0)
+		packets.push_back(str(buf, n));
+	bug("done!");
 
 	close(cs);
 
-	std::this_thread::sleep_until(pause);
+//	std::this_thread::sleep_until(pause);
 
 	return true;
 }

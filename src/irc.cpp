@@ -171,5 +171,11 @@ str oa_to_IRC(const char* msg)
 
 	return oss.str();
 }
+
+str oa_to_IRC(const str& msg)
+{
+	return oa_to_IRC(msg.c_str());
+}
+
 }} // sookee::irc
 

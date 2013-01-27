@@ -461,7 +461,6 @@ bool ChanopsIrcBotPlugin::votekick(const message& msg)
 
 	if(vote_in_progress[chan])
 		return bot.cmd_error(msg, "Vote already in progress.", true);
-	vote_in_progress[chan] = true;
 
 	str nick;
 	str reason;
@@ -482,6 +481,7 @@ bool ChanopsIrcBotPlugin::votekick(const message& msg)
 	vote_f2[chan] = 0;
 	voted[chan].clear();
 
+	vote_in_progress[chan] = true;
 	vote_fut[chan] = std::async(std::launch::async, [=]{ ballot(chan, nick, st_clk::now() + std::chrono::seconds(secs)); });
 
 	return true;
@@ -544,6 +544,7 @@ bool ChanopsIrcBotPlugin::ballot(const str& chan, const str& nick, const st_time
 	while(st_clk::now() < end)
 		std::this_thread::sleep_until(end);
 	lock_guard lock(vote_mtx);
+	vote_in_progress[chan] = false;
 	bug_var(chan);
 	bug_var(vote_f1[chan]);
 	bug_var(vote_f2[chan]);
@@ -559,7 +560,6 @@ bool ChanopsIrcBotPlugin::ballot(const str& chan, const str& nick, const st_time
 	else
 		irc->say(chan, bold + red + "VOTE-KICK: " + blue + "The scrawney life of "
 			+ black + nick + blue + " has been saved by the people!");
-	vote_in_progress[chan] = false;
 
 	return true;
 }

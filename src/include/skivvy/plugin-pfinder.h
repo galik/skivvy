@@ -131,8 +131,6 @@ private:
 
 	// utilities
 
-	bool server_uidfile_is_old() const;
-	void write_server_uidfile(std::map<str, scache>& servers, siz uid) const;
 	str::size_type extract_server(const str& line, server& s, str::size_type pos = 0) const;
 	str::size_type extract_player(const str& line, player& p, str::size_type pos = 0) const;
 
@@ -145,6 +143,7 @@ private:
 //	void oarconmsg(const message& msg);
 
 	bool links_changed = false;
+	st_time_point servers_cached;
 
 	void cvar(const message& msg);
 	void oafind(const message& msg);
@@ -152,7 +151,10 @@ private:
 	void oaunlink(const message& msg);
 	void oalist(const message& msg);
 	void oatell(const message& msg);
-	void oaserver(const message& msg);
+	bool oaserver(const message& msg);
+	bool oaslist(const message& msg);
+	bool oasinfo(const message& msg);
+	bool oasname(const message& msg);
 
 public:
 	PFinderIrcBotPlugin(IrcBot& bot);
