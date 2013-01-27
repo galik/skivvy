@@ -57,6 +57,7 @@ using namespace skivvy::types;
 
 bool aocom(const str& cmd, str_vec& packets, const str& host, int port)
 {
+	bug_func();
 	bug_var(cmd);
 	bug_var(host);
 	bug_var(port);
@@ -141,25 +142,30 @@ bool aocom(const str& cmd, str_vec& packets, const str& host, int port)
 
 	packets.clear();
 
-	char buf[1024];
+	char buf[2048];
 
 	bug("about to recv...");
-	timeout = st_clk::now() + std::chrono::milliseconds(TIMEOUT);
-	while((n = recv(cs, buf, 1024, MSG_DONTWAIT)) ==  -1 && (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR))
+	n = sizeof(buf);
+	while(n == sizeof(buf))
 	{
-		if(st_clk::now() > timeout)
+		timeout = st_clk::now() + std::chrono::milliseconds(TIMEOUT);
+		while((n = recv(cs, buf, sizeof(buf), MSG_DONTWAIT)) ==  -1 && (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR))
 		{
-			log("socket timed out connecting to: " << host << ":" << port);
-			return false;
+			if(st_clk::now() > timeout)
+			{
+				log("socket timed out connecting to: " << host << ":" << port);
+				return false;
+			}
+			std::this_thread::yield();
 		}
-		std::this_thread::yield();
+	//		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		if(n < 0)
+			log("cs recv: " << strerror(errno));
+		if(n > 0)
+			packets.push_back(str(buf, n));
 	}
-//		std::this_thread::sleep_for(std::chrono::milliseconds(100));
-	if(n < 0)
-		log("cs recv: " << strerror(errno));
-	if(n > 0)
-		packets.push_back(str(buf, n));
 	bug("done!");
+	bug(packets.size());
 
 	close(cs);
 
@@ -236,6 +242,7 @@ bool getstatus(const str& host, siz port, str& status)
 		return false;
 	}
 
+	status.clear();
 	for(const str& packet: packets)
 	{
 		bug_var(packet.size());
@@ -246,7 +253,8 @@ bool getstatus(const str& host, siz port, str& status)
 			return false;
 		}
 
-		status.assign(packet.substr(header.size()));
+		status.append(packet.substr(header.size()));
+//		status.assign(packet.substr(header.size()));
 	}
 
 	return true;

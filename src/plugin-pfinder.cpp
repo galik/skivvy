@@ -824,12 +824,15 @@ bool PFinderIrcBotPlugin::oasinfo(const message& msg)
 			return false;
 		}
 
+		bug_var(status);
+
 		bot.fc_reply(msg, prompt + oa_handle_to_irc(oasd.sv_hostname));
 
 		str player;
 		str info;
 		siss iss(status);
 		sgl(iss, info);
+		bug_var(info);
 		while(sgl(iss, player))
 		{
 			bot.fc_reply(msg, prompt + player);
@@ -1322,6 +1325,12 @@ bool PFinderIrcBotPlugin::initialize()
 		, "!cvar <cvar> [#n] - Match <cvar> as part of an OpenArena cvar, providing info."
 			"\nOptional #n where n is the batch number if there are more than 10 results."
 		, [&](const message& msg){ cvar(msg); }
+	});
+	add
+	({
+		"!oaserver"
+		, "!oaserver DEPRECATED, use !oaslist & !oasinfo."
+		, [&](const message& msg){ bot.fc_reply(msg, "Please use !oaslist & !oasinfo"); }
 	});
 	add
 	({
