@@ -109,6 +109,40 @@ private:
 		}
 	};
 
+	struct oasdata
+	{
+		str host;
+		siz port;
+		siz uid;
+		str name;
+		str sv_hostname;
+		str hostname; // OA colors removed from sv_hostname
+		str mapname;
+		siz g_gametype;
+		siz g_humanplayers;
+		siz g_maxGameClients;
+
+		bool operator<(const oasdata& oasd) const
+		{
+			return uid < oasd.uid;
+		}
+		bool operator==(const oasdata& oasd) const
+		{
+			return uid == oasd.uid;
+		}
+		bool operator!=(const oasdata& oasd) const
+		{
+			return !operator==(oasd);
+		}
+	};
+
+	typedef std::vector<oasdata> oasdata_vec;
+	typedef std::map<str, oasdata> oasdata_map;
+	typedef std::pair<const str, oasdata> oasdata_pair;
+
+	bool read_servers(const message& msg, oasdata_map& m);
+	bool read_servers(const message& msg, oasdata_map& m, siz& uid);
+	bool write_servers(const message& msg, const oasdata_map& m, siz uid);
 	// RPC Services
 
 	/**

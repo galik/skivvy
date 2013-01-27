@@ -566,71 +566,50 @@ str remove_oa_codes(const str& name)
 	return s;
 }
 
-bool PFinderIrcBotPlugin::oaslist(const message& msg)
+struct oasdata
 {
-	BUG_COMMAND(msg);
+	str host;
+	siz port;
+	siz uid;
+	str name;
+	str sv_hostname;
+	str hostname; // OA colors removed from sv_hostname
+	str mapname;
+	siz g_gametype;
+	siz g_humanplayers;
+	siz g_maxGameClients;
 
-	static const str prompt = IRC_BOLD + IRC_COLOR + IRC_Green + "oaslist"
-		+ IRC_COLOR + IRC_Black + ": " + IRC_NORMAL;
-
-	str wild;
-	siz batch = 1; // batch
-	siss iss(msg.get_user_params());
-
-	if(!(iss >> wild))
-		return bot.cmd_error(msg, "!oalist <wildcard> *(#n)");
-
-	bug_var(wild);
-
-	str skip;
-	if(sgl(iss, skip, '#') && !(iss >> batch))
-		return bot.cmd_error(msg, "Number expected: !oalist <wildcard> *(#n)");
-
-	bug_var(batch);
-
-	oa_server_vec servers;
-	if(!getservers(servers))
-		return bot.cmd_error(msg, "There was a problem contacting master server.");
-
-	bug_var(servers.size());
-
-	// prospective servers
-//	siz size = servers.size();
-//	siz start = (n - 1) * 10;
-//	siz end = (start + 10) > size ? size : (start + 10);
-
-	struct oasdata
+	bool operator<(const oasdata& oasd) const
 	{
-		str host;
-		siz port;
-		siz uid;
-		str name;
-		str sv_hostname;
-		str hostname; // OA colors removed from sv_hostname
-		str mapname;
-		siz g_gametype;
-		siz g_humanplayers;
-		siz g_maxGameClients;
+		return uid < oasd.uid;
+	}
+	bool operator==(const oasdata& oasd) const
+	{
+		return uid == oasd.uid;
+	}
+	bool operator!=(const oasdata& oasd) const
+	{
+		return !operator==(oasd);
+	}
+};
 
-		bool operator<(const oasdata& oasd) const
-		{
-			return uid < oasd.uid;
-		}
-		bool operator==(const oasdata& oasd) const
-		{
-			return uid == oasd.uid;
-		}
-	};
+typedef std::vector<oasdata> oasdata_vec;
+typedef std::map<str, oasdata> oasdata_map;
+typedef std::pair<const str, oasdata> oasdata_pair;
+
+bool PFinderIrcBotPlugin::read_servers(const message& msg, oasdata_map& m)
+{
+	siz uid;
+	return read_servers(msg, m, uid);
+}
+bool PFinderIrcBotPlugin::read_servers(const message& msg, oasdata_map& m, siz& ret_uid)
+{
+	const str uidfile = bot.getf(SERVER_UID_FILE, SERVER_UID_FILE_DEFAULT);
+
+	// load current info
 
 	siz uid = 0;
 	oasdata oasd;
-	std::map<str, oasdata> oasds; // ip:port -> oasdata;
-
-	// load cache
-	// PFINDER_OASLIST: 0.0
-	// host:port UID name "sv_hostname" "hostname" mapname g_gametype g_humanplayers g_maxGameClients
-	const str uidfile = bot.getf(SERVER_UID_FILE, SERVER_UID_FILE_DEFAULT);
-
 	str version, line;
 	sifs ifs(uidfile);
 	if(sgl(ifs, version) && version == "PFINDER_OASLIST: 0.0")
@@ -638,110 +617,143 @@ bool PFinderIrcBotPlugin::oaslist(const message& msg)
 		// something to recover
 		if(!(ifs >> uid >> std::ws))
 			uid = 0;
-		while(sgl(ifs, line))
+		m.clear();
+		while(sgl(ifs, line)) // host:port uid "name" "sv_hostname"
 		{
 			siss iss(line);
 			sgl(iss, oasd.host, ':');
 			iss >> oasd.port >> oasd.uid;// >> oasd.name >> std::ws;
 			sgl(sgl(iss, oasd.name, '"'), oasd.name, '"');
 			sgl(sgl(iss, oasd.sv_hostname, '"'), oasd.sv_hostname, '"');
-			sgl(sgl(iss, oasd.hostname, '"'), oasd.hostname, '"');
-			sgl(sgl(iss, oasd.mapname, '"'), oasd.mapname, '"');
-			iss >> oasd.g_gametype >> oasd.g_humanplayers >> oasd.g_maxGameClients;
 
-			if(iss)
-				oasds[oasd.host + std::to_string(oasd.port)] = oasd;
+			if(!iss)
+			{
+				log("Bad record: " << line);
+				continue;
+			}
+			str key = oasd.host + std::to_string(oasd.port);
+			m[key] = oasd;
 		}
 	}
+	ifs.close();
 
+	// is it out of date?
 
-	if(st_clk::now() - servers_cached > std::chrono::minutes(3))
+	if(st_clk::now() - servers_cached > std::chrono::minutes(60))
 	{
-		str status;
-		for(const oa_server_t& server: servers)
+		log("INFO: Recaching OA server info.");
+		oa_server_vec servers;
+		if(getservers(servers))
 		{
-			if(!getstatus(server.host, server.port, status))
-				continue; // don't count unreachable servers
+			bug_var(servers.size());
 
-			oasd.host = server.host;
-			oasd.port = server.port;
-
-			// allocate uid if necessary
-			str oasd_key = oasd.host + std::to_string(oasd.port);
-			if(oasds.find(oasd_key) != oasds.end())
-				oasd.uid = oasds[oasd_key].uid;
-			else
-				oasd.uid = uid++;
-
-			str info;
-			siss iss(status);
-			sgl(iss, info);
-			//bug_var(info);
-			iss.clear();
-			iss.str(info);
-			str key, val;
-			if(!sgl(iss, skip, '\\')) // remove initial '\\'
-				continue;
-			while(sgl(sgl(iss, key, '\\'), val, '\\'))
+			str status;
+			for(const oa_server_t& server: servers)
 			{
-				if(key == "sv_hostname")
-					oasd.sv_hostname = val;
-				else if(key == "mapname")
-					oasd.mapname = val;
-				else if(key == "g_gametype")
-					siss(val) >> oasd.g_gametype;
-				else if(key == "g_humanplayers")
-					siss(val) >> oasd.g_humanplayers;
-				else if(key == "g_maxGameClients")
-					siss(val) >> oasd.g_maxGameClients;
+				if(!getstatus(server.host, server.port, status))
+					continue; // don't count unreachable servers
+
+				oasd.host = server.host;
+				oasd.port = server.port;
+
+				// allocate uid if necessary
+				str oasd_key = oasd.host + std::to_string(oasd.port);
+				if(m.find(oasd_key) != m.end())
+					oasd = m[oasd_key];
+				else
+					oasd.uid = uid++;
+
+				str skip,info;
+				siss iss(status);
+				sgl(iss, info);
+				//bug_var(info);
+				iss.clear();
+				iss.str(info);
+				str key, val;
+				if(!sgl(iss, skip, '\\')) // remove initial '\\'
+					continue;
+				while(sgl(sgl(iss, key, '\\'), val, '\\'))
+				{
+					if(key == "sv_hostname")
+						oasd.sv_hostname = val;
+				}
+
+				oasd.hostname = remove_oa_codes(oasd.sv_hostname);
+
+				m[oasd_key] = oasd;
 			}
 
-			oasd.hostname = remove_oa_codes(oasd.sv_hostname);
-
-//			if(!bot.wild_match("*" + lowercase(wild) + "*", lowercase(oasd.hostname)))
-//				continue; // don't count non-matching servers
-//
-			oasds[oasd_key] = oasd;
-
-			struct oas
-			{
-				siz uid;
-				str name;
-				str host;
-				siz port;
-				st_time_point when;
-			};
+			write_servers(msg, m, uid);
 		}
-		servers_cached = st_clk::now();
+		else
+			log("WARNING: There was a problem contacting master server.");
 	}
 
-	std::vector<oasdata> oasdv;
+	ret_uid = uid;
 
-	str sep;
+	return true;
+}
+
+bool PFinderIrcBotPlugin::write_servers(const message& /*msg*/, const oasdata_map& m, siz uid)
+{
+	const str uidfile = bot.getf(SERVER_UID_FILE, SERVER_UID_FILE_DEFAULT);
+
 	sofs ofs(uidfile);
+	str sep;
 	ofs << sep << "PFINDER_OASLIST: 0.0";
 	sep = "\n";
 	ofs << sep << uid;
-	for(const std::pair<const str, oasdata>& oasdp: oasds)
-//	for(const oasdata& oasd: oasds)
+	for(const std::pair<const str, oasdata>& oasdp: m)
 	{
 		const oasdata& oasd = oasdp.second;
-		// host:port UID name "sv_hostname" "hostname" mapname g_gametype g_humanplayers g_maxGameClients
+		// host:port UID name "sv_hostname"
 		ofs << sep << oasd.host << ":" << oasd.port;
 		ofs << " " << oasd.uid;
 		ofs << " \"" << oasd.name << "\"";
 		ofs << " \"" << oasd.sv_hostname << "\"";
-		ofs << " \"" << oasd.hostname << "\"";
-		ofs << " \"" << oasd.mapname << "\"";
-		ofs << " " << oasd.g_gametype;
-		ofs << " " << oasd.g_humanplayers;
-		ofs << " " << oasd.g_maxGameClients;
-
-		if(bot.wild_match("*" + lowercase(wild) + "*", lowercase(oasd.hostname)))
-			oasdv.push_back(oasd);
-
 	}
 	ofs.close();
+
+	servers_cached = st_clk::now();
+	return true;
+}
+
+bool PFinderIrcBotPlugin::oaslist(const message& msg)
+{
+	BUG_COMMAND(msg);
+
+	const str blkwht = IRC_COLOR + IRC_Black + "," + IRC_White;
+
+	static const str prompt = IRC_BOLD + IRC_COLOR + IRC_Green + "oaslist"
+		+ ":" + blkwht + " " + IRC_NORMAL;
+
+	str wild;
+	siz batch = 1; // batch
+	siss iss(msg.get_user_params());
+
+	if(!(iss >> wild))
+		return bot.cmd_error(msg, prompt + "!oalist <wildcard> *(#n)");
+
+	bug_var(wild);
+
+	str skip;
+	if(sgl(iss, skip, '#') && !(iss >> batch))
+		return bot.cmd_error(msg, prompt + "Number expected: !oalist <wildcard> *(#n)");
+
+	bug_var(batch);
+
+	std::map<str, oasdata> oasds; // ip:port -> oasdata;
+	if(!read_servers(msg, oasds))
+		return false;
+
+	std::vector<oasdata> oasdv;
+
+	for(const std::pair<const str, oasdata>& oasdp: oasds)
+	{
+		const str hostname = remove_oa_codes(oasdp.second.sv_hostname);
+		if(bot.wild_match("*" + lowercase(wild) + "*", lowercase(hostname)))
+			oasdv.push_back(oasdp.second);
+	}
 
 	stl::sort(oasdv);
 
@@ -758,7 +770,7 @@ bool PFinderIrcBotPlugin::oaslist(const message& msg)
 	if(((batch - 1) * 10) > size)
 		return bot.cmd_error(msg, "Batch number too high.");
 
-	bot.fc_reply(msg, prompt + "Listing #" + std::to_string(batch)
+	bot.fc_reply(msg, prompt + blkwht + "Listing #" + std::to_string(batch)
 		+ " of " + std::to_string((size + 9)/10)
 		+ " (from " + std::to_string(start + 1) + " to "
 		+ std::to_string(end) + " of " + std::to_string(size) + ")");
@@ -772,7 +784,8 @@ bool PFinderIrcBotPlugin::oaslist(const message& msg)
 			break;
 
 		str id = oasd.name.empty() ? std::to_string(oasd.uid) : oasd.name;
-		bot.fc_reply(msg, "oaslist: " + id + ": " + oa_handle_to_irc(oasd.sv_hostname) + " " + oasd.mapname);
+		str space(6 - id.length(), ' ');
+		bot.fc_reply(msg, prompt + IRC_BOLD + blkwht + "[" + space + id + "] "+ IRC_NORMAL + oa_handle_to_irc(oasd.sv_hostname));
 
 	}
 
@@ -782,12 +795,86 @@ bool PFinderIrcBotPlugin::oaslist(const message& msg)
 bool PFinderIrcBotPlugin::oasinfo(const message& msg)
 {
 	BUG_COMMAND(msg);
+	// !oasinfo uid|name
+
+	str id;
+	if(!bot.extract_params(msg, {&id}, true))
+		return false;
+
+	static const str prompt = IRC_BOLD + IRC_COLOR + IRC_Teal + "oasinfo"
+		+ IRC_COLOR + IRC_Black + ": " + IRC_NORMAL;
+
+	oasdata oasd;
+
+	siz uid;
+	std::map<str, oasdata> oasds; // ip:port -> oasdata;
+	if(!read_servers(msg, oasds, uid))
+		return false;
+
+	for(const std::pair<const str, oasdata>& oasdp: oasds)
+	{
+		const oasdata& oasd = oasdp.second;
+		if(oasd.name != id && std::to_string(oasd.uid) != id)
+			continue;
+
+		str status;
+		if(!getstatus(oasd.host, oasd.port, status))
+		{
+			bot.fc_reply(msg, prompt + "Server not answering.");
+			return false;
+		}
+
+		bot.fc_reply(msg, prompt + oa_handle_to_irc(oasd.sv_hostname));
+
+		str player;
+		str info;
+		siss iss(status);
+		sgl(iss, info);
+		while(sgl(iss, player))
+		{
+			bot.fc_reply(msg, prompt + player);
+		}
+		break;
+	}
+
 	return true;
 }
 
 bool PFinderIrcBotPlugin::oasname(const message& msg)
 {
 	BUG_COMMAND(msg);
+	// !oasname uid|name name
+	static const str prompt = IRC_BOLD + IRC_COLOR + IRC_Brown + "oasname"
+		+ IRC_COLOR + IRC_Black + ": " + IRC_NORMAL;
+
+	str id, newname;
+	if(!bot.extract_params(msg, {&id, &newname}, true))
+		return false;
+
+	if(newname.empty())
+		return bot.cmd_error(msg,  prompt + bot.help(msg.get_user_cmd()));
+
+	if(newname.size() > 6)
+		return bot.cmd_error(msg, prompt + "New name must be 6 characters or less.");
+
+	siz uid;
+	std::map<str, oasdata> oasds; // ip:port -> oasdata;
+	if(!read_servers(msg, oasds, uid))
+		return false;
+
+	for(std::pair<const str, oasdata>& oasdp: oasds)
+	{
+		oasdata& oasd = oasdp.second;
+		if(oasd.name != id && std::to_string(oasd.uid) != id)
+			continue;
+
+		oasd.name = newname;
+		if(write_servers(msg, oasds, uid))
+			bot.fc_reply(msg, prompt + "Name has been chaned.");
+		else
+			log("ERROR: Problem changing name from: " << id << " to " << newname);
+		break;
+	}
 	return true;
 }
 
@@ -1247,6 +1334,18 @@ bool PFinderIrcBotPlugin::initialize()
 		"!oaslist"
 		, "!oaslist <wildcard> ?(#n) - List ,batch number n, the servers matching <wildcard>."
 		, [&](const message& msg){ oaslist(msg); }
+	});
+	add
+	({
+		"!oasinfo"
+		, "!oasinfo <uid>|<name> - List players for the the server named <uid> or <name>."
+		, [&](const message& msg){ oasinfo(msg); }
+	});
+	add
+	({
+		"!oasname"
+		, "!oasname <uid>|<name> <new-name> - rename server named <uid> or <name> to <new-name>."
+		, [&](const message& msg){ oasname(msg); }
 	});
 	bot.add_rpc_service(*this);
 	fut = std::async(std::launch::async, [&]{ tell_runner([&]{check_tell();}); });
