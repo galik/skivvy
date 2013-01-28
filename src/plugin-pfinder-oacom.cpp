@@ -47,7 +47,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <skivvy/types.h>
 
 #define TIMEOUT 200
-#define MASTER_TIMEOUT 200
+#define MASTER_TIMEOUT 400
 
 namespace skivvy { namespace oacom {
 

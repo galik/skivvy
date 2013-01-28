@@ -35,6 +35,8 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 #include <skivvy/network.h>
 
+#include <chrono>
+
 namespace skivvy { namespace ircbot {
 
 str html_handle_to_irc(str html);
@@ -116,11 +118,10 @@ private:
 		siz uid;
 		str name;
 		str sv_hostname;
-		str hostname; // OA colors removed from sv_hostname
-		str mapname;
-		siz g_gametype;
-		siz g_humanplayers;
-		siz g_maxGameClients;
+		str hostname; // sv_hostname stripped of OA color codes
+		siz attempts; // connection attempts
+		siz us; // average connection time in mucroseconds
+		oasdata(): attempts(0), us(0) {}
 
 		bool operator<(const oasdata& oasd) const
 		{

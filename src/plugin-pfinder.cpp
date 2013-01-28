@@ -619,31 +619,50 @@ bool PFinderIrcBotPlugin::read_servers(const message& msg, oasdata_map& m, siz& 
 
 	// load current info
 
-	siz uid = 0;
-	oasdata oasd;
-	str version, line;
-	sifs ifs(uidfile);
-	if(sgl(ifs, version) && version == "PFINDER_OASLIST: 0.0")
+	enum
 	{
-		// something to recover
-		if(!(ifs >> uid >> std::ws))
-			uid = 0;
-		m.clear();
-		while(sgl(ifs, line)) // host:port uid "name" "sv_hostname"
-		{
-			siss iss(line);
-			sgl(iss, oasd.host, ':');
-			iss >> oasd.port >> oasd.uid;// >> oasd.name >> std::ws;
-			sgl(sgl(iss, oasd.name, '"'), oasd.name, '"');
-			sgl(sgl(iss, oasd.sv_hostname, '"'), oasd.sv_hostname, '"');
+		PFINDER_OASLIST_vNONE
+		, PFINDER_OASLIST_v0_0
+		, PFINDER_OASLIST_v0_1
+	};
 
-			if(!iss)
+	siz uid = 0;
+	str line;
+	sifs ifs(uidfile);
+	siz version = 0; // unrecognized
+	if(sgl(ifs, line))
+	{
+		if(line == "PFINDER_OASLIST: 0.0")
+			version = PFINDER_OASLIST_v0_0; //  (0.0 * 10) + 1
+		else if(line == "PFINDER_OASLIST: 0.1")
+			version = PFINDER_OASLIST_v0_1; // (0.1 * 10) + 1
+
+		if(version > PFINDER_OASLIST_vNONE)
+		{
+			// something to recover
+			if(!(ifs >> uid >> std::ws))
+				uid = 0;
+			m.clear();
+			while(sgl(ifs, line)) // host:port uid "name" "sv_hostname"
 			{
-				log("Bad record: " << line);
-				continue;
+				oasdata oasd;
+				siss iss(line);
+				sgl(iss, oasd.host, ':');
+				iss >> oasd.port >> oasd.uid;// >> oasd.name >> std::ws;
+				sgl(sgl(iss, oasd.name, '"'), oasd.name, '"');
+				sgl(sgl(iss, oasd.sv_hostname, '"'), oasd.sv_hostname, '"');
+
+				if(version > PFINDER_OASLIST_v0_0)
+					iss >> oasd.attempts >> oasd.us;
+
+				if(!iss)
+				{
+					log("Bad record: " << line);
+					continue;
+				}
+				str key = oasd.host + std::to_string(oasd.port);
+				m[key] = oasd;
 			}
-			str key = oasd.host + std::to_string(oasd.port);
-			m[key] = oasd;
 		}
 	}
 	ifs.close();
@@ -658,21 +677,38 @@ bool PFinderIrcBotPlugin::read_servers(const message& msg, oasdata_map& m, siz& 
 		{
 			bug_var(servers.size());
 
+			hr_time_point now;
+
 			str status;
 			for(const oa_server_t& server: servers)
 			{
+				now = hr_clk::now();
 				if(!getstatus(server.host, server.port, status))
 					continue; // don't count unreachable servers
 
-				oasd.host = server.host;
-				oasd.port = server.port;
+				std::chrono::microseconds us = hr_clk::now().time_since_epoch() - now.time_since_epoch();
+
+				oasdata oasd;
 
 				// allocate uid if necessary
-				str oasd_key = oasd.host + std::to_string(oasd.port);
+				str oasd_key = server.host + std::to_string(server.port);
 				if(m.find(oasd_key) != m.end())
-					oasd = m[oasd_key];
+					oasd = m[oasd_key]; // start with cached values
 				else
+				{
+					// new record
+					oasd.host = server.host;
+					oasd.port = server.port;
 					oasd.uid = uid++;
+					oasd.name.clear();
+					oasd.sv_hostname.clear();
+					oasd.hostname.clear();
+					oasd.attempts = 0;
+					oasd.us = 0;
+				}
+
+				oasd.us = ((oasd.us * oasd.attempts) + us.count()) / (oasd.attempts + 1);
+				++oasd.attempts;
 
 				str skip,info;
 				siss iss(status);
@@ -711,7 +747,7 @@ bool PFinderIrcBotPlugin::write_servers(const message& /*msg*/, const oasdata_ma
 
 	sofs ofs(uidfile);
 	str sep;
-	ofs << sep << "PFINDER_OASLIST: 0.0";
+	ofs << sep << "PFINDER_OASLIST: 0.1";
 	sep = "\n";
 	ofs << sep << uid;
 	for(const std::pair<const str, oasdata>& oasdp: m)
@@ -722,6 +758,8 @@ bool PFinderIrcBotPlugin::write_servers(const message& /*msg*/, const oasdata_ma
 		ofs << " " << oasd.uid;
 		ofs << " \"" << oasd.name << "\"";
 		ofs << " \"" << oasd.sv_hostname << "\"";
+		ofs << " " << oasd.attempts;
+		ofs << " " << oasd.us;
 	}
 	ofs.close();
 

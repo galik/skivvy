@@ -261,7 +261,12 @@ private:
 	}
 
 public:
-	BackupStore(const str& file): file(file) { reload(); store[VERSION_KEY].push_back("0.0"); }
+	BackupStore(const str& file): file(file)
+	{
+		reload();
+		if(store[VERSION_KEY].empty())
+			store[VERSION_KEY].push_back("0.0");
+	}
 
 	void reload()
 	{
