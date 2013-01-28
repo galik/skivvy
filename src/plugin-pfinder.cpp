@@ -559,10 +559,21 @@ void PFinderIrcBotPlugin::cvar(const message& msg)
 
 str remove_oa_codes(const str& name)
 {
+//	bug_func();
+//	str s = name;
+//	for(siz i = 1; i < s.size(); ++i)
+//		if(s[i - 1] == '^' && std::isdigit(s[i]))
+//			replace(s, str(s.c_str() + i - 1, 2), "");
+//	return s;
 	str s = name;
-	for(siz i = 1; i < s.size(); ++i)
+	for(siz i = 1; i < s.size(); )
+	{
 		if(s[i - 1] == '^' && std::isdigit(s[i]))
-			replace(s, str(s.c_str() + i - 1, 2), "");
+			s.replace(i - 1, 2, "");
+//			replace(s, str(s.c_str() + i - 1, 2), "");
+		else
+			++i;
+	}
 	return s;
 }
 
@@ -785,7 +796,8 @@ bool PFinderIrcBotPlugin::oaslist(const message& msg)
 
 		str id = oasd.name.empty() ? std::to_string(oasd.uid) : oasd.name;
 		str space(6 - id.length(), ' ');
-		bot.fc_reply(msg, prompt + IRC_BOLD + blkwht + "[" + space + id + "] "+ IRC_NORMAL + oa_handle_to_irc(oasd.sv_hostname));
+		bot.fc_reply(msg, prompt + IRC_BOLD + blkwht + "[" + space + id + "] "
+			+ IRC_NORMAL + oa_handle_to_irc(oasd.sv_hostname));
 
 	}
 
@@ -801,8 +813,10 @@ bool PFinderIrcBotPlugin::oasinfo(const message& msg)
 	if(!bot.extract_params(msg, {&id}, true))
 		return false;
 
+	const str blkwht = IRC_COLOR + IRC_Black + "," + IRC_White;
+
 	static const str prompt = IRC_BOLD + IRC_COLOR + IRC_Teal + "oasinfo"
-		+ IRC_COLOR + IRC_Black + ": " + IRC_NORMAL;
+		+ ":" + blkwht + " " + IRC_NORMAL;
 
 	oasdata oasd;
 
@@ -826,17 +840,64 @@ bool PFinderIrcBotPlugin::oasinfo(const message& msg)
 
 		bug_var(status);
 
-		bot.fc_reply(msg, prompt + oa_handle_to_irc(oasd.sv_hostname));
-
 		str player;
 		str info;
 		siss iss(status);
 		sgl(iss, info);
 		bug_var(info);
+
+		struct stpl
+		{
+			str oaname;
+			siz frags, ping;
+			siz size; // stripped name size
+		};
+
+		siz max = 0;
+		stpl sp;
+		std::vector<stpl> sps;
 		while(sgl(iss, player))
 		{
-			bot.fc_reply(msg, prompt + player);
+			bug_var(player);
+			if(!sgl(sgl(siss(player) >> sp.frags >> sp.ping >> std::ws, sp.oaname, '"'), sp.oaname, '"'))
+				continue;
+			bug_var(sp.oaname);
+
+			if((sp.size = remove_oa_codes(sp.oaname).size()) > max)
+				max = sp.size;
+			bug_var(max);
+			bug_var(sp.size);
+			sps.push_back(sp);
 		}
+
+		bug_var(sps.size());
+		bug_var(max);
+
+		std::sort(sps.begin(), sps.end(), [](const stpl& sp1, const stpl& sp2) { return sp1.frags >= sp2.frags; });
+
+		siz header_size = remove_oa_codes(oasd.sv_hostname).size();
+		if(header_size > max)
+			max = header_size;
+
+		bot.fc_reply(msg, prompt + oa_handle_to_irc(oasd.sv_hostname + str(max - header_size + 1, ' ')));
+
+		// allow for indent of players from header
+		if(max > 6)
+			max -= 5;
+
+		for(const stpl& sp: sps)
+		{
+			bug_var(sp.oaname);
+			bug_var(sp.frags);
+			bug_var(sp.ping);
+			bug_var(sp.size);
+			str space(3 - std::to_string(sp.frags).size(), ' ');
+			//bot.fc_reply(msg, prompt + IRC_BOLD + blkwht + "[" + space + id + "] " + IRC_NORMAL + oa_handle_to_irc(oasd.sv_hostname));
+			bot.fc_reply(msg, prompt + IRC_BOLD + blkwht
+				+ "[" + space + std::to_string(sp.frags) + "] " + IRC_NORMAL
+				+ oa_handle_to_irc(sp.oaname + str(max - sp.size, ' ')));
+		}
+
 		break;
 	}
 

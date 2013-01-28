@@ -55,7 +55,13 @@ using namespace skivvy::types;
 
 str& replace(str& s, const str& from, const str& to)
 {
+//	siz pos = 0;
+//	while((pos = s.find(from, pos + to.size())) != str::npos)
+//		s.replace(pos, from.size(), to);
+//	return s;
 	siz pos = 0;
+	if((pos = s.find(from)) != str::npos)
+		s.replace(pos, from.size(), to);
 	while((pos = s.find(from, pos + to.size())) != str::npos)
 		s.replace(pos, from.size(), to);
 	return s;

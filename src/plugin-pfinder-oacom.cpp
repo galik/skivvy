@@ -57,10 +57,10 @@ using namespace skivvy::types;
 
 bool aocom(const str& cmd, str_vec& packets, const str& host, int port)
 {
-	bug_func();
-	bug_var(cmd);
-	bug_var(host);
-	bug_var(port);
+//	bug_func();
+//	bug_var(cmd);
+//	bug_var(host);
+//	bug_var(port);
 	// One mutex per server:port to ensure that all threads
 	// accessing the same server:port pause for a minimum time
 	// between calls to avoid flood protection.
@@ -89,10 +89,10 @@ bool aocom(const str& cmd, str_vec& packets, const str& host, int port)
 	sin.sin_family = AF_INET;
 	sin.sin_port = htons(port);
 
-	bug("Setting non-blocking");
+//	bug("Setting non-blocking");
 	fcntl(cs, F_SETFL, cs_flags | O_NONBLOCK);
 
-	bug("connecting to : " << host << ":" << port);
+//	bug("connecting to : " << host << ":" << port);
 
 	st_time_point timeout = st_clk::now() + std::chrono::milliseconds(MASTER_TIMEOUT);
 
@@ -113,7 +113,7 @@ bool aocom(const str& cmd, str_vec& packets, const str& host, int port)
 		return false;
 	}
 
-	bug("Non-blocking off");
+//	bug("Non-blocking off");
 	fcntl(cs, F_SETFL, cs_flags);
 
 
@@ -132,19 +132,19 @@ bool aocom(const str& cmd, str_vec& packets, const str& host, int port)
 
 	const str msg = "\xFF\xFF\xFF\xFF" + cmd;
 
-	bug("about to send...");
+//	bug("about to send...");
 	if((n = send(cs, msg.c_str(), msg.size(), 0)) < 0 || n < msg.size())
 	{
 		log("cs send: " << strerror(errno));
 		return false;
 	}
-	bug("done!");
+//	bug("done!");
 
 	packets.clear();
 
 	char buf[2048];
 
-	bug("about to recv...");
+//	bug("about to recv...");
 	n = sizeof(buf);
 	while(n == sizeof(buf))
 	{
@@ -164,8 +164,8 @@ bool aocom(const str& cmd, str_vec& packets, const str& host, int port)
 		if(n > 0)
 			packets.push_back(str(buf, n));
 	}
-	bug("done!");
-	bug(packets.size());
+//	bug("done!");
+//	bug(packets.size());
 
 	close(cs);
 
@@ -234,7 +234,7 @@ bool getstatus(const str& host, siz port, str& status)
 
 	const str header = "\xFF\xFF\xFF\xFFstatusResponse\x0A";
 
-	bug_var(header.size());
+	//bug_var(header.size());
 
 	if(packets.empty())
 	{
@@ -245,7 +245,7 @@ bool getstatus(const str& host, siz port, str& status)
 	status.clear();
 	for(const str& packet: packets)
 	{
-		bug_var(packet.size());
+		//bug_var(packet.size());
 
 		if(packet.find(header) != 0)
 		{
