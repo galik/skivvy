@@ -289,7 +289,7 @@ public:
 		str_set res;
 		lock_guard lock(mtx);
 		for(const str_vec_pair& p: store)
-			if(wild_match(p.first, wld))
+			if(wild_match(wld, p.first))
 				res.insert(p.first);
 		return res;
 	}

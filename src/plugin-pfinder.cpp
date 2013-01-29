@@ -167,59 +167,6 @@ str html_handle_to_irc(str html)
 	return IRC_BOLD + net::fix_entities(html) + IRC_NORMAL;
 }
 
-#define ColorIndex(c)	( ( (c) - '0' ) & 7 )
-#define Q_COLOR_ESCAPE	'^'
-#define Q_IsColorString(p)	( p && *(p) == Q_COLOR_ESCAPE && *((p)+1) && isalnum(*((p)+1)) ) // ^[0-9a-zA-Z]
-#define Q_IsSpecialChar(c) ((c) && ((c) < 32))
-
-str oatoirc(const str& str)
-{
-	std::ostringstream oss;
-
-	static int  q3ToAnsi[ 8 ] =
-	{
-		30, // COLOR_BLACK
-		31, // COLOR_RED
-		32, // COLOR_GREEN
-		33, // COLOR_YELLOW
-		34, // COLOR_BLUE
-		36, // COLOR_CYAN
-		35, // COLOR_MAGENTA
-		0   // COLOR_WHITE
-	};
-
-	const char* msg = str.c_str();
-
-	while( *msg )
-	{
-		if( Q_IsColorString( msg ) || *msg == '\n' )
-		{
-			if( *msg == '\n' )
-			{
-				oss << "\033[0m\n";
-				msg++;
-			}
-			else
-			{
-				oss << "\033[" << q3ToAnsi[ ColorIndex( *( msg + 1 ) ) ] << "m";
-				msg += 2;
-			}
-		}
-		else if(Q_IsSpecialChar(*msg))
-		{
-				// Print the special char
-			oss << "#";
-			msg++;
-		}
-		else
-		{
-			oss << *msg;
-			msg++;
-		}
-	}
-	return oss.str();
-}
-
 // TODO: make handles a std::set<str>
 // Requires RPC to be working for std::set
 // TODO: Make player lookup channel specific
@@ -559,18 +506,14 @@ void PFinderIrcBotPlugin::cvar(const message& msg)
 
 str remove_oa_codes(const str& name)
 {
-//	bug_func();
-//	str s = name;
-//	for(siz i = 1; i < s.size(); ++i)
-//		if(s[i - 1] == '^' && std::isdigit(s[i]))
-//			replace(s, str(s.c_str() + i - 1, 2), "");
-//	return s;
 	str s = name;
+	for(char& c: s)
+		if(!std::isprint(c))
+			c = '#';
 	for(siz i = 1; i < s.size(); )
 	{
 		if(s[i - 1] == '^' && std::isdigit(s[i]))
 			s.replace(i - 1, 2, "");
-//			replace(s, str(s.c_str() + i - 1, 2), "");
 		else
 			++i;
 	}
@@ -905,13 +848,17 @@ bool PFinderIrcBotPlugin::oasinfo(const message& msg)
 				max = sp.size;
 			bug_var(max);
 			bug_var(sp.size);
+			bug_var(remove_oa_codes(sp.oaname));
+			bug("");
 			sps.push_back(sp);
 		}
 
+		bug("=========================================");
 		bug_var(sps.size());
 		bug_var(max);
+		bug("=========================================");
 
-		std::sort(sps.begin(), sps.end(), [](const stpl& sp1, const stpl& sp2) { return sp1.frags >= sp2.frags; });
+		//std::sort(sps.begin(), sps.end(), [](const stpl& sp1, const stpl& sp2) { return sp1.frags >= sp2.frags; });
 
 		siz header_size = remove_oa_codes(oasd.sv_hostname).size();
 		if(header_size > max)
@@ -923,17 +870,25 @@ bool PFinderIrcBotPlugin::oasinfo(const message& msg)
 		if(max > 6)
 			max -= 5;
 
+		bug("=========================================");
+		bug_var(sps.size());
+		bug_var(max);
+		bug("=========================================");
 		for(const stpl& sp: sps)
 		{
 			bug_var(sp.oaname);
 			bug_var(sp.frags);
 			bug_var(sp.ping);
 			bug_var(sp.size);
+			bug_var(remove_oa_codes(sp.oaname));
+			bug("");
 			str space(3 - std::to_string(sp.frags).size(), ' ');
-			//bot.fc_reply(msg, prompt + IRC_BOLD + blkwht + "[" + space + id + "] " + IRC_NORMAL + oa_handle_to_irc(oasd.sv_hostname));
+
+			bug("-----------------------------------------");
 			bot.fc_reply(msg, prompt + IRC_BOLD + blkwht
 				+ "[" + space + std::to_string(sp.frags) + "] " + IRC_NORMAL
 				+ oa_handle_to_irc(sp.oaname + str(max - sp.size, ' ')));
+			bug("-----------------------------------------");
 		}
 
 		break;
@@ -1336,7 +1291,7 @@ void PFinderIrcBotPlugin::check_tell()
 			}
 			else
 			{
-				bot.fc_reply_pm(t.msg, IRC_COLOR + IRC_Red + "tell: " + oatoirc(t.nick) + " has expired.");
+				bot.fc_reply_pm(t.msg, IRC_COLOR + IRC_Red + "tell: " + oa_handle_to_irc(t.nick) + " has expired.");
 			}
 		}
 	}

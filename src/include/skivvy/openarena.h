@@ -35,15 +35,20 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <string>
 #include <skivvy/types.h>
 #include <skivvy/irc.h>
+#include <skivvy/str.h>
 
 namespace skivvy { namespace oa {
 
 using namespace skivvy::irc;
 using namespace skivvy::types;
+using namespace skivvy::string;
 
 inline
 str oa_handle_to_irc(str oa)
 {
+	for(char& c: oa)
+		if(!std::isprint(c))
+			c = '#';
 	static str BACK = "," + IRC_Black;
 	static str_map subs =
 	{
@@ -65,13 +70,71 @@ str oa_handle_to_irc(str oa)
 	if(oa[0] != '^')
 		oa = "^7" + oa; // default to white
 
-	size_t pos = 0;
+//	size_t pos = 0;
 	for(str_pair& p: subs)
-		while((pos = oa.find(p.first)) != str::npos)
-			oa.replace(pos, p.first.size(), p.second);
+		replace(oa, p.first, p.second);
+//		while((pos = oa.find(p.first)) != str::npos)
+//			oa.replace(pos, p.first.size(), p.second);
 	oa += IRC_NORMAL;
 	return oa;
 
+}
+
+#define ColorIndex(c)	( ( (c) - '0' ) & 7 )
+#define Q_COLOR_ESCAPE	'^'
+#define Q_IsColorString(p)	( p && *(p) == Q_COLOR_ESCAPE && *((p)+1) && isalnum(*((p)+1)) ) // ^[0-9a-zA-Z]
+#define Q_IsSpecialChar(c) ((c) && ((c) < 32))
+
+inline
+str oatoirc(const str& s, const str& back = "")
+{
+	std::ostringstream oss;
+
+	static str BACK = back.empty() ? back : "," + back;
+
+	static str q3ToAnsi[] =
+	{
+		IRC_COLOR + IRC_Black
+		, IRC_Red // COLOR_RED
+		, IRC_Green // COLOR_GREEN
+		, IRC_Yellow // COLOR_YELLOW
+		, IRC_Navy_Blue // COLOR_BLUE
+		, IRC_Royal_Blue // COLOR_CYAN
+		, IRC_Purple // COLOR_MAGENTA
+		, IRC_White   // COLOR_WHITE
+		, IRC_Brown   //
+	};
+
+	const char* msg = s.c_str();
+
+	while( *msg )
+	{
+		if( Q_IsColorString( msg ) || *msg == '\n' )
+		{
+			if( *msg == '\n' )
+			{
+				oss << IRC_NORMAL;
+				msg++;
+			}
+			else
+			{
+				oss << IRC_COLOR << q3ToAnsi[ ColorIndex(*(msg + 1))] << back;
+				msg += 2;
+			}
+		}
+		else if(Q_IsSpecialChar(*msg))
+		{
+				// Print the special char
+			oss << "#";
+			msg++;
+		}
+		else
+		{
+			oss << *msg;
+			msg++;
+		}
+	}
+	return oss.str();
 }
 
 }} // skivvy::oa

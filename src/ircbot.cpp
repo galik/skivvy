@@ -593,6 +593,8 @@ RemoteIrcServer& IrcBot::get_irc_server() { return irc; }
 // flood control
 bool IrcBot::fc_reply(const message& msg, const str& text)
 {
+	bug_func();
+	bug_var(text);
 	return fc.send(msg.to, [&,msg,text]()->bool{ return irc.reply(msg, text); });
 }
 
@@ -1306,9 +1308,9 @@ bool IrcBot::allow_cmd_access(const str& cmd, const message& msg)
 
 void IrcBot::execute(const str& cmd, const message& msg)
 {
-	bug_func();
-	bug_var(cmd);
-	bug_msg(msg);
+//	bug_func();
+//	bug_var(cmd);
+//	bug_msg(msg);
 	if(commands.find(cmd) == commands.end())
 	{
 		log("IrcBot::execute(): Unknown command: " << cmd);

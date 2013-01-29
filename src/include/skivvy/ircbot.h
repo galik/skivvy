@@ -874,36 +874,35 @@ public:
 template<typename Plugin>
 class IrcBotPluginHandle
 {
-	typedef std::auto_ptr<Plugin> PluginPtr;
+	typedef std::shared_ptr<Plugin> PluginSPtr;
 	IrcBot& bot;
-	const str id;
-	PluginPtr plugin;// = 0;
+
+	PluginSPtr plugin;// = 0;
 	time_t plugin_load_time = 0;
 
-//	static IrcBot null_bot;
-//	static Plugin null_plugin;
 
 public:
-
-	operator bool()
-	{
-		return plugin.get();
-	}
-
 	IrcBotPluginHandle(IrcBot& bot)
 	: bot(bot)
 	{
 	}
 
-	IrcBotPluginHandle(IrcBotPluginHandle<Plugin>&& handle)
-	: bot(handle.bot), id(handle.id), plugin(handle.plugin)
+	IrcBotPluginHandle(IrcBotPluginHandle<Plugin>& handle)
+	: bot(handle.bot), plugin(handle.plugin)
 	, plugin_load_time(handle.plugin_load_time)
 	{
 	}
 
-	IrcBotPluginHandle(IrcBot& bot, const str& id)
-	: bot(bot), id(id)
+	operator void*() const
 	{
+		return plugin.get();
+	}
+
+	IrcBotPluginHandle& operator=(const IrcBotPluginHandle& handle)
+	{
+		plugin = handle.plugin;
+		plugin_load_time = handle.plugin_load_time;
+		return *this;
 	}
 
 	void ensure_plugin();

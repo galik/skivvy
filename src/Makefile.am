@@ -72,7 +72,6 @@ noinst_HEADERS = \
 	$(srcdir)/include/skivvy/network.h \
 	$(srcdir)/include/skivvy/server.h \
 	$(srcdir)/include/skivvy/plugin-artibot.h \
-	$(srcdir)/include/skivvy/plugin-chanops.h \
 	$(srcdir)/include/skivvy/plugin-diction.h \
 	$(srcdir)/include/skivvy/plugin-factoid.h \
 	$(srcdir)/include/skivvy/plugin-oastats.h \
@@ -81,6 +80,7 @@ noinst_HEADERS = \
 	$(srcdir)/include/skivvy/plugin-rquotes.h \
 	$(srcdir)/include/skivvy/plugin-rserver.h
 
+#	$(srcdir)/include/skivvy/plugin-chanops.h \
 #	$(srcdir)/include/skivvy/plugin-compile.h \
 #	$(srcdir)/include/skivvy/plugin-example.h \
 #	$(srcdir)/include/skivvy/plugin-trivial.h
@@ -95,7 +95,6 @@ lib_LTLIBRARIES = \
 
 plugin_LTLIBRARIES =  \
 	skivvy-plugin-artibot.la \
-	skivvy-plugin-chanops.la \
 	skivvy-plugin-diction.la \
 	skivvy-plugin-factoid.la \
 	skivvy-plugin-oastats.la \
@@ -103,6 +102,7 @@ plugin_LTLIBRARIES =  \
 	skivvy-plugin-rquotes.la \
 	skivvy-plugin-rserver.la
 
+#	skivvy-plugin-chanops.la \
 #	skivvy-plugin-compile.la \
 #	skivvy-plugin-example.la \
 #	skivvy-plugin-trivial.la
@@ -127,7 +127,7 @@ libskivvy_la_LDFLAGS = -version-info 0:0:0
 
 # IrcBot plugins
 skivvy_plugin_artibot_la_SOURCES = plugin-artibot.cpp mh/megahal.cpp
-skivvy_plugin_chanops_la_SOURCES = plugin-chanops.cpp
+#skivvy_plugin_chanops_la_SOURCES = plugin-chanops.cpp
 #skivvy_plugin_compile_la_SOURCES = plugin-compile.cpp
 skivvy_plugin_diction_la_SOURCES = plugin-diction.cpp
 #skivvy_plugin_example_la_SOURCES = plugin-example.cpp
@@ -139,7 +139,7 @@ skivvy_plugin_rserver_la_SOURCES = plugin-rserver.cpp
 #skivvy_plugin_trivial_la_SOURCES = plugin-trivial.cpp
 
 skivvy_plugin_artibot_la_LDFLAGS = -module
-skivvy_plugin_chanops_la_LDFLAGS = -module
+#skivvy_plugin_chanops_la_LDFLAGS = -module
 #skivvy_plugin_compile_la_LDFLAGS = -module
 skivvy_plugin_diction_la_LDFLAGS = -module
 #skivvy_plugin_example_la_LDFLAGS = -module

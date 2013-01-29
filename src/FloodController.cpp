@@ -105,6 +105,7 @@ void FloodController::dispatcher()
 
 bool FloodController::send(const str& channel, std::function<bool()> func)
 {
+//	bug_func();
 	lock_guard lock(mtx);
 	m[channel].push(func);
 	if(stl::find(keys, channel) == keys.end())
