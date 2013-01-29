@@ -7,6 +7,7 @@ A - Addition
 F - FIXED
 X - Won't fix
 
+A Add !inhelp - help displayed into the channel
 A Remote plugin connector aka rawplug.
 R !todo - todo list command
 R !bug - bug reporting/feature request command

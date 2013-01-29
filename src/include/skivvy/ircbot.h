@@ -892,7 +892,7 @@ public:
 	IrcBotPluginHandle(const IrcBotPluginHandle<Plugin>& handle);
 //	IrcBotPluginHandle(IrcBotPluginHandle<Plugin>&& handle);
 
-	operator void*() const;
+	operator void*() /*const*/;
 	IrcBotPluginHandle& operator=(const IrcBotPluginHandle& handle);
 	void ensure_plugin();
 	Plugin& operator*();
@@ -1205,8 +1205,9 @@ public:
 
 template<typename Plugin>
 IrcBotPluginHandle<Plugin>::IrcBotPluginHandle(IrcBot& bot, const str& id)
-: bot(bot), id(id), plugin(bot.get_typed_plugin<Plugin>(id))
+: bot(bot), id(id)//, plugin(bot.get_typed_plugin<Plugin>(id))
 {
+	bug_func();
 }
 
 template<typename Plugin>
@@ -1214,17 +1215,21 @@ IrcBotPluginHandle<Plugin>::IrcBotPluginHandle(const IrcBotPluginHandle<Plugin>&
 : bot(handle.bot), id(handle.id), plugin(handle.plugin)
 , plugin_load_time(handle.plugin_load_time)
 {
+	bug_func();
 }
 
 template<typename Plugin>
-IrcBotPluginHandle<Plugin>::operator void*() const
+IrcBotPluginHandle<Plugin>::operator void*() /*const*/
 {
+	bug_func();
+	ensure_plugin();
 	return plugin.get();
 }
 
 template<typename Plugin>
 IrcBotPluginHandle<Plugin>& IrcBotPluginHandle<Plugin>::operator=(const IrcBotPluginHandle& handle)
 {
+	bug_func();
 	id = handle.id;
 	plugin = handle.plugin;
 	plugin_load_time = handle.plugin_load_time;
@@ -1234,6 +1239,7 @@ IrcBotPluginHandle<Plugin>& IrcBotPluginHandle<Plugin>::operator=(const IrcBotPl
 template<typename Plugin>
 void IrcBotPluginHandle<Plugin>::ensure_plugin()
 {
+	bug_func();
 	if(bot.get_plugin_load_time() > plugin_load_time)
 	{
 		*this = bot.get_plugin_handle<Plugin>(id);
@@ -1244,6 +1250,7 @@ void IrcBotPluginHandle<Plugin>::ensure_plugin()
 template<typename Plugin>
 Plugin& IrcBotPluginHandle<Plugin>::operator*()
 {
+	bug_func();
 	ensure_plugin();
 
 	if(!plugin.get())
@@ -1256,6 +1263,7 @@ Plugin& IrcBotPluginHandle<Plugin>::operator*()
 template<typename Plugin>
 Plugin* IrcBotPluginHandle<Plugin>::operator->()
 {
+	bug_func();
 	ensure_plugin();
 
 	if(!plugin.get())

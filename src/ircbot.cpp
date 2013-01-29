@@ -431,8 +431,8 @@ IrcBotPluginPtr IrcBotPluginLoader::operator()(const str& file, IrcBot& bot)
 	IrcBotPluginPtr(*skivvy_ircbot_factory)(IrcBot&) = 0;
 
 	log("PLUGIN LOAD: " << file);
-	if(!(dl = dlopen(file.c_str(), RTLD_NOW|RTLD_GLOBAL)))
-//	if(!(ptr.dl = dlopen(file.c_str(), RTLD_LAZY|RTLD_GLOBAL)))
+//	if(!(dl = dlopen(file.c_str(), RTLD_NOW|RTLD_GLOBAL)))
+	if(!(dl = dlopen(file.c_str(), RTLD_LAZY|RTLD_GLOBAL)))
 	{
 		log(dlerror());
 		return plugin;
