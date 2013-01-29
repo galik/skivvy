@@ -21,9 +21,9 @@
 # 
 # '-----------------------------------------------------------------*/
 
-skivvydir = $(prefix)/include/skivvy
-plugindir = $(datadir)/skivvy/plugins
-docsdir = $(datadir)/skivvy
+skivvy_includedir = $(prefix)/include/skivvy
+skivvy_librarydir = $(prefix)/lib/skivvy
+skivvy_manualsdir = $(datadir)/skivvy
 
 # Required for GCC on some systems it seems 
 #	-D _GLIBCXX_USE_NANOSLEEP
@@ -49,7 +49,7 @@ AM_CXXFLAGS = -std=gnu++11 $(GEN_FLAGS) $(DEF_FLAGS) $(LIBXML2_FLAG)
 
 #BOOST_LIBS = -lboost_regex-mt
 
-skivvy_HEADERS = \
+skivvy_include_HEADERS = \
 	$(srcdir)/include/skivvy/bits/rpc.tcc \
 	$(srcdir)/include/skivvy/FloodController.h \
 	$(srcdir)/include/skivvy/ios.h \
@@ -70,38 +70,37 @@ noinst_HEADERS = \
 	$(srcdir)/include/skivvy/irc-constants.h \
 	$(srcdir)/include/skivvy/stl.h \
 	$(srcdir)/include/skivvy/network.h \
-	$(srcdir)/include/skivvy/server.h \
-	$(srcdir)/include/skivvy/plugin-artibot.h \
-	$(srcdir)/include/skivvy/plugin-diction.h \
-	$(srcdir)/include/skivvy/plugin-factoid.h \
-	$(srcdir)/include/skivvy/plugin-oastats.h \
-	$(srcdir)/include/skivvy/plugin-pfinder.h \
-	$(srcdir)/include/skivvy/plugin-pfinder-oacom.h \
-	$(srcdir)/include/skivvy/plugin-rquotes.h \
-	$(srcdir)/include/skivvy/plugin-rserver.h
-
+	$(srcdir)/include/skivvy/server.h
+	
+#	$(srcdir)/include/skivvy/plugin-artibot.h \
+#	$(srcdir)/include/skivvy/plugin-diction.h \
+#	$(srcdir)/include/skivvy/plugin-factoid.h \
+#	$(srcdir)/include/skivvy/plugin-oastats.h \
+#	$(srcdir)/include/skivvy/plugin-pfinder.h \
+#	$(srcdir)/include/skivvy/plugin-pfinder-oacom.h \
+#	$(srcdir)/include/skivvy/plugin-rquotes.h \
+#	$(srcdir)/include/skivvy/plugin-rserver.h
 #	$(srcdir)/include/skivvy/plugin-chanops.h \
 #	$(srcdir)/include/skivvy/plugin-compile.h \
 #	$(srcdir)/include/skivvy/plugin-example.h \
 #	$(srcdir)/include/skivvy/plugin-trivial.h
 
 
-BOTLIBS = -lskivvy -ldl -lpcrecpp
+BOTLIBS = -L.libs -lskivvy -ldl -lpcrecpp
 # -Wl,-E is required for programs that load plugin's
 BOTFLAGS = -Wl,-E
 
-lib_LTLIBRARIES = \
+skivvy_library_LTLIBRARIES = \
 	libskivvy.la
 
-plugin_LTLIBRARIES =  \
-	skivvy-plugin-artibot.la \
-	skivvy-plugin-diction.la \
-	skivvy-plugin-factoid.la \
-	skivvy-plugin-oastats.la \
-	skivvy-plugin-pfinder.la \
-	skivvy-plugin-rquotes.la \
-	skivvy-plugin-rserver.la
-
+#plugin_LTLIBRARIES =  \
+#	skivvy-plugin-artibot.la \
+#	skivvy-plugin-diction.la \
+#	skivvy-plugin-factoid.la \
+#	skivvy-plugin-oastats.la \
+#	skivvy-plugin-pfinder.la \
+#	skivvy-plugin-rquotes.la \
+#	skivvy-plugin-rserver.la \
 #	skivvy-plugin-chanops.la \
 #	skivvy-plugin-compile.la \
 #	skivvy-plugin-example.la \
@@ -126,28 +125,28 @@ libskivvy_la_LIBADD = -lreadline
 libskivvy_la_LDFLAGS = -version-info 0:0:0
 
 # IrcBot plugins
-skivvy_plugin_artibot_la_SOURCES = plugin-artibot.cpp mh/megahal.cpp
+#skivvy_plugin_artibot_la_SOURCES = plugin-artibot.cpp mh/megahal.cpp
 #skivvy_plugin_chanops_la_SOURCES = plugin-chanops.cpp
 #skivvy_plugin_compile_la_SOURCES = plugin-compile.cpp
-skivvy_plugin_diction_la_SOURCES = plugin-diction.cpp
+#skivvy_plugin_diction_la_SOURCES = plugin-diction.cpp
 #skivvy_plugin_example_la_SOURCES = plugin-example.cpp
-skivvy_plugin_factoid_la_SOURCES = plugin-factoid.cpp
-skivvy_plugin_oastats_la_SOURCES = plugin-oastats.cpp
-skivvy_plugin_pfinder_la_SOURCES = plugin-pfinder.cpp plugin-pfinder-oacom.cpp 
-skivvy_plugin_rquotes_la_SOURCES = plugin-rquotes.cpp
-skivvy_plugin_rserver_la_SOURCES = plugin-rserver.cpp
+#skivvy_plugin_factoid_la_SOURCES = plugin-factoid.cpp
+#skivvy_plugin_oastats_la_SOURCES = plugin-oastats.cpp
+#skivvy_plugin_pfinder_la_SOURCES = plugin-pfinder.cpp plugin-pfinder-oacom.cpp 
+#skivvy_plugin_rquotes_la_SOURCES = plugin-rquotes.cpp
+#skivvy_plugin_rserver_la_SOURCES = plugin-rserver.cpp
 #skivvy_plugin_trivial_la_SOURCES = plugin-trivial.cpp
 
-skivvy_plugin_artibot_la_LDFLAGS = -module
+#skivvy_plugin_artibot_la_LDFLAGS = -module
 #skivvy_plugin_chanops_la_LDFLAGS = -module
 #skivvy_plugin_compile_la_LDFLAGS = -module
-skivvy_plugin_diction_la_LDFLAGS = -module
+#skivvy_plugin_diction_la_LDFLAGS = -module
 #skivvy_plugin_example_la_LDFLAGS = -module
-skivvy_plugin_factoid_la_LDFLAGS = -module
-skivvy_plugin_oastats_la_LDFLAGS = -module
-skivvy_plugin_pfinder_la_LDFLAGS = -module
-skivvy_plugin_rquotes_la_LDFLAGS = -module
-skivvy_plugin_rserver_la_LDFLAGS = -module
+#skivvy_plugin_factoid_la_LDFLAGS = -module
+#skivvy_plugin_oastats_la_LDFLAGS = -module
+#skivvy_plugin_pfinder_la_LDFLAGS = -module
+#skivvy_plugin_rquotes_la_LDFLAGS = -module
+#skivvy_plugin_rserver_la_LDFLAGS = -module
 #skivvy_plugin_trivial_la_LDFLAGS = -module
 
 # Development utils
@@ -176,15 +175,14 @@ skivvy_plugin_rserver_la_LDFLAGS = -module
 
 # Skivvy IrcBot
 bin_PROGRAMS = skivvy skivvy-client
-#bin_PROGRAMS = skivvy
 
 skivvy_client_SOURCES = skivvy-client.cpp
 skivvy_client_LDADD = $(BOTLIBS) -lreadline
 
 skivvy_SOURCES = skivvy.cpp
-skivvy_LDADD = $(BOTLIBS) -lreadline
-skivvy_LDFLAGS = $(BOTFLAGS)
+skivvy_LDADD = -lskivvy -ldl -lpcrecpp -lreadline
+skivvy_LDFLAGS = -Wl,-E
 
-docs_DATA = $(top_srcdir)/docs/manual.text
+skivvy_manuals_DATA = $(top_srcdir)/docs/skivvy-manual.text
 
 extra_DIST = $(top_srcdir)/docs/manual.text

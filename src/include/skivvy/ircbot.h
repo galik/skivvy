@@ -10,7 +10,7 @@
  */
 
 /*-----------------------------------------------------------------.
-| Copyright (C) 2011 SooKee oaskivvy@gmail.com               |
+| Copyright (C) 2011 SooKee oaskivvy@gmail.com                     |
 '------------------------------------------------------------------'
 
 This program is free software; you can redistribute it and/or
@@ -871,68 +871,33 @@ public:
 	IrcBotPluginPtr operator()(const str& file, IrcBot& bot);
 };
 
+// ==================================================
+// The core Bot
+// ==================================================
+
+class IrcBot;
+
 template<typename Plugin>
 class IrcBotPluginHandle
 {
 	typedef std::shared_ptr<Plugin> PluginSPtr;
-	IrcBot& bot;
 
+	IrcBot& bot;
+	str id;
 	PluginSPtr plugin;// = 0;
 	time_t plugin_load_time = 0;
 
-
 public:
-	IrcBotPluginHandle(IrcBot& bot)
-	: bot(bot)
-	{
-	}
+	IrcBotPluginHandle(IrcBot& bot, const str& id);
+	IrcBotPluginHandle(const IrcBotPluginHandle<Plugin>& handle);
+//	IrcBotPluginHandle(IrcBotPluginHandle<Plugin>&& handle);
 
-	IrcBotPluginHandle(IrcBotPluginHandle<Plugin>& handle)
-	: bot(handle.bot), plugin(handle.plugin)
-	, plugin_load_time(handle.plugin_load_time)
-	{
-	}
-
-	operator void*() const
-	{
-		return plugin.get();
-	}
-
-	IrcBotPluginHandle& operator=(const IrcBotPluginHandle& handle)
-	{
-		plugin = handle.plugin;
-		plugin_load_time = handle.plugin_load_time;
-		return *this;
-	}
-
+	operator void*() const;
+	IrcBotPluginHandle& operator=(const IrcBotPluginHandle& handle);
 	void ensure_plugin();
-
-	Plugin& operator*()
-	{
-		ensure_plugin();
-
-		if(!plugin.get())
-		{
-			log("ERROR: Bad IrcBotPluginHandle: " << this);
-		}
-		return *plugin;
-	}
-
-	Plugin* operator->()
-	{
-		ensure_plugin();
-
-		if(!plugin.get())
-		{
-			log("ERROR: Bad IrcBotPluginHandle: " << this);
-		}
-		return plugin.get();
-	}
+	Plugin& operator*();
+	Plugin* operator->();
 };
-
-// ==================================================
-// The core Bot
-// ==================================================
 
 class IrcBot _final_
 //: private IrcBotPlugin
@@ -1175,10 +1140,10 @@ public:
 	}
 
 	template<typename Plugin>
-	std::shared_ptr<Plugin> get_typed_plugin(const str& name)
+	std::shared_ptr<Plugin> get_typed_plugin(const str& id)
 	{
 		for(IrcBotPluginPtr plugin: plugins)
-			if(plugin->get_name() == name)
+			if(plugin->get_id() == id)
 				return std::shared_ptr<Plugin>(dynamic_cast<Plugin*>(plugin.get()));
 		return std::shared_ptr<Plugin>(0);
 	}
@@ -1190,9 +1155,9 @@ public:
 //	}
 
 	template<typename Plugin>
-	IrcBotPluginHandle<Plugin> get_plugin_handle(const str& name)
+	IrcBotPluginHandle<Plugin> get_plugin_handle(const str& id)
 	{
-		return IrcBotPluginHandle<Plugin>(*this, name);
+		return IrcBotPluginHandle<Plugin>(*this, id);
 	}
 
 	/**
@@ -1239,21 +1204,67 @@ public:
 };
 
 template<typename Plugin>
+IrcBotPluginHandle<Plugin>::IrcBotPluginHandle(IrcBot& bot, const str& id)
+: bot(bot), id(id), plugin(bot.get_typed_plugin<Plugin>(id))
+{
+}
+
+template<typename Plugin>
+IrcBotPluginHandle<Plugin>::IrcBotPluginHandle(const IrcBotPluginHandle<Plugin>& handle)
+: bot(handle.bot), id(handle.id), plugin(handle.plugin)
+, plugin_load_time(handle.plugin_load_time)
+{
+}
+
+template<typename Plugin>
+IrcBotPluginHandle<Plugin>::operator void*() const
+{
+	return plugin.get();
+}
+
+template<typename Plugin>
+IrcBotPluginHandle<Plugin>& IrcBotPluginHandle<Plugin>::operator=(const IrcBotPluginHandle& handle)
+{
+	id = handle.id;
+	plugin = handle.plugin;
+	plugin_load_time = handle.plugin_load_time;
+	return *this;
+}
+
+template<typename Plugin>
 void IrcBotPluginHandle<Plugin>::ensure_plugin()
 {
 	if(bot.get_plugin_load_time() > plugin_load_time)
 	{
-		IrcBotPluginPtr ptr = bot.get_plugin(id);
-		plugin.reset(dynamic_cast<Plugin*>(ptr.get()));
+		*this = bot.get_plugin_handle<Plugin>(id);
 		plugin_load_time = std::time(0);
 	}
 }
 
-//bool wildmatch(str_citer mi, const str_citer me
-//	, str_citer ii, const str_citer ie);
-//
-//bool wildmatch(const str& mask, const str& id);
+template<typename Plugin>
+Plugin& IrcBotPluginHandle<Plugin>::operator*()
+{
+	ensure_plugin();
 
-}} // namespace skivvy { namespace ircbot {
+	if(!plugin.get())
+	{
+		log("ERROR: Bad IrcBotPluginHandle: " << this);
+	}
+	return *plugin;
+}
+
+template<typename Plugin>
+Plugin* IrcBotPluginHandle<Plugin>::operator->()
+{
+	ensure_plugin();
+
+	if(!plugin.get())
+	{
+		log("ERROR: Bad IrcBotPluginHandle: " << this);
+	}
+	return plugin.get();
+}
+
+}} // skivvy::ircbot
 
 #endif // _SKIVVY_IRCBOT_H_
