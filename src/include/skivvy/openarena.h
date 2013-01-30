@@ -80,6 +80,71 @@ str oa_handle_to_irc(str oa)
 
 }
 
+//inline
+//str oa_handle_to_irc(str oa)
+//{
+//	return oa;
+//	static str BACK = "," + IRC_Black;
+//	static str_map subs =
+//	{
+//		{"^0", IRC_COLOR + IRC_Black + "," + IRC_Dark_Gray}
+//		, {"^1", IRC_COLOR + IRC_Red + BACK}
+//		, {"^2", IRC_COLOR + IRC_Lime_Green + BACK}
+//		, {"^3", IRC_COLOR + IRC_Yellow + BACK}
+//		, {"^4", IRC_COLOR + IRC_Navy_Blue + BACK}
+//		, {"^5", IRC_COLOR + IRC_Royal_Blue + BACK}
+//		, {"^6", IRC_COLOR + IRC_Purple + BACK}
+//		, {"^7", IRC_COLOR + IRC_White + BACK}
+//		, {"^8", IRC_COLOR + IRC_Brown + BACK}
+//	};
+//
+//	static str oa2irc[] =
+//	{
+//		IRC_COLOR + IRC_Black
+//		, IRC_COLOR + IRC_Red // COLOR_RED
+//		, IRC_COLOR + IRC_Green // COLOR_GREEN
+//		, IRC_COLOR + IRC_Yellow // COLOR_YELLOW
+//		, IRC_COLOR + IRC_Navy_Blue // COLOR_BLUE
+//		, IRC_COLOR + IRC_Royal_Blue // COLOR_CYAN
+//		, IRC_COLOR + IRC_Purple // COLOR_MAGENTA
+//		, IRC_COLOR + IRC_White   // COLOR_WHITE
+//		, IRC_COLOR + IRC_Brown   //
+//		, "xxx"
+//	};
+//
+//	if(oa.empty())
+//		return oa;
+//
+//	for(char& c: oa)
+//		if(!std::isprint(c))
+//			c = '#';
+//
+//	// ensure color prefix
+//	if(oa[0] != '^')
+//		oa = "^7" + oa; // default to white
+//
+//	str irc;
+//	siz i = 1;
+//	for(; i < oa.size(); ++i)
+//	{
+//		bug_var(oa[i - 1]);
+//		bug_var(oa[i]);
+//		if(isdigit(oa[i] && oa[i - 1] == '^'))
+//		{
+//			bug_var(oa[i] - '0');
+//			irc.append(oa2irc[oa[i] - '0']);
+//			++i;
+//		}
+//		else
+//			irc.append(1, oa[i - 1]);
+//	}
+//	irc.append(1, oa[i - 1]);
+//
+//	irc += IRC_NORMAL;
+//	return irc;
+//
+//}
+
 #define ColorIndex(c)	( ( (c) - '0' ) & 7 )
 #define Q_COLOR_ESCAPE	'^'
 #define Q_IsColorString(p)	( p && *(p) == Q_COLOR_ESCAPE && *((p)+1) && isalnum(*((p)+1)) ) // ^[0-9a-zA-Z]

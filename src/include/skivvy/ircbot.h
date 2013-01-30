@@ -1157,6 +1157,8 @@ public:
 	template<typename Plugin>
 	IrcBotPluginHandle<Plugin> get_plugin_handle(const str& id)
 	{
+		bug_func();
+		bug_var(id);
 		return IrcBotPluginHandle<Plugin>(*this, id);
 	}
 
@@ -1240,9 +1242,12 @@ template<typename Plugin>
 void IrcBotPluginHandle<Plugin>::ensure_plugin()
 {
 	bug_func();
+	bug_var(bot.get_plugin_load_time());
+	bug_var(plugin_load_time);
 	if(bot.get_plugin_load_time() > plugin_load_time)
 	{
-		*this = bot.get_plugin_handle<Plugin>(id);
+//		*this = bot.get_plugin_handle<Plugin>(id);
+		plugin = bot.get_typed_plugin<Plugin>(id);
 		plugin_load_time = std::time(0);
 	}
 }

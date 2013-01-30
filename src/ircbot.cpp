@@ -424,28 +424,35 @@ str BasicIrcBotPlugin::help(const str& cmd) const
 
 IrcBotPluginPtr IrcBotPluginLoader::operator()(const str& file, IrcBot& bot)
 {
+	bug_func();
 	IrcBotPluginPtr plugin;
-//	union { void* dl; void* dlsym; IrcBotPluginPtr(*plugin)(IrcBot&); } ptr;
 	void* dl = 0;
-//	void* skivvy_ircbot_factory = 0;
 	IrcBotPluginPtr(*skivvy_ircbot_factory)(IrcBot&) = 0;
 
 	log("PLUGIN LOAD: " << file);
-//	if(!(dl = dlopen(file.c_str(), RTLD_NOW|RTLD_GLOBAL)))
+
+	//if(!(dl = dlopen(file.c_str(), RTLD_NOW|RTLD_GLOBAL)))
 	if(!(dl = dlopen(file.c_str(), RTLD_LAZY|RTLD_GLOBAL)))
 	{
 		log(dlerror());
 		return plugin;
 	}
+
+	bug("Getting factory function");
+
 	if(!(*(void**)&skivvy_ircbot_factory = dlsym(dl, "skivvy_ircbot_factory")))
-//	if(!(skivvy_ircbot_factory = reinterpret_cast<IrcBotPluginPtr(*)(IrcBot&)>(dlsym(dl, "skivvy_ircbot_factory"))))
 	{
 		log(dlerror());
 		return plugin;
 	}
 
+	bug("Invoking factory function");
+
 	if(!(plugin = skivvy_ircbot_factory(bot)))
 		return plugin;
+
+	bug("Adding newly created plugin");
+
 	plugin->dl = dl;
 	bot.del_plugin(plugin->get_id());
 	bot.add_plugin(plugin);
@@ -523,7 +530,7 @@ std::istream& operator>>(std::istream& is, IrcBot& bot)
 		if(line.empty() || line[0] == '#')
 			continue;
 
-		bug("prop: " << line);
+//		bug("prop: " << line);
 
 		str key, val;
 		if(!sgl(sgl(siss(line) >> std::ws, key, ':') >> std::ws, val))

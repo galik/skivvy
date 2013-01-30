@@ -75,12 +75,19 @@ void handler(int sig)
 int main(int argc, char* argv[])
 {
 	bug_func();
-	//signal(SIGSEGV, handler);   // install our handler
+	signal(SIGSEGV, handler);   // install our handler
 
 	IrcBot bot;
-	log(bot.get_name() + " v" + bot.get_version());
-	bot.init(argc > 1 ? argv[1] : "");
-	bot.exit();
+	try
+	{
+		log(bot.get_name() + " v" + bot.get_version());
+		bot.init(argc > 1 ? argv[1] : "");
+		bot.exit();
+	}
+	catch(std::exception& e)
+	{
+		log("EXCEPTION: " << e.what());
+	}
 	if(bot.restart)
 		return 6;
 	return 0;
