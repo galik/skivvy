@@ -713,8 +713,6 @@ void IrcBot::load_plugins()
 		bug_var(access);
 		for(const str& plugin_dir: plugin_dirs)
 		{
-			log("Searching plugin dir: " << plugin_dir);
-
 			str_vec files;
 			if(int e = ios::ls(plugin_dir, files))
 			{
@@ -757,10 +755,8 @@ void IrcBot::load_plugins()
 
 void IrcBot::dispatch_msgevent(const message& msg)
 {
-//	bug_func();
 	time_t now = std::time(0);
 	lock_guard lock(msgevent_mtx);
-//	bug_var(msgevents.size());
 
 	msgevent_map::iterator mei;
 	if((mei = msgevents.find(msg.cmd)) != msgevents.end())
