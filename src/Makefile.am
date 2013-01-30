@@ -63,7 +63,6 @@ skivvy_include_HEADERS = \
 	$(srcdir)/include/skivvy/types.h
 
 noinst_HEADERS = \
-	$(srcdir)/mh/megahal.h \
 	$(srcdir)/include/skivvy/ansi.h \
 	$(srcdir)/include/skivvy/cal.h \
 	$(srcdir)/include/skivvy/irc.h \
