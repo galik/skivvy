@@ -1,9 +1,9 @@
 #pragma once
-#ifndef _SKIVVY_SOCKETSTREAM_H_
-#define _SKIVVY_SOCKETSTREAM_H_
+#ifndef _SKIVVY_SSL_SOCKETSTREAM_H_
+#define _SKIVVY_SSL_SOCKETSTREAM_H_
 
 /*-----------------------------------------------------------------.
-| Copyright (C) 2011 SooKee oaskivvy@gmail.com               |
+| Copyright (C) 2013 SooKee oaskivvy@gmail.com               |
 '------------------------------------------------------------------'
 
 This code is was created from code (C) Copyright Nicolai M. Josuttis 2001
@@ -44,18 +44,35 @@ is granted under the same conditions.
 '----------------------------------------------------------------*/
 
 #include <sys/socket.h>
+#include <sys/types.h>
 #include <netinet/in.h>
 #include <netdb.h>
-#include <streambuf>
-#include <istream>
-#include <ostream>
+#include <cstdio>
+#include <cstdlib>
 #include <unistd.h>
-#include <fcntl.h>
+#include <errno.h>
+#include <openssl/rand.h>
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+
+#include <string>
+#include <iostream>
+
+typedef std::string str;
+typedef size_t siz;
 
 namespace skivvy { namespace net {
 
+struct ssl_connection
+{
+	int sock;
+	SSL *ssl;
+	SSL_CTX *ctx;
+	ssl_connection(): sock(0), ssl(0), ctx(0) {}
+};
+
 template<typename Char>
-class basic_socketbuf
+class basic_ssl_socketbuf
 : public std::basic_streambuf<Char>
 {
 public:
@@ -66,18 +83,17 @@ public:
 	typedef typename std::basic_streambuf<Char>::traits_type traits_type;
 
 protected:
-
 	static const int char_size = sizeof(char_type);
 	static const int SIZE = 128;
 
-	int sock;
+	ssl_connection conn;
 	char_type* ibuf;//[SIZE] ;
 	char_type* obuf;//[SIZE] ;
 
 
 public:
-	basic_socketbuf()
-	: sock(0)
+	basic_ssl_socketbuf()
+	: conn()
 	, ibuf(0)
 	, obuf(0)
 	{
@@ -87,22 +103,23 @@ public:
 		buf_type::setg(ibuf, ibuf, ibuf);
 	}
 
-	virtual ~basic_socketbuf()
+	virtual ~basic_ssl_socketbuf()
 	{
 		sync();
 		delete[] ibuf;
 		delete[] obuf;
 	}
 
-	void set_socket(int sock) { this->sock = sock; }
-	int get_socket() { return this->sock; }
+	void set_ssl_connection(const ssl_connection& conn) { this->conn = conn; }
+	ssl_connection get_ssl_connection() { return this->conn; }
 
 protected:
 
 	int output_buffer()
 	{
 		int num = buf_type::pptr() - buf_type::pbase();
-		if(send(sock, reinterpret_cast<char*>(obuf), num * char_size, 0) != num)
+
+		if(SSL_write(conn.ssl, reinterpret_cast<char*>(obuf), num * char_size) != num)
 			return traits_type::eof();
 		buf_type::pbump(-num);
 		return num;
@@ -134,7 +151,7 @@ protected:
 			return *buf_type::gptr();
 
 		int num;
-		if((num = recv(sock, reinterpret_cast<char*>(ibuf), SIZE * char_size, 0)) <= 0)
+		if((num = SSL_read(conn.ssl, reinterpret_cast<char*>(ibuf), SIZE * char_size)) <= 0)
 			return traits_type::eof();
 
 		buf_type::setg(ibuf, ibuf, ibuf + num);
@@ -142,40 +159,47 @@ protected:
 	}
 };
 
-typedef basic_socketbuf<char> socketbuf;
-typedef basic_socketbuf<wchar_t> wsocketbuf;
+typedef basic_ssl_socketbuf<char> ssl_socketbuf;
+typedef basic_ssl_socketbuf<wchar_t> ssl_wsocketbuf;
 
 template<typename Char>
-class basic_socketstream
+class basic_ssl_socketstream
 : public std::basic_iostream<Char>
 {
 public:
 	typedef Char char_type;
 	typedef std::basic_iostream<char_type> stream_type;
-	typedef basic_socketbuf<char_type> buf_type;
+	typedef basic_ssl_socketbuf<char_type> buf_type;
 
 protected:
 	buf_type buf;
 
 public:
-	basic_socketstream(): stream_type(&buf) {}
-	basic_socketstream(int s): stream_type(&buf) { buf.set_socket(s); }
+	basic_ssl_socketstream(): stream_type(&buf) {}
 
-	virtual ~basic_socketstream()
+	virtual ~basic_ssl_socketstream()
 	{
-		close();
+		this->close();
 	}
 
 	void close()
 	{
-		if(buf.get_socket() != 0) ::close(buf.get_socket());
+		if(buf.get_ssl_connection().sock != 0)
+			ssl_disconnect();
 		stream_type::clear();
 	}
 
-	bool open(const std::string& host, uint16_t port, int type = SOCK_STREAM, bool nb = false)
+	bool open(const std::string& host, uint16_t port)
 	{
 		close();
-		int sd = socket(PF_INET, type, 0);
+		buf.set_ssl_connection(ssl_connect(host, port));
+		return *this;
+	}
+	// Establish a regular tcp connection
+	int tcp_connect(const str& host, siz port)
+	{
+		close();
+		int sd = socket(PF_INET, SOCK_STREAM, 0);
 		sockaddr_in sin;
 		hostent *he = gethostbyname(host.c_str());
 
@@ -188,20 +212,59 @@ public:
 		sin.sin_addr = *((in_addr*) he->h_addr);
 
 		if(connect(sd, reinterpret_cast<sockaddr*>(&sin), sizeof(sin)) < 0)
-			stream_type::setstate(std::ios::failbit);
-		else
-		{
-			if(nb)
-				fcntl(sd, F_SETFL, O_NONBLOCK);
-			buf.set_socket(sd);
-		}
-		return *this;
+			stream_type::setstate(std::ios::badbit);
+		return sd;
 	}
+
+//	void print_ERRs()
+//	{
+//		siz code;
+//		while((code = ERR_get_error()) != 0)
+//			std::cerr << ERR_error_string(code, 0) << '\n';
+//	}
+//
+
+	ssl_connection ssl_connect(const str& host, siz port)
+	{
+		ssl_connection conn;
+
+		if(!(conn.sock = tcp_connect(host, port)))
+			stream_type::setstate(std::ios::badbit);
+
+		SSL_load_error_strings();
+		SSL_library_init();
+
+		if(!(conn.ctx = SSL_CTX_new(SSLv23_client_method())))
+			stream_type::setstate(std::ios::badbit);
+		if(!(conn.ssl = SSL_new(conn.ctx)))
+			stream_type::setstate(std::ios::badbit);
+		if(!SSL_set_fd(conn.ssl, conn.sock))
+			stream_type::setstate(std::ios::badbit);
+		if(SSL_connect(conn.ssl) != 1)
+			stream_type::setstate(std::ios::badbit);
+
+		return conn;
+	}
+
+	void ssl_disconnect()
+	{
+		ssl_connection conn = buf.get_ssl_connection();
+		if(conn.sock)
+			::close(conn.sock);
+		if(conn.ssl)
+		{
+			SSL_shutdown(conn.ssl);
+			SSL_free(conn.ssl);
+		}
+		if(conn.ctx)
+			SSL_CTX_free(conn.ctx);
+	}
+
 };
 
-typedef basic_socketstream<char> socketstream;
-typedef basic_socketstream<wchar_t> wsocketstream;
+typedef basic_ssl_socketstream<char> ssl_socketstream;
+typedef basic_ssl_socketstream<wchar_t> ssl_wsocketstream;
 
 }} // skivvy::net
 
-#endif // _SKIVVY_SOCKETSTREAM_H_
+#endif // _SKIVVY_SSL_SOCKETSTREAM_H_
