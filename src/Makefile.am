@@ -94,11 +94,10 @@ libskivvy_la_SOURCES = \
 libskivvy_la_LIBADD = -lreadline
 libskivvy_la_LDFLAGS = -version-info 0:0:0
 
-# IrcBot plugins
 # Development utils
-#noinst_PROGRAMS = \
+noinst_PROGRAMS = \
+	skivlet
 #	convert-cvars \
-#	skivlet \
 #	test \
 #	test-props \
 #	test-server
@@ -116,7 +115,7 @@ libskivvy_la_LDFLAGS = -version-info 0:0:0
 #convert_cvars_LDADD = $(BOTLIBS)
 
 # Skivvy IrcBot
-bin_PROGRAMS = skivvy skivvy-client skivlet
+bin_PROGRAMS = skivvy skivvy-client
 
 skivvy_SOURCES = skivvy.cpp
 skivvy_LDADD = -lskivvy -ldl -lpcrecpp -lreadline
