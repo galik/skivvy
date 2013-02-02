@@ -47,8 +47,6 @@ LIBXML2_LIBS = $(shell xml2-config --libs)
 	
 AM_CXXFLAGS = -std=gnu++11 $(GEN_FLAGS) $(DEF_FLAGS) $(LIBXML2_FLAG)
 
-#BOOST_LIBS = -lboost_regex-mt
-
 skivvy_include_HEADERS = \
 	$(srcdir)/include/skivvy/bits/rpc.tcc \
 	$(srcdir)/include/skivvy/FloodController.h \
@@ -71,39 +69,12 @@ noinst_HEADERS = \
 	$(srcdir)/include/skivvy/network.h \
 	$(srcdir)/include/skivvy/server.h
 	
-#	$(srcdir)/include/skivvy/plugin-artibot.h \
-#	$(srcdir)/include/skivvy/plugin-diction.h \
-#	$(srcdir)/include/skivvy/plugin-factoid.h \
-#	$(srcdir)/include/skivvy/plugin-oastats.h \
-#	$(srcdir)/include/skivvy/plugin-pfinder.h \
-#	$(srcdir)/include/skivvy/plugin-pfinder-oacom.h \
-#	$(srcdir)/include/skivvy/plugin-rquotes.h \
-#	$(srcdir)/include/skivvy/plugin-rserver.h
-#	$(srcdir)/include/skivvy/plugin-chanops.h \
-#	$(srcdir)/include/skivvy/plugin-compile.h \
-#	$(srcdir)/include/skivvy/plugin-example.h \
-#	$(srcdir)/include/skivvy/plugin-trivial.h
-
-
 BOTLIBS = -L.libs -lskivvy -ldl -lpcrecpp
 # -Wl,-E is required for programs that load plugin's
 BOTFLAGS = -Wl,-E
 
 skivvy_library_LTLIBRARIES = \
 	libskivvy.la
-
-#plugin_LTLIBRARIES =  \
-#	skivvy-plugin-artibot.la \
-#	skivvy-plugin-diction.la \
-#	skivvy-plugin-factoid.la \
-#	skivvy-plugin-oastats.la \
-#	skivvy-plugin-pfinder.la \
-#	skivvy-plugin-rquotes.la \
-#	skivvy-plugin-rserver.la \
-#	skivvy-plugin-chanops.la \
-#	skivvy-plugin-compile.la \
-#	skivvy-plugin-example.la \
-#	skivvy-plugin-trivial.la
 
 # IrcBot framework
 libskivvy_la_SOURCES = \
@@ -124,30 +95,6 @@ libskivvy_la_LIBADD = -lreadline
 libskivvy_la_LDFLAGS = -version-info 0:0:0
 
 # IrcBot plugins
-#skivvy_plugin_artibot_la_SOURCES = plugin-artibot.cpp mh/megahal.cpp
-#skivvy_plugin_chanops_la_SOURCES = plugin-chanops.cpp
-#skivvy_plugin_compile_la_SOURCES = plugin-compile.cpp
-#skivvy_plugin_diction_la_SOURCES = plugin-diction.cpp
-#skivvy_plugin_example_la_SOURCES = plugin-example.cpp
-#skivvy_plugin_factoid_la_SOURCES = plugin-factoid.cpp
-#skivvy_plugin_oastats_la_SOURCES = plugin-oastats.cpp
-#skivvy_plugin_pfinder_la_SOURCES = plugin-pfinder.cpp plugin-pfinder-oacom.cpp 
-#skivvy_plugin_rquotes_la_SOURCES = plugin-rquotes.cpp
-#skivvy_plugin_rserver_la_SOURCES = plugin-rserver.cpp
-#skivvy_plugin_trivial_la_SOURCES = plugin-trivial.cpp
-
-#skivvy_plugin_artibot_la_LDFLAGS = -module
-#skivvy_plugin_chanops_la_LDFLAGS = -module
-#skivvy_plugin_compile_la_LDFLAGS = -module
-#skivvy_plugin_diction_la_LDFLAGS = -module
-#skivvy_plugin_example_la_LDFLAGS = -module
-#skivvy_plugin_factoid_la_LDFLAGS = -module
-#skivvy_plugin_oastats_la_LDFLAGS = -module
-#skivvy_plugin_pfinder_la_LDFLAGS = -module
-#skivvy_plugin_rquotes_la_LDFLAGS = -module
-#skivvy_plugin_rserver_la_LDFLAGS = -module
-#skivvy_plugin_trivial_la_LDFLAGS = -module
-
 # Development utils
 #noinst_PROGRAMS = \
 #	convert-cvars \
@@ -168,19 +115,19 @@ libskivvy_la_LDFLAGS = -version-info 0:0:0
 #convert_cvars_SOURCES = convert-cvars.cpp
 #convert_cvars_LDADD = $(BOTLIBS)
 
-#skivlet_SOURCES = skivlet.cpp
-#skivlet_LDADD = $(BOTLIBS)
-#skivlet_LDFLAGS =
-
 # Skivvy IrcBot
-bin_PROGRAMS = skivvy skivvy-client
-
-skivvy_client_SOURCES = skivvy-client.cpp
-skivvy_client_LDADD = $(BOTLIBS) -lreadline
+bin_PROGRAMS = skivvy skivvy-client skivlet
 
 skivvy_SOURCES = skivvy.cpp
 skivvy_LDADD = -lskivvy -ldl -lpcrecpp -lreadline
 skivvy_LDFLAGS = -Wl,-E
+
+skivvy_client_SOURCES = skivvy-client.cpp
+skivvy_client_LDADD = $(BOTLIBS) -lreadline
+
+skivlet_SOURCES = skivlet.cpp
+skivlet_LDADD = $(BOTLIBS)
+skivlet_LDFLAGS =
 
 skivvy_manuals_DATA = $(top_srcdir)/docs/skivvy-manual.text
 

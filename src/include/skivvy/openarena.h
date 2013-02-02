@@ -63,18 +63,19 @@ str oa_handle_to_irc(str oa)
 		, {"^8", IRC_COLOR + IRC_Brown + BACK}
 	};
 
-	// ensure color prefix
 	if(oa.empty())
 		return oa;
 
+	// ensure color prefix
 	if(oa[0] != '^')
 		oa = "^7" + oa; // default to white
+
+	// ensure color suffix
+//	oa = oa + "^7"; // default to white
 
 //	size_t pos = 0;
 	for(str_pair& p: subs)
 		replace(oa, p.first, p.second);
-//		while((pos = oa.find(p.first)) != str::npos)
-//			oa.replace(pos, p.first.size(), p.second);
 	oa += IRC_NORMAL;
 	return oa;
 
