@@ -100,14 +100,19 @@ class Bot
 public:
 	Bot(const str& host, int port): host(host), port(port) {}
 
-	void start()
+	bool start()
 	{
 		std::cout << "> " << std::flush;
 		func();
 		std::srand(std::time(0));
-		ss.open(host, port);
+		if(!ss.open(host, port))
+		{
+			log("Failed to open connection to server: " << strerror(errno));
+			return false;
+		}
 		connecter_fut = std::async(std::launch::async, [&]{ connecter(); });
 		responder_fut = std::async(std::launch::async, [&]{ responder(); });
+		return true;
 	}
 
 	// ss << cmd.substr(0, 510) << "\r\n" << std::flush;
@@ -282,8 +287,11 @@ public:
 
 int main()
 {
-	Bot bot("irc.quakenet.org", 6667);
-	bot.start();
-	bot.cli();
-	bot.join();
+//	Bot bot("irc.quakenet.org", 6667);
+	Bot bot("irc.se.quakenet.org", 6667);
+	if(bot.start())
+	{
+		bot.cli();
+		bot.join();
+	}
 }

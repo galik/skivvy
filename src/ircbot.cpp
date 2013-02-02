@@ -1240,6 +1240,10 @@ bool IrcBot::init(const str& config_file)
 						}
 						fc_reply_pm(msg, oss.str());
 					}
+					if(have("help.append"))
+						fc_reply_pm(msg, "Additional Info:");
+					for(const str& h: get_vec("help.append"))
+						fc_reply_pm(msg, "\t" + h);
 				}
 				else
 				{
@@ -1450,6 +1454,7 @@ void IrcBot::exec(const std::string& cmd, std::ostream* os)
 		}
 		else if(cmd == "/reconfigure")
 		{
+			props.clear();
 			if(!(std::ifstream(configfile) >> (*this)))
 				log("Error reading config file.");
 			config_loaded = std::time(0);
