@@ -192,17 +192,32 @@ public:
 	bool open(const std::string& host, uint16_t port)
 	{
 		close();
-		buf.set_ssl_connection(ssl_connect(host, port));
+		ssl_connection conn;
+		if(ssl_connect(host, port, conn))
+			buf.set_ssl_connection(ssl_connect(host, port));
 		return *this;
 	}
-	// Establish a regular tcp connection
-	int tcp_connect(const str& host, siz port)
+
+	bool tcp_connect(const str& host, siz port, int& sd)
 	{
 		close();
-		int sd = socket(PF_INET, SOCK_STREAM, 0);
-		sockaddr_in sin;
-		hostent *he = gethostbyname(host.c_str());
 
+		if((sd = socket(PF_INET, SOCK_STREAM, 0)) == -1)
+		{
+			log(strerror(errno));
+			stream_type::setstate(std::ios::failbit);
+			return false;
+		}
+
+		hostent* he;
+		if(!(he = gethostbyname(host.c_str())))
+		{
+			::close(sd);
+			stream_type::setstate(std::ios::failbit);
+			return false;
+		}
+
+		sockaddr_in sin;
 		std::copy(reinterpret_cast<char*>(he->h_addr)
 			, reinterpret_cast<char*>(he->h_addr) + he->h_length
 			, reinterpret_cast<char*>(&sin.sin_addr.s_addr));
@@ -212,8 +227,13 @@ public:
 		sin.sin_addr = *((in_addr*) he->h_addr);
 
 		if(connect(sd, reinterpret_cast<sockaddr*>(&sin), sizeof(sin)) < 0)
-			stream_type::setstate(std::ios::badbit);
-		return sd;
+		{
+			::close(sd);
+			stream_type::setstate(std::ios::failbit);
+			return false;
+		}
+
+		return true;
 	}
 
 //	void print_ERRs()
@@ -224,26 +244,44 @@ public:
 //	}
 //
 
-	ssl_connection ssl_connect(const str& host, siz port)
+	bool ssl_connect(const str& host, siz port, ssl_connection& conn)
 	{
-		ssl_connection conn;
-
-		if(!(conn.sock = tcp_connect(host, port)))
+		if(!tcp_connect(host, port, conn.sock))
+		{
 			stream_type::setstate(std::ios::badbit);
+			return false;
+		}
 
 		SSL_load_error_strings();
 		SSL_library_init();
 
 		if(!(conn.ctx = SSL_CTX_new(SSLv23_client_method())))
+		{
 			stream_type::setstate(std::ios::badbit);
+			return false;
+		}
 		if(!(conn.ssl = SSL_new(conn.ctx)))
+		{
+			SSL_CTX_free(conn.ctx);
 			stream_type::setstate(std::ios::badbit);
+			return false;
+		}
 		if(!SSL_set_fd(conn.ssl, conn.sock))
+		{
+			SSL_free(conn.ssl);
+			SSL_CTX_free(conn.ctx);
 			stream_type::setstate(std::ios::badbit);
+			return false;
+		}
 		if(SSL_connect(conn.ssl) != 1)
+		{
+			SSL_free(conn.ssl);
+			SSL_CTX_free(conn.ctx);
 			stream_type::setstate(std::ios::badbit);
+			return false;
+		}
 
-		return conn;
+		return true;
 	}
 
 	void ssl_disconnect()

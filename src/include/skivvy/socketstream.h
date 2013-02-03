@@ -191,16 +191,19 @@ public:
 		if((sd = socket(PF_INET, type, 0)) == -1)
 		{
 			log(strerror(errno));
+			stream_type::setstate(std::ios::failbit);
 			return false;
 		}
 		bug_var(sd);
-		sockaddr_in sin;
+
 		if(!(he = gethostbyname(host.c_str())))
 		{
 			::close(sd);
+			stream_type::setstate(std::ios::failbit);
 			return false;
 		}
 
+		sockaddr_in sin;
 		std::copy(reinterpret_cast<char*>(he->h_addr)
 			, reinterpret_cast<char*>(he->h_addr) + he->h_length
 			, reinterpret_cast<char*>(&sin.sin_addr.s_addr));
@@ -213,13 +216,13 @@ public:
 		{
 			::close(sd);
 			stream_type::setstate(std::ios::failbit);
+			return false;
 		}
-		else
-		{
-			if(nb)
-				fcntl(sd, F_SETFL, O_NONBLOCK);
-			buf.set_socket(sd);
-		}
+
+		if(nb)
+			fcntl(sd, F_SETFL, O_NONBLOCK);
+		buf.set_socket(sd);
+
 		return *this;
 	}
 };
