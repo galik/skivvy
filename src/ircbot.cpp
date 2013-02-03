@@ -258,7 +258,7 @@ RemoteIrcServer::RemoteIrcServer()
 {
 }
 
-bool RemoteIrcServer::connect(const str& host, long port) { return ss.open(host, port); }
+bool RemoteIrcServer::connect(const str& host, long port) { ss.clear(); return ss.open(host, port); }
 
 bool RemoteIrcServer::pass(const str& pwd)
 {
@@ -1032,13 +1032,6 @@ bool IrcBot::init(const str& config_file)
 		else if(msg.cmd == KICK)
 		{
 			BUG_MSG(msg, KICK);
-			// TODO: Move this to ChanOps
-			std::istringstream iss(msg.params);
-			//  params: #google-admin Skivvy
-			str k;
-			iss >> k >> k;
-			irc.me(msg.to, "1waves bye bye to " + k + " :P");
-			//irc.say(msg.to, "4Don't let the door hit you on the way out!");
 		}
 		else if(msg.cmd == NICK)
 		{
