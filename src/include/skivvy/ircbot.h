@@ -989,8 +989,8 @@ private:
 
 	const std::time_t uptime;
 
-	str host;
-	siz port;
+//	str host;
+//	siz port;
 
 	str locate_file(const str& name);
 

@@ -51,8 +51,14 @@ is granted under the same conditions.
 #include <ostream>
 #include <unistd.h>
 #include <fcntl.h>
+#include <cstring> // strerror()
+#include <cerrno>
+
+#include <skivvy/logrep.h>
 
 namespace skivvy { namespace net {
+
+using namespace skivvy::utils;
 
 template<typename Char>
 class basic_socketbuf
@@ -168,16 +174,32 @@ public:
 
 	void close()
 	{
+		bug_func();
+		bug_var(buf.get_socket());
 		if(buf.get_socket() != 0) ::close(buf.get_socket());
 		stream_type::clear();
 	}
 
 	bool open(const std::string& host, uint16_t port, int type = SOCK_STREAM, bool nb = false)
 	{
+		bug_func();
 		close();
-		int sd = socket(PF_INET, type, 0);
+
+		int sd;
+		hostent* he;
+
+		if((sd = socket(PF_INET, type, 0)) == -1)
+		{
+			log(strerror(errno));
+			return false;
+		}
+		bug_var(sd);
 		sockaddr_in sin;
-		hostent *he = gethostbyname(host.c_str());
+		if(!(he = gethostbyname(host.c_str())))
+		{
+			::close(sd);
+			return false;
+		}
 
 		std::copy(reinterpret_cast<char*>(he->h_addr)
 			, reinterpret_cast<char*>(he->h_addr) + he->h_length
@@ -188,7 +210,10 @@ public:
 		sin.sin_addr = *((in_addr*) he->h_addr);
 
 		if(connect(sd, reinterpret_cast<sockaddr*>(&sin), sizeof(sin)) < 0)
+		{
+			::close(sd);
 			stream_type::setstate(std::ios::failbit);
+		}
 		else
 		{
 			if(nb)

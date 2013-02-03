@@ -63,8 +63,8 @@ void handler(int sig)
 
 		cstring_uptr func_name(abi::__cxa_demangle(func.c_str(), 0, 0, &status));
 		std::cerr << "function: " << func_name.get() << '\n';
-		std::cerr << "info    : " << trace[i] << '\n';
-		std::cerr << '\n';
+//		std::cerr << "info    : " << trace[i] << '\n';
+//		std::cerr << '\n';
 	}
 	free(trace);
 

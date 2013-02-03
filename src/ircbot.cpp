@@ -71,6 +71,7 @@ using namespace skivvy::utils;
 using namespace skivvy::string;
 
 static const str SERVER_HOST = "server.host";
+static const str SERVER_HOST_DEFAULT = "localhost";
 static const str SERVER_PORT = "server.port";
 static const siz SERVER_PORT_DEFAULT = 6667;
 
@@ -837,8 +838,8 @@ bool IrcBot::init(const str& config_file)
 		return false;
 	}
 
-	host = get(SERVER_HOST);
-	port = get(SERVER_PORT, SERVER_PORT_DEFAULT);
+//	host = get(SERVER_HOST, SERVER_HOST_DEFAULT);
+//	port = get(SERVER_PORT, SERVER_PORT_DEFAULT);
 
 	if(info.nicks.empty())
 	{
@@ -1565,6 +1566,9 @@ void IrcBot::exec(const std::string& cmd, std::ostream* os)
 		}
 		else if(cmd == "/reconnect")
 		{
+			// TODO: not this - invoke pinger() reconnect cycle instead!
+			str host = get(SERVER_HOST, SERVER_HOST_DEFAULT);
+			siz port = get(SERVER_PORT, SERVER_PORT_DEFAULT);
 			if(irc.connect(host, port)) { if(os) (*os) << "OK"; }
 			else if(os)
 				(*os) << "ERROR: Unable to reconnect.\n";
@@ -1682,14 +1686,17 @@ void IrcBot::pinger()
 	bug_func();
 	while(!done)
 	{
-		const size_t retries = get<int>(PROP_SERVER_RETRIES, 10);
+		const siz retries = get<int>(PROP_SERVER_RETRIES, 10);
+		bug_var(retries);
 		size_t attempt = 0;
 
 		log("Connecting:");
 
+		str	host = get(SERVER_HOST, SERVER_HOST_DEFAULT);
+		siz	port = get(SERVER_PORT, SERVER_PORT_DEFAULT);
 		for(attempt = 0; !done && !irc.connect(host, port) && attempt < retries; ++attempt)
 		{
-			log("Connection attempt: " << attempt);
+			log("Re-connection attempt: " << (attempt + 1));
 			for(time_t now = time(0); !done && time(0) - now < 10;)
 				std::this_thread::sleep_for(std::chrono::seconds(3));
 		}
