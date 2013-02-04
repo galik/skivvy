@@ -38,7 +38,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 namespace skivvy { namespace ircbot {
 
-class FactoidIrcBotPlugin
+class CompileIrcBotPlugin
 : public BasicIrcBotPlugin
  , public IrcBotMonitor
 {
@@ -47,11 +47,11 @@ public:
 private:
 
 	std::mutex mtx;
-	void faq(const message& msg, bool cpp11);
+	void cpp(const message& msg, bool cpp11);
 
 public:
-	FactoidIrcBotPlugin(IrcBot& bot);
-	virtual ~FactoidIrcBotPlugin();
+	CompileIrcBotPlugin(IrcBot& bot);
+	virtual ~CompileIrcBotPlugin();
 
 	// INTERFACE: BasicIrcBotPlugin
 
@@ -60,6 +60,7 @@ public:
 	// INTERFACE: IrcBotPlugin
 
 	virtual std::string get_id() const;
+	virtual std::string get_name() const;
 	virtual std::string get_version() const;
 	virtual void exit();
 
