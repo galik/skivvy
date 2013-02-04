@@ -78,6 +78,7 @@ skivvy_library_LTLIBRARIES = \
 
 # IrcBot framework
 libskivvy_la_SOURCES = \
+	cal.cpp \
 	FloodController.cpp \
 	ios.cpp \
 	irc.cpp \

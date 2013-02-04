@@ -73,20 +73,20 @@ std::string date_t::format(const char* fmt)
 	return std::string(str, len);
 }
 
-Calendar::Calendar()
-{
-}
-
-Calendar::~Calendar()
-{
-}
-
-void Calendar::test(tst::context& ctx) throw(std::exception)
-{
-	gman_test(ctx);
-	date_t d;
-
-	ctx.out << d.format() << std::endl;
-}
+//Calendar::Calendar()
+//{
+//}
+//
+//Calendar::~Calendar()
+//{
+//}
+//
+//void Calendar::test(tst::context& ctx) throw(std::exception)
+//{
+//	gman_test(ctx);
+//	date_t d;
+//
+//	ctx.out << d.format() << std::endl;
+//}
 
 }} // skivvy::cal

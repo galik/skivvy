@@ -88,12 +88,12 @@ public:
 
 	void set_time_between_checks(siz milliseconds)
 	{
-		if(milliseconds < 500)
+//		if(milliseconds < 500)
 			time_between_checks = milliseconds;
 	}
 	void set_time_between_events(siz milliseconds)
 	{
-		if(milliseconds >= 1600)
+//		if(milliseconds >= 1600)
 			time_between_events = milliseconds;
 	}
 };
