@@ -34,12 +34,14 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 #include <sookee/socketstream.h>
 
-#include <skivvy/rpc.h>
-#include <skivvy/store.h>
-#include <skivvy/logrep.h>
-#include <skivvy/socketstream.h>
 #include <skivvy/FloodController.h>
+#include <skivvy/logrep.h>
 #include <skivvy/message.h>
+#include <skivvy/RemoteIrcServer.h>
+#include <skivvy/rpc.h>
+#include <skivvy/socketstream.h>
+#include <skivvy/store.h>
+#include <skivvy/Timers.h>
 
 #include <map>
 #include <set>
@@ -114,299 +116,9 @@ struct user_info
 	str real;
 };
 
-/**
- * Class to manage the dialogue with a remote IRC server.
- * It provides functions to connect to, and communicate with
- * the server and other users on its network in various channels.
- *
- * Typically this class will be used like this:
- *
- * <pre>
- * RemoteIrcServer irc;
- *
- * user_info info;
- *
- * info.nick = "Nick";
- * info.user = "User;
- * info.mode = "0";
- * info.real = "Real Name";
- *
- * if(!irc.connect()) { log("Failed to connect:"); return; }
- * if(!irc.negotiate(info)) { log("Failed to negotiate:"); return; }
- *
- * str line;
- * while(irc.receive(line))
- * {
- * 		// ... deal with incoming lines from the
- * 		// IRC server here.
- * }
- * </pre>
- */
-class RemoteIrcServer
-{
-private:
-//	const str host;
-//	const long port;
-
-	std::mutex mtx_ss;
-	net::socketstream ss;
-//	soo::netstream ss;
-
-
-public:
-
-	bool send(const str& cmd);
-	bool send_unlogged(const str& cmd);
-
-	/**
-	 * Construct a RemoteIrcServer object.
-	 *
-	 */
-	RemoteIrcServer();
-
-	/**
-	 * Open a TCP/IP connection to the host on the given port
-	 * that were passed as parameters.
-	 *
-	 * @host The hostname of the IRC server
-	 * @port The port the IRC server is accepting requests on.
-	 * @return false on failure.
-	 */
-	bool connect(const str& host, long port = 6667);
-
-	/**
-	 * Initiate the dialogue between the client and the server
-	 * by sending an (optionally blank) password.
-	 */
-	bool pass(const str& pwd);
-
-	/**
-	 * Tell the server the nick you will be using. This may
-	 * be rejected later so this call may need to be made again
-	 * with an alternative nick.
-	 */
-	bool nick(const str& n);
-
-	/**
-	 * Provide the user information for the given nick. If the nick is rejected
-	 * this information will have to be sent again after a new nick has been sent
-	 * with a call to bool nick().
-	 *
-	 * @param u User Name
-	 * @param m User Mode
-	 * @param r Real Name
-	 */
-	bool user(const str& u, const str m, const str r);
-
-	/**
-	 * Join a specific channel.
-	 *
-	 * @channel The channel to join, eg. #stuff
-	 * @return false on failure.
-	 */
-	bool join(const str& channel, const str& key = "");
-
-	/**
-	 * Part (leave) a channel.
-	 *
-	 * @channel the channel to leave
-	 * @message an optional leaving message
-	 * @return false on failure.
-	 */
-	bool part(const str& channel, const str& message = "");
-
-	/**
-	 * Send a PING message.
-	 * @return false on failure.
-	 */
-	bool ping(const str& info);
-
-	/**
-	 * Send a PONG message.
-	 * @return false on failure.
-	 */
-	bool pong(const str& info);
-
-	/**
-	 * Say something to either a channel or a specific user.
-	 * This function facilitates "talking/chatting" on IRC.
-	 *
-	 * @to the channel or the user to direct this message to.
-	 * @text The text of the message.
-	 * @return false on failure.
-	 */
-	bool say(const str& to, const str& text);
-
-	bool kick(const str_vec& chans, const str_vec&users, const str& comment);
-
-	// non standard??
-	bool auth(const str& user, const str& pass);
-
-	/**
-	 * Emote something to either a channel or a specific user.
-	 * This function facilitates "emoting" on IRC.
-	 *
-	 * @to the channel or the user to direct this message to.
-	 * @text The text of the emotion.
-	 * @return false on failure.
-	 */
-	bool me(const str& to, const str& text);
-
-	/**
-	 * Open a one on one session with a specific user.
-	 * @return false on failure.
-	 */
-	bool query(const str& nick);
-
-	/**
-	 * Close client session.
-	 * @return false on failure.
-	 */
-	bool quit(const str& reason);
-
-	bool whois(const str& nick);
-
-	/**
-	 * Change mode settings for nick.
-	 *
-	 * @chan the channel the mode is set in
-	 * @mode The mode flags.
-	 * @nick the nick of the user to change mode flags for.
-	 * @return false on failure.
-	 */
-	bool mode(const str& chan, const str& mode, const str& nick);
-
-	/**
-	 * Change mode settings for nick. // CORRECT???
-	 *
-	 * @nick the nick of the user to change mode flags for.
-	 * @mode The mode flags.
-	 * @return false on failure.
-	 */
-	bool mode(const str& nick, const str& mode);
-
-	/**
-	 * Reply is like say() but it deduces who to send the reply
-	 * to based on the received message. This could either be
-	 * the channel the message was sent from or a specific user
-	 * from a PM.
-	 *
-	 * @return false on failure.
-	 */
-	bool reply(const message& msg, const str& text);
-
-	/**
-	 * This function is like reply except that it always sends a PM (QUERY)
-	 * to the sender of the message.
-	 *
-	 * @param msg The message from the person you wish to
-	 * reply to using PM (QUERY).
-	 */
-	bool reply_pm(const message& msg, const str& text);
-
-	/**
-	 * Get a line from the IRC server.
-	 *
-	 * @return false on failure.
-	 */
-	bool receive(str& line);
-};
-
 // ==================================================
 // Bot Utils
 // ==================================================
-
-/**
- * multi-user aware random callback timer
- */
-class RandomTimer
-{
-private:
-	typedef std::set<const void*> user_set;
-
-	user_set users;
-	std::mutex mtx;
-	std::future<void> fut;
-	siz mindelay; // = 1;
-	siz maxdelay; // = 120;
-
-	std::function<void(const void*)> cb;
-
-	void timer();
-
-public:
-
-	RandomTimer(std::function<void(const void*)> cb);
-	RandomTimer(const RandomTimer& rt);
-	~RandomTimer();
-
-	void set_mindelay(size_t seconds);
-	void set_maxdelay(size_t seconds);
-
-	/**
-	 * @return false if already on for this user else true.
-	 */
-	bool on(const void* user);
-
-	/**
-	 * @return false if already off for this user else true.
-	 */
-	bool off(const void* user);
-
-	/**
-	 * @return false if already off for this user else true.
-	 */
-	bool turn_off();
-};
-
-/**
- * multi-user aware random callback timer
- */
-class MessageTimer
-{
-private:
-	struct comp
-	{
-	  bool operator()(const message& lhs, const message& rhs) const
-	  {return lhs.reply_to() < rhs.reply_to();}
-	};
-
-	typedef std::set<message, comp> message_set;
-
-	message_set messages;
-	std::mutex mtx;
-	std::future<void> fut;
-	siz mindelay; // = 1;
-	siz maxdelay; // = 120;
-
-	std::function<void(const message&)> cb;
-
-	void timer();
-
-public:
-
-	MessageTimer(std::function<void(const message&)> cb);
-	MessageTimer(const MessageTimer& mt);
-	~MessageTimer();
-
-	void set_mindelay(size_t seconds);
-	void set_maxdelay(size_t seconds);
-
-	/**
-	 * @return false if already on for this user else true.
-	 */
-	bool on(const message& m);
-
-	/**
-	 * @return false if already off for this user else true.
-	 */
-	bool off(const message& m);
-
-	/**
-	 * @return false if already off for this user else true.
-	 */
-	bool turn_off();
-};
 
 // ==================================================
 // Bot Plugin Framework
@@ -517,7 +229,7 @@ class IrcBotPlugin
 {
 public:
 	void* dl = 0;
-	typedef std::vector<str> command_list;
+	typedef str_vec command_list;
 	virtual ~IrcBotPlugin() {}
 
 	/**
@@ -578,7 +290,7 @@ public:
 	virtual void exit() = 0;
 };
 
-typedef std::shared_ptr<IrcBotPlugin> IrcBotPluginPtr;
+typedef std::shared_ptr<IrcBotPlugin> IrcBotPluginSPtr;
 
 /**
  * This is the abstract superclass for bot
@@ -645,16 +357,6 @@ public:
 		: cmd(cmd), help(help), func(func), flags(flags) {}
 	};
 
-	/*
-	 * compatability struct
-	 */
-//	struct oldaction
-//	{
-//		str cmd;
-//		str help;
-//		std::function<void(const message& msg)> func;
-//	};
-
 	typedef std::vector<action> action_vec;
 	typedef std::map<str, action> action_map;
 	typedef std::pair<str, action> action_pair;
@@ -671,7 +373,6 @@ protected:
 	 * BasicIrcBotPlugin::initialize() function.
 	 */
 	void add(const action& a);
-	//void add(const oldaction& a);
 
 public:
 	BasicIrcBotPlugin(IrcBot& bot);
@@ -720,7 +421,7 @@ public:
 	 * BasicIrcBotPlugin::action objects provided by calling
 	 * the void BasicIrcBotPlugin::add(const action& a) function.
 	 */
-	virtual std::vector<str> list() const; // final
+	virtual str_vec list() const; // final
 
 	/**
 	 * Implementing classes should not override this
@@ -787,7 +488,7 @@ IrcBotPluginPtr skivvy_ircbot_factory(IrcBot& bot) \
 class IrcBotPluginLoader
 {
 public:
-	IrcBotPluginPtr operator()(const str& file, IrcBot& bot);
+	IrcBotPluginSPtr operator()(const str& file, IrcBot& bot);
 };
 
 // ==================================================
@@ -818,12 +519,12 @@ public:
 	Plugin* operator->();
 };
 
-class IrcBot _final_
+class IrcBot
 //: private IrcBotPlugin
 {
+	friend class IrcBotPlugin;
 public:
 
-//	typedef std::multimap<str, str> property_mmap;
 	typedef std::map<str, str_vec> property_map;
 	typedef std::pair<const str, str_vec> property_pair;
 	typedef property_map::iterator property_iter;
@@ -832,17 +533,16 @@ public:
 	typedef std::pair<property_iter, property_iter> property_iter_pair;
 	typedef std::pair<property_iter, property_iter> property_range;
 
-//	typedef std::set<IrcBotPluginPtr> plugin_set;
-	typedef std::vector<IrcBotPluginPtr> plugin_vec;
+	typedef std::vector<IrcBotPluginSPtr> plugin_vec;
 	typedef plugin_vec::iterator plugin_vec_iter;
 	typedef plugin_vec::const_iterator plugin_vec_citer;
+
 	typedef std::set<IrcBotMonitor*> monitor_set;
 	typedef std::set<IrcBotChoiceListener*> listener_set;
 	typedef std::map<str, IrcBotRPCService*> service_map;
 	typedef std::set<str> channel_set;
-//	typedef std::set<str> ban_set;
-	typedef std::map<str, IrcBotPluginPtr> command_map;
-	typedef std::pair<str, IrcBotPluginPtr> command_map_pair;
+	typedef std::map<str, IrcBotPluginSPtr> command_map;
+	typedef std::pair<str, IrcBotPluginSPtr> command_map_pair;
 
 	typedef std::map<const str, str_set> nicks_map;
 	typedef std::pair<const str, str_set> nicks_map_pair;
@@ -853,7 +553,7 @@ public:
 private:
 	RemoteIrcServer irc;
 	FloodController fc;
-	Store* store;
+	Store* store; // TODO: Why is this a pointer?
 
 	msgevent_map msgevents;
 	std::mutex msgevent_mtx;
@@ -925,10 +625,6 @@ private:
 public:
 	bool restart = false;
 
-//	time_t when;
-//	siz timeout = 30; // 30 seconds
-//	std::function<void(const message&)> func;
-
 	msgevent_lst::iterator add_msgevent(const str& msg, const msgevent& me)
 	{
 		lock_guard lock(msgevent_mtx);
@@ -962,7 +658,6 @@ public:
 	/**
 	 * Match s according to regular expression r.
 	 */
-//	bool ereg_match(const str& r, const str& s); // extended regex
 	bool preg_match(const str& r, const str& s, bool full = false); // peare regex
 	bool wild_match(const str& w, const str& s, int flags = 0);
 
@@ -980,19 +675,6 @@ public:
 	 * Join channel announcing bot version.
 	 */
 	void official_join(const str& channel);
-
-//	template<typename Iter>
-//	void set_all(const str& s, Iter begin, Iter end)
-//	{
-//		property_iter_pair i = props.equal_range(s);
-//		props.erase(i.first, i.second);
-//		for(; begin != end; ++begin)
-//		{
-//			std::ostringstream oss;
-//			oss << begin->second;
-//			props.insert(property_pair(begin->first, oss.str()));
-//		}
-//	}
 
 	template<typename T>
 	T get(const str& s, const T& dflt = T())
@@ -1013,7 +695,7 @@ public:
 	 * Get a property variable intended to be a filename.
 	 * The name is resolved such that absolute paths are
 	 * left as they are but relative paths are apended
-	 * to the value of the property variable data_dir:;
+	 * to the value of the property variable data_dir:
 	 *
 	 * If data_dir: is unset the $HOME/.skivvy is used.
 	 */
@@ -1041,7 +723,7 @@ public:
 
 	bool has_plugin(const str& id, const str& version = "");
 	void del_plugin(const str& id);
-	void add_plugin(IrcBotPluginPtr p);
+	void add_plugin(IrcBotPluginSPtr p);
 	void add_monitor(IrcBotMonitor& m);
 	void add_rpc_service(IrcBotRPCService& s);
 
@@ -1050,28 +732,22 @@ public:
 		return services.find(name) == services.end() ? 0 : services[name];
 	}
 
-	IrcBotPluginPtr get_plugin(const str& id)
+	IrcBotPluginSPtr get_plugin(const str& id)
 	{
-		for(IrcBotPluginPtr plugin: plugins)
+		for(IrcBotPluginSPtr plugin: plugins)
 			if(plugin->get_id() == id)
 				return plugin;
-		return IrcBotPluginPtr(0);
+		return IrcBotPluginSPtr(0);
 	}
 
 	template<typename Plugin>
 	std::shared_ptr<Plugin> get_typed_plugin(const str& id)
 	{
-		for(IrcBotPluginPtr plugin: plugins)
+		for(IrcBotPluginSPtr plugin: plugins)
 			if(plugin->get_id() == id)
 				return std::shared_ptr<Plugin>(dynamic_cast<Plugin*>(plugin.get()));
 		return std::shared_ptr<Plugin>(0);
 	}
-
-//	template<typename Plugin>
-//	IrcBotPluginHandle<Plugin> get_plugin_handle(const str& name)
-//	{
-//		return IrcBotPluginHandle<Plugin>(*this, name);
-//	}
 
 	template<typename Plugin>
 	IrcBotPluginHandle<Plugin> get_plugin_handle(const str& id)
@@ -1090,12 +766,7 @@ public:
 
 	RemoteIrcServer& get_irc_server();
 
-	// Utility
-
-	// flood control
-
 public:
-
 	str configfile; // current config file
 
 	bool fc_reply(const message& msg, const str& text);
@@ -1105,11 +776,6 @@ public:
 
 	bool cmd_error(const message& msg, const str& text, bool rv = false);
 	bool cmd_error_pm(const message& msg, const str& text, bool rv = false);
-
-	/**
-	 * Return a list of nicks registered to a given channel
-	 */
-	//str_set get_nicks(const str& channel);
 
 	// INTERFACE: IrcBotPlugin
 
@@ -1126,9 +792,8 @@ public:
 
 template<typename Plugin>
 IrcBotPluginHandle<Plugin>::IrcBotPluginHandle(IrcBot& bot, const str& id)
-: bot(bot), id(id)//, plugin(bot.get_typed_plugin<Plugin>(id))
+: bot(bot), id(id)
 {
-	bug_func();
 }
 
 template<typename Plugin>
@@ -1136,13 +801,11 @@ IrcBotPluginHandle<Plugin>::IrcBotPluginHandle(const IrcBotPluginHandle<Plugin>&
 : bot(handle.bot), id(handle.id), plugin(handle.plugin)
 , plugin_load_time(handle.plugin_load_time)
 {
-	bug_func();
 }
 
 template<typename Plugin>
 IrcBotPluginHandle<Plugin>::operator void*() /*const*/
 {
-	bug_func();
 	ensure_plugin();
 	return plugin.get();
 }
@@ -1150,7 +813,6 @@ IrcBotPluginHandle<Plugin>::operator void*() /*const*/
 template<typename Plugin>
 IrcBotPluginHandle<Plugin>& IrcBotPluginHandle<Plugin>::operator=(const IrcBotPluginHandle& handle)
 {
-	bug_func();
 	id = handle.id;
 	plugin = handle.plugin;
 	plugin_load_time = handle.plugin_load_time;
@@ -1160,12 +822,8 @@ IrcBotPluginHandle<Plugin>& IrcBotPluginHandle<Plugin>::operator=(const IrcBotPl
 template<typename Plugin>
 void IrcBotPluginHandle<Plugin>::ensure_plugin()
 {
-	bug_func();
-	bug_var(bot.get_plugin_load_time());
-	bug_var(plugin_load_time);
 	if(bot.get_plugin_load_time() > plugin_load_time)
 	{
-//		*this = bot.get_plugin_handle<Plugin>(id);
 		plugin = bot.get_typed_plugin<Plugin>(id);
 		plugin_load_time = std::time(0);
 	}
@@ -1174,7 +832,6 @@ void IrcBotPluginHandle<Plugin>::ensure_plugin()
 template<typename Plugin>
 Plugin& IrcBotPluginHandle<Plugin>::operator*()
 {
-	bug_func();
 	ensure_plugin();
 
 	if(!plugin.get())
@@ -1187,7 +844,6 @@ Plugin& IrcBotPluginHandle<Plugin>::operator*()
 template<typename Plugin>
 Plugin* IrcBotPluginHandle<Plugin>::operator->()
 {
-	bug_func();
 	ensure_plugin();
 
 	if(!plugin.get())

@@ -28,29 +28,12 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 '-----------------------------------------------------------------*/
 
-#include <skivvy/ircbot.h>
-
-#include <string>
-#include <fstream>
-#include <sstream>
-#include <iostream>
-#include <future>
-#include <cstdlib>
-#include <ctime>
-#include <thread>
-#include <chrono>
-#include <cstdio>
-#include <iterator>
-
-#include <cstring>
-#include <cstdlib>
-#include <dirent.h>
-
-#include <skivvy/ios.h>
+#include <skivvy/FloodController.h>
+//#include <skivvy/ios.h>
 #include <skivvy/stl.h>
-#include <skivvy/str.h>
+//#include <skivvy/str.h>
 #include <skivvy/logrep.h>
-#include <skivvy/irc-constants.h>
+//#include <skivvy/irc-constants.h>
 
 #include <random>
 #include <functional>
@@ -60,7 +43,7 @@ namespace skivvy { namespace ircbot {
 using namespace skivvy;
 using namespace skivvy::types;
 using namespace skivvy::utils;
-using namespace skivvy::string;
+//using namespace skivvy::string;
 
 FloodController::FloodController()
 : idx(0)
@@ -71,10 +54,8 @@ FloodController::~FloodController() {}
 
 void FloodController::dispatcher()
 {
-	bug_func();
 	while(dispatching)
 	{
-//		std::this_thread::sleep_for(std::chrono::milliseconds(200));
 		std::this_thread::sleep_for(std::chrono::milliseconds(time_between_checks));
 		{
 			lock_guard lock(mtx);
@@ -96,7 +77,6 @@ void FloodController::dispatcher()
 			m[keys[idx]].front()();
 			m[keys[idx]].pop();
 		}
-//		std::this_thread::sleep_for(std::chrono::milliseconds(1200));
 		std::this_thread::sleep_for(std::chrono::milliseconds(time_between_events - time_between_checks));
 	}
 
@@ -105,7 +85,6 @@ void FloodController::dispatcher()
 
 bool FloodController::send(const str& channel, std::function<bool()> func)
 {
-//	bug_func();
 	lock_guard lock(mtx);
 	m[channel].push(func);
 	if(stl::find(keys, channel) == keys.end())

@@ -32,24 +32,11 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 '-----------------------------------------------------------------*/
 
-#include <skivvy/rpc.h>
-#include <skivvy/logrep.h>
-#include <skivvy/socketstream.h>
+#include <skivvy/types.h>
 
-#include <map>
-#include <set>
-#include <string>
-#include <vector>
-#include <functional>
 #include <mutex>
 #include <future>
-#include <memory>
 #include <queue>
-
-#include <dlfcn.h>
-
-#define _final_
-#define _override_
 
 namespace skivvy { namespace ircbot {
 
@@ -88,17 +75,13 @@ public:
 
 	void set_time_between_checks(siz milliseconds)
 	{
-//		if(milliseconds < 500)
-			time_between_checks = milliseconds;
+		time_between_checks = milliseconds;
 	}
 	void set_time_between_events(siz milliseconds)
 	{
-//		if(milliseconds >= 1600)
-			time_between_events = milliseconds;
+		time_between_events = milliseconds;
 	}
 };
-
-//typedef FloodController FloodController2;
 
 }} // namespace skivvy { namespace ircbot {
 

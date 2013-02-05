@@ -132,12 +132,12 @@ str BasicIrcBotPlugin::help(const str& cmd) const
 	return actions.at(cmd).help;
 }
 
-IrcBotPluginPtr IrcBotPluginLoader::operator()(const str& file, IrcBot& bot)
+IrcBotPluginSPtr IrcBotPluginLoader::operator()(const str& file, IrcBot& bot)
 {
 	bug_func();
-	IrcBotPluginPtr plugin;
+	IrcBotPluginSPtr plugin;
 	void* dl = 0;
-	IrcBotPluginPtr(*skivvy_ircbot_factory)(IrcBot&) = 0;
+	IrcBotPluginSPtr(*skivvy_ircbot_factory)(IrcBot&) = 0;
 
 	log("PLUGIN LOAD: " << file);
 
@@ -169,7 +169,7 @@ IrcBotPluginPtr IrcBotPluginLoader::operator()(const str& file, IrcBot& bot)
 	return plugin;
 }
 
-void IrcBot::add_plugin(IrcBotPluginPtr plugin)
+void IrcBot::add_plugin(IrcBotPluginSPtr plugin)
 {
 	if(plugin)
 		this->plugins.push_back(plugin);
@@ -179,7 +179,7 @@ void IrcBot::add_plugin(IrcBotPluginPtr plugin)
 
 bool IrcBot::has_plugin(const str& id, const str&  version)
 {
-	for(const IrcBotPluginPtr& p: plugins)
+	for(const IrcBotPluginSPtr& p: plugins)
 		if(p->get_id() == id && p->get_version() >= version)
 			return true;
 	return false;
@@ -433,7 +433,7 @@ void IrcBot::load_plugins()
 			if(stl::find(files, p) == files.end())
 				continue;
 
-			IrcBotPluginPtr plugin;
+			IrcBotPluginSPtr plugin;
 			if(!(plugin = load(plugin_dir + "/" + p, *this)))
 			{
 				log("Failed to load: " << p);
@@ -930,7 +930,7 @@ bool IrcBot::init(const str& config_file)
 						continue;
 
 					fc_reply_pm(msg, "List of commands:");
-					for(const IrcBotPluginPtr& p: plugins)
+					for(const IrcBotPluginSPtr& p: plugins)
 					{
 						fc_reply_pm(msg, "\t" + p->get_name() + " " + p->get_version());
 						std::ostringstream oss;
@@ -975,7 +975,7 @@ bool IrcBot::init(const str& config_file)
 str_vec IrcBot::list() const
 {
 	str_vec v;
-	for(const IrcBotPluginPtr& p: plugins)
+	for(const IrcBotPluginSPtr& p: plugins)
 		for(str& i: p->list())
 			v.push_back(i);
 	return v;
@@ -1052,7 +1052,7 @@ str IrcBot::help(const str& cmd) const
 void IrcBot::exit()
 {
 	log("Closing down plugins:");
-	for(IrcBotPluginPtr p: plugins)
+	for(IrcBotPluginSPtr p: plugins)
 	{
 		log("\t" << p->get_name());
 		p->exit();
@@ -1467,200 +1467,6 @@ bool IrcBot::extract_params(const message& msg, std::initializer_list<str*> args
 				fc_reply_help(msg, help(msg.get_user_cmd()), "04" + msg.get_user_cmd() + ": 01");
 			return false;
 		}
-	return true;
-}
-
-RandomTimer::RandomTimer(std::function<void(const void*)> cb)
-: mindelay(1)
-, maxdelay(60)
-, cb(cb)
-{
-}
-
-RandomTimer::RandomTimer(const RandomTimer& rt)
-: mindelay(rt.mindelay)
-, maxdelay(rt.maxdelay)
-, cb(rt.cb)
-{
-}
-
-RandomTimer::~RandomTimer()
-{
-	turn_off();
-}
-
-void RandomTimer::timer()
-{
-	bug_func();
-	while(!users.empty())
-	{
-		try
-		{
-			for(const void* user: users)
-				cb(user);
-
-			std::time_t end = std::time(0) + rand_int(mindelay, maxdelay);
-			//bug("NEXT QUOTE: " << ctime(&end));
-			while(!users.empty() && std::time(0) < end)
-				std::this_thread::sleep_for(std::chrono::seconds(1));
-		}
-		catch(std::exception& e)
-		{
-			log("e.what(): " << e.what());
-		}
-	}
-}
-
-bool RandomTimer::turn_off()
-{
-	bug_func();
-	if(users.empty())
-		return false;
-	{
-		lock_guard lock(mtx);
-		if(users.empty())
-			return false;
-		users.clear();
-	}
-	if(fut.valid())
-		if(fut.wait_for(std::chrono::seconds(10)) == std::future_status::ready)
-			fut.get();
-//	if(fut.valid())
-//		fut.get();
-
-	return true;
-}
-
-void RandomTimer::set_mindelay(size_t seconds) { mindelay = seconds; }
-void RandomTimer::set_maxdelay(size_t seconds) { maxdelay = seconds; }
-
-bool RandomTimer::on(const void* user)
-{
-	bug_func();
-	if(users.count(user))
-		return false;
-
-	lock_guard lock(mtx);
-	if(users.count(user))
-		return false;
-
-	users.insert(user);
-	if(users.size() == 1)
-		fut = std::async(std::launch::async, [&]{ timer(); });
-
-	return true;
-}
-
-bool RandomTimer::off(const void* user)
-{
-	bug_func();
-	if(!users.count(user))
-		return false;
-
-	{
-		lock_guard lock(mtx);
-		if(!users.count(user))
-			return false;
-
-		users.erase(user);
-		if(!users.empty())
-			return true;
-	}
-	if(fut.valid())
-		if(fut.wait_for(std::chrono::seconds(10)) == std::future_status::ready)
-			fut.get();
-//	if(end)
-//		fut.get();
-
-	return true;
-}
-
-MessageTimer::MessageTimer(std::function<void(const message&)> cb)
-: mindelay(1)
-, maxdelay(60)
-, cb(cb)
-{
-}
-
-MessageTimer::MessageTimer(const MessageTimer& rt)
-: mindelay(rt.mindelay)
-, maxdelay(rt.maxdelay)
-, cb(rt.cb)
-{
-}
-
-MessageTimer::~MessageTimer()
-{
-	turn_off();
-}
-
-void MessageTimer::timer()
-{
-	while(!messages.empty())
-	{
-		for(const message& m: messages)
-			cb(m);
-
-		std::time_t end = std::time(0) + rand_int(mindelay, maxdelay);
-		bug("NEXT CALL: " << ctime(&end));
-		while(!messages.empty() && std::time(0) < end)
-			std::this_thread::sleep_for(std::chrono::seconds(1));
-	}
-}
-
-bool MessageTimer::turn_off()
-{
-	if(messages.empty())
-		return false;
-	{
-		lock_guard lock(mtx);
-		if(messages.empty())
-			return false;
-		messages.clear();
-	}
-	if(fut.valid())
-		fut.get();
-
-	return true;
-}
-
-void MessageTimer::set_mindelay(size_t seconds) { mindelay = seconds; }
-void MessageTimer::set_maxdelay(size_t seconds) { maxdelay = seconds; }
-
-bool MessageTimer::on(const message& m)
-{
-	if(messages.count(m))
-		return false;
-
-	lock_guard lock(mtx);
-	if(messages.count(m))
-		return false;
-
-	messages.insert(m);
-	if(messages.size() == 1)
-		fut = std::async(std::launch::async, [&]{ timer(); });
-
-	return true;
-}
-
-bool MessageTimer::off(const message& m)
-{
-	if(!messages.count(m))
-		return false;
-
-	bool end = false;
-	{
-		lock_guard lock(mtx);
-		if(!messages.count(m))
-			return false;
-
-		messages.erase(m);
-		if(messages.empty())
-			end = true;
-	}
-	if(end)
-		fut.get();
-
 	return true;
 }
 

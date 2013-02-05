@@ -48,28 +48,27 @@ LIBXML2_LIBS = $(shell xml2-config --libs)
 AM_CXXFLAGS = -std=gnu++11 $(GEN_FLAGS) $(DEF_FLAGS) $(LIBXML2_FLAG)
 
 skivvy_include_HEADERS = \
+	$(srcdir)/include/skivvy/ansi.h \
 	$(srcdir)/include/skivvy/bits/rpc.tcc \
+	$(srcdir)/include/skivvy/cal.h \
 	$(srcdir)/include/skivvy/FloodController.h \
 	$(srcdir)/include/skivvy/ios.h \
 	$(srcdir)/include/skivvy/ircbot.h \
+	$(srcdir)/include/skivvy/irc-constants.h \
+	$(srcdir)/include/skivvy/irc.h \
 	$(srcdir)/include/skivvy/logrep.h \
 	$(srcdir)/include/skivvy/message.h \
+	$(srcdir)/include/skivvy/network.h \
 	$(srcdir)/include/skivvy/props.h \
 	$(srcdir)/include/skivvy/RemoteIrcServer.h \
 	$(srcdir)/include/skivvy/rpc.h \
+	$(srcdir)/include/skivvy/server.h \
 	$(srcdir)/include/skivvy/socketstream.h \
-	$(srcdir)/include/skivvy/str.h \
-	$(srcdir)/include/skivvy/store.h \
-	$(srcdir)/include/skivvy/types.h
-
-noinst_HEADERS = \
-	$(srcdir)/include/skivvy/ansi.h \
-	$(srcdir)/include/skivvy/cal.h \
-	$(srcdir)/include/skivvy/irc.h \
-	$(srcdir)/include/skivvy/irc-constants.h \
 	$(srcdir)/include/skivvy/stl.h \
-	$(srcdir)/include/skivvy/network.h \
-	$(srcdir)/include/skivvy/server.h
+	$(srcdir)/include/skivvy/store.h \
+	$(srcdir)/include/skivvy/str.h \
+	$(srcdir)/include/skivvy/Timers.h \
+	$(srcdir)/include/skivvy/types.h
 	
 BOTLIBS = -L.libs -lskivvy -ldl -lpcrecpp
 # -Wl,-E is required for programs that load plugin's
@@ -83,8 +82,8 @@ libskivvy_la_SOURCES = \
 	cal.cpp \
 	FloodController.cpp \
 	ios.cpp \
-	irc.cpp \
 	ircbot.cpp \
+	irc.cpp \
 	logrep.cpp \
 	message.cpp \
 	network.cpp \
@@ -94,6 +93,7 @@ libskivvy_la_SOURCES = \
 	server.cpp \
 	store.cpp \
 	str.cpp \
+	Timers.cpp \
 	types.cpp
 	
 libskivvy_la_LIBADD = -lreadline
