@@ -85,12 +85,6 @@ typedef std::list<msgevent> msgevent_lst;
 typedef std::map<str, msgevent_lst> msgevent_map;
 typedef std::pair<const str, msgevent_lst> msgevent_pair;
 
-//typedef std::multimap<str, msgevent> msgevent_map;
-//typedef std::pair<const str, msgevent> msgevent_pair;
-//typedef msgevent_map::iterator msgevent_itr;
-//typedef msgevent_map::const_iterator msgevent_citr;
-//typedef std::pair<msgevent_itr, msgevent_itr> msgevent_range;
-
 struct user_info
 {
 	/**
@@ -463,9 +457,9 @@ public:
 
 #define IRC_BOT_PLUGIN(name) \
 extern "C" \
-IrcBotPluginPtr skivvy_ircbot_factory(IrcBot& bot) \
+IrcBotPluginSPtr skivvy_ircbot_factory(IrcBot& bot) \
 { \
-	return IrcBotPluginPtr(new name(bot)); \
+	return IrcBotPluginSPtr(new name(bot)); \
 } extern int _missing_semicolon_()
 
 /**
