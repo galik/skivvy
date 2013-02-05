@@ -53,7 +53,9 @@ skivvy_include_HEADERS = \
 	$(srcdir)/include/skivvy/ios.h \
 	$(srcdir)/include/skivvy/ircbot.h \
 	$(srcdir)/include/skivvy/logrep.h \
+	$(srcdir)/include/skivvy/message.h \
 	$(srcdir)/include/skivvy/props.h \
+	$(srcdir)/include/skivvy/RemoteIrcServer.h \
 	$(srcdir)/include/skivvy/rpc.h \
 	$(srcdir)/include/skivvy/socketstream.h \
 	$(srcdir)/include/skivvy/str.h \
@@ -84,8 +86,10 @@ libskivvy_la_SOURCES = \
 	irc.cpp \
 	ircbot.cpp \
 	logrep.cpp \
+	message.cpp \
 	network.cpp \
 	props.cpp \
+	RemoteIrcServer.cpp \
 	rpc.cpp \
 	server.cpp \
 	store.cpp \
@@ -119,7 +123,7 @@ noinst_PROGRAMS = \
 bin_PROGRAMS = skivvy skivvy-client
 
 skivvy_SOURCES = skivvy.cpp
-skivvy_LDADD = -lskivvy -ldl -lpcrecpp -lreadline
+skivvy_LDADD = -lskivvy -ldl -lpcrecpp -lreadline -L/usr/lib/sookee -lsookee
 skivvy_LDFLAGS = -Wl,-E
 
 skivvy_client_SOURCES = skivvy-client.cpp

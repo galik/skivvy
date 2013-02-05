@@ -52,7 +52,7 @@ const str HEADERS =
 	"#include <map>\n"
 	"#include <set>\n"
 	"#include <list>\n"
-// 	"#include <array>\n" c++11
+ 	"#include <array>\n" // c++11
 	"#include <cmath>\n"
 	"#include <ctime>\n"
 	"#include <deque>\n"
@@ -62,8 +62,8 @@ const str HEADERS =
 	"#include <cstdio>\n"
 	"#include <vector>\n"
 	"#include <string>\n"
-//	"#include <future>\n" c++11
-//	"#include <thread>\n" c++11
+	"#include <future>\n" // c++11
+	"#include <thread>\n" // c++11
 	"#include <cstdlib>\n"
 	"#include <cstring>\n"
 	"#include <fstream>\n"

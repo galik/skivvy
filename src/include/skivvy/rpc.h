@@ -43,6 +43,8 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 namespace skivvy { namespace rpc {
 
+using namespace skivvy;
+
 class call
 {
 	std::iostream& i;

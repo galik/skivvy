@@ -32,11 +32,14 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 '-----------------------------------------------------------------*/
 
+#include <sookee/socketstream.h>
+
 #include <skivvy/rpc.h>
 #include <skivvy/store.h>
 #include <skivvy/logrep.h>
 #include <skivvy/socketstream.h>
 #include <skivvy/FloodController.h>
+#include <skivvy/message.h>
 
 #include <map>
 #include <set>
@@ -60,91 +63,6 @@ using namespace skivvy::types;
 using namespace skivvy::utils;
 
 const str DATA_DIR = "data_dir";
-
-/**
- * Relevant components from incoming the messages sent
- * by the IRC server.
- */
-struct message
-{
-	str line; // original message line
-	str from; // ":Nick!user@network"
-	str cmd; // "PRIVMSG"
-	str params; // not same as user_params()
-	str to; // "#oa-ictf" | Nick;
-	str text; // "evening all";
-
-	void clear()
-	{
-		from.clear();
-		cmd.clear();
-		params.clear();
-		to.clear();
-		text.clear();
-	}
-
-	/**
-	 * Parse an incoming line from the IRC server and break it down into
-	 * its relevant parts.
-	 */
-	friend std::istream& parsemsg(std::istream& is, message& m);
-
-	/**
-	 * Output the message parts for diagnostics.
-	 */
-	friend std::ostream& printmsg(std::ostream& os, const message& m);
-
-	/**
-	 * deserialize
-	 */
-	friend std::istream& operator>>(std::istream& is, message& m);
-
-	/**
-	 * serialize
-	 */
-	friend std::ostream& operator<<(std::ostream& os, const message& m);
-
-	/**
-	 * Extract the nick of the message sender from the surrounding
-	 * server qualifier. Eg from "MyNick!~User@server.com it will"
-	 * extract "MyNick" as the 'sender'.
-	 */
-	str get_nick() const; // MyNick
-	str get_user() const; // ~User
-	str get_host() const; // server.com
-	str get_userhost() const; // ~User@server.com
-
-	/**
-	 * Extract the user command out from a channel/query message.
-	 * That is the first word (command word) of the text line that the bot uses
-	 * to test if it recognises it as a command, for example "!help".
-	 */
-	str get_user_cmd() const;
-
-	/**
-	 * Extract the parameters out from a channel/query message.
-	 * That is everything after the first word (command word) of the text line that
-	 * the bot uses as parameters to a command that it recognises.
-	 */
-	str get_user_params() const;
-
-	/**
-	 * Returns true if this message was sent from a channel
-	 * rather than a private message.
-	 */
-	bool from_channel() const;
-
-	/**
-	 * Returns either the command sender, or the sender's channel.
-	 * This is the correct person to sent replies to because
-	 * it will correctly deal with QUERY sessions.
-	 */
-	str reply_to() const;
-};
-
-typedef std::set<message> message_set;
-typedef message_set::iterator message_set_iter;
-typedef message_set::const_iterator message_set_citer;
 
 // Event to be triggered upon an incoming message
 // For example when a task needs to be performed
@@ -232,6 +150,7 @@ private:
 
 	std::mutex mtx_ss;
 	net::socketstream ss;
+//	soo::netstream ss;
 
 
 public:
