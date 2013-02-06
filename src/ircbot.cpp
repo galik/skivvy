@@ -6,7 +6,7 @@
  */
 
 /*-----------------------------------------------------------------.
-| Copyright (C) 2011 SooKee oaskivvy@gmail.com               |
+| Copyright (C) 2011 SooKee oaskivvy@gmail.com                     |
 '------------------------------------------------------------------'
 
 This program is free software; you can redistribute it and/or
@@ -616,17 +616,9 @@ bool IrcBot::init(const str& config_file)
 		if(line.empty())
 			continue;
 
-		// RAW plugins ? TODO: implement as a plugin!
-
-		// send: register
-		// recv: name v0.0
-		// recv: !cmd1
-		// recv: !cmd2
-
-//		siss iss(line);
 		msg.clear();
-//		parsemsg_cp(siss(line), msg);
-		parsemsg(siss(line), msg);
+		if(!parsemsg(line, msg))
+			continue;
 
 		dispatch_msgevent(msg);
 

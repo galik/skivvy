@@ -35,6 +35,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <sookee/socketstream.h>
 
 #include <sookee/stl.h>
+#include <sookee/str.h>
 
 #include <skivvy/types.h>
 
@@ -305,8 +306,10 @@ private:
 
 public:
 	// message    =  [ ":" prefix SPACE ] command [ params ] crlf
+	str line; // original message line
+
 	str prefix;
-	str command; // TODO: Change this to command to refactor changes throughout
+	str command;
 	str params;
 
 	str get_servername() const
@@ -417,29 +420,50 @@ public:
 		return trailing;
 	}
 
-	std::istream& parse(std::istream& is)
+//	std::istream& parse(std::istream& is)
+//	{
+//		// MUST handle both
+//		// [":" prefix SPACE] command [params] cr
+//		// [":" prefix SPACE] command [params] crlf
+//		if(char c = is.peek() == ':') // optional prefix
+//			is.get(c) >> prefix;
+//		return std::getline(is >> command, params, '\r') >> std::ws;
+//	}
+
+//	bool parse(std::istream&& is) { return parse(is); }
+	bool parse(const str& line)
 	{
+		if(line.empty())
+			return false;
 		// MUST handle both
 		// [":" prefix SPACE] command [params] cr
 		// [":" prefix SPACE] command [params] crlf
-		if(char c = is.peek() == ':') // optional prefix
-			is.get(c) >> prefix;
-		return std::getline(is >> command, params, '\r') >> std::ws;
+
+		this->line = line;
+		siss iss(soo::trim(this->line)); // solve cr crlf endings
+		if(iss.peek() == ':') // optional prefix
+			iss.ignore() >> prefix;
+		return sgl(iss >> command, params);
 	}
 
-	bool parse(std::istream&& is) { return parse(is); }
-	bool parse(const str& line) { return parse(std::istringstream(line)); }
-	friend std::istream& parsemsg(std::istream& is, message& msg)
+	friend bool parsemsg(const str& line, message& msg)
 	{
-		std::streampos pos = is.tellg();
-		parsemsg_cp(is, msg);
-		is.seekg(pos);
-		return msg.parse(is);
+		parsemsg_cp(siss(line), msg);
+		return msg.parse(line);
 	}
-	friend std::istream& parsemsg(std::istream&& is, message& msg)
-	{
-		return parsemsg(is, msg);
-	}
+
+//	friend std::istream& parsemsg(std::istream& is, message& msg)
+//	{
+//		std::streampos pos = is.tellg();
+//		parsemsg_cp(is, msg);
+//		is.seekg(pos);
+//		return msg.parse(is);
+//	}
+//
+//	friend std::istream& parsemsg(std::istream&& is, message& msg)
+//	{
+//		return parsemsg(is, msg);
+//	}
 
 	friend std::ostream& printmsg(std::ostream& os, const message& m);
 };
