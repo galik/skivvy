@@ -175,8 +175,35 @@ str message_cp::reply_to_cp() const
 	return from_channel_cp() ? to_cp : get_nick_cp();
 }
 
+std::ostream& printmsg(std::ostream& os, const message& m)
+{
+	printmsg_cp(os, m);
+	os << "//                prefix: " << m.prefix << '\n';
+	os << "//               command: " << m.command << '\n';
+	os << "//                params: " << m.params << '\n';
+	os << "// get_servername()     : " << m.get_servername() << '\n';
+	os << "// get_nickname()       : " << m.get_nickname() << '\n';
+	os << "// get_user()           : " << m.get_user() << '\n';
+	os << "// get_host()           : " << m.get_host() << '\n';
+	for(const str& param: m.get_params())
+		os << "// param                : " << param << '\n';
+	for(const str& middle: m.get_middles())
+		os << "// middle               : " << middle << '\n';
+	os << "// trailing             : " << m.get_trailing() << '\n';
+	return os << std::flush;
+}
+
 // TODO: Sort this mess out
-void bug_message_cp(const std::string& K, const std::string& V, const message_cp& msg)
+//void bug_message_cp(const std::string& K, const std::string& V, const message_cp& msg)
+//{
+//	bug("===============================");
+//	bug(K << ": " << V);
+//	bug("-------------------------------");
+//	bug_msg(msg);
+//	bug("-------------------------------");
+//}
+
+void bug_message(const std::string& K, const std::string& V, const message& msg)
 {
 	bug("===============================");
 	bug(K << ": " << V);

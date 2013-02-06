@@ -625,7 +625,8 @@ bool IrcBot::init(const str& config_file)
 
 //		siss iss(line);
 		msg.clear();
-		parsemsg_cp(siss(line), msg);
+//		parsemsg_cp(siss(line), msg);
+		parsemsg(siss(line), msg);
 
 		dispatch_msgevent(msg);
 

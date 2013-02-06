@@ -79,7 +79,7 @@ struct __scope__bomb__
 };
 
 #define QUOTE(s) #s
-#define bug_msg(m) do{printmsg_cp(botbug(), (m));}while(false)
+#define bug_msg(m) do{printmsg(botbug(), (m));}while(false)
 #define bug_var(v) bug(QUOTE(v:) << std::boolalpha << " " << v)
 
 #define bug_func() __scope__bomb__ __scoper__(__PRETTY_FUNCTION__)

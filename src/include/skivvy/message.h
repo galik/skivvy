@@ -47,8 +47,9 @@ using namespace skivvy::types;
  * Relevant components from incoming the messages sent
  * by the IRC server.
  */
-struct message_cp
+class message_cp
 {
+public:
 	str line_cp; // original message line
 	str from_cp; // ":Nick!user@network"
 	str cmd_cp; // "PRIVMSG"
@@ -223,7 +224,7 @@ private:
 	static const str nospcrlfat; // any octet except NUL, CR, LF, " " and "@"
 	static const str bnf_special; // any octet except NUL, CR, LF, " " and "@"
 
-	siss& gettrailing(siss& is, str& trailing)
+	siss& gettrailing(siss& is, str& trailing) const
 	{
 		// trailing: *(":" / " " / nospcrlfcl)
 		// trailing: ("\0"|"\n"|"\r")^*
@@ -237,7 +238,23 @@ private:
 		return is;
 	}
 
-	siss& getmiddle(siss& is, str& middle)
+//	siss& getmiddle(siss& is, str& middle) const
+//	{
+//		// middle: nospcrlfcl *(":" / nospcrlfcl)
+//		// middle: ("\0"|"\n"|"\r"|" "|":")^ ("\0"|"\n"|"\r"|" ")^*
+//
+//		if(is && soo::find(nospcrlfcl, is.peek()) != nospcrlfcl.cend())
+//			is.setstate(std::ios::failbit);
+//		else
+//		{
+//			middle = is.get();
+//			while(is && soo::find(nospcrlf, is.peek()) == nospcrlf.end())
+//				middle += is.get();
+//		}
+//		return is;
+//	}
+
+	siss& getmiddle(siss& is, str& middle) const
 	{
 		// middle: nospcrlfcl *(":" / nospcrlfcl)
 		// middle: ("\0"|"\n"|"\r"|" "|":")^ ("\0"|"\n"|"\r"|" ")^*
@@ -247,13 +264,12 @@ private:
 		else
 		{
 			middle = is.get();
-			while(is && soo::find(nospcrlf, is.peek()) == nospcrlf.end())
+			while(is && is.peek() != EOF && soo::find(nospcrlf, is.peek()) == nospcrlf.end())
 				middle += is.get();
 		}
 		return is;
 	}
-
-	siss& getparams(siss& is, str_vec& middles, str& trailing)
+	siss& getparams(siss& is, str_vec& middles, str& trailing) const
 	{
 		// params  :   (SPACE middle){0,14} [SPACE ":" trailing]
 		//         : | (SPACE middle){14}   [SPACE [ ":" ] trailing]
@@ -282,7 +298,7 @@ private:
 		return is;
 	}
 
-	siss& getparams(siss&& is, str_vec& middles, str& trailing)
+	siss& getparams(siss&& is, str_vec& middles, str& trailing) const
 	{
 		return getparams(is, middles, trailing);
 	}
@@ -293,7 +309,7 @@ public:
 	str command; // TODO: Change this to command to refactor changes throughout
 	str params;
 
-	str get_servername()
+	str get_servername() const
 	{
 		// prefix: servername | (nickname [[ "!" user ] "@" host ])
 		if(prefix.find('!') != str::npos || prefix.find('@') != str::npos)
@@ -301,7 +317,7 @@ public:
 		return prefix;
 	}
 
-	bool is_nick(const str& nick)
+	bool is_nick(const str& nick) const
 	{
 		if(nick.empty())
 			return false;
@@ -313,14 +329,14 @@ public:
 		return true;
 	}
 
-	str allow_nick(const str& nick)
+	str allow_nick(const str& nick) const
 	{
 		if(!is_nick(nick))
 			return "";
 		return nick;
 	}
 
-	str get_nickname()
+	str get_nickname() const
 	{
 		// prefix: servername | (nickname [[ "!" user ] "@" host ])
 		// nickname   =  ( letter / special ) *8( letter / digit / special / "-" )
@@ -336,7 +352,7 @@ public:
 		return allow_nick(prefix);
 	}
 
-	bool is_user(const str& user)
+	bool is_user(const str& user) const
 	{
 		for(char c: user)
 			if(soo::find(nospcrlfat, c) != nospcrlfat.cend())
@@ -344,14 +360,14 @@ public:
 		return true;
 	}
 
-	str allow_user(const str& user)
+	str allow_user(const str& user) const
 	{
 		if(is_user(user))
 			return user;
 		return "";
 	}
 
-	str get_user()
+	str get_user() const
 	{
 		// prefix: servername | (nickname [[ "!" user ] "@" host ])
 		str::size_type beg = 0, end;
@@ -361,7 +377,7 @@ public:
 		return "";
 	}
 
-	str get_host()
+	str get_host() const
 	{
 		// prefix: servername | (nickname [[ "!" user ] "@" host ])
 		str::size_type pos;
@@ -370,12 +386,12 @@ public:
 		return "";
 	}
 
-	bool get_params(str_vec& middles, str& trailing)
+	bool get_params(str_vec& middles, str& trailing) const
 	{
 		return getparams(siss(params), middles, trailing);
 	}
 
-	str_vec get_params()
+	str_vec get_params() const
 	{
 		// treat all params equally (middles and trailing)
 		str trailing;
@@ -385,7 +401,7 @@ public:
 		return middles;
 	}
 
-	str_vec get_middles()
+	str_vec get_middles() const
 	{
 		str trailing;
 		str_vec middles;
@@ -393,7 +409,7 @@ public:
 		return middles;
 	}
 
-	str get_trailing()
+	str get_trailing() const
 	{
 		str trailing;
 		str_vec middles;
@@ -413,7 +429,19 @@ public:
 
 	bool parse(std::istream&& is) { return parse(is); }
 	bool parse(const str& line) { return parse(std::istringstream(line)); }
-	friend std::istream& operator>>(std::istream& is, message& msg) { return msg.parse(is); }
+	friend std::istream& parsemsg(std::istream& is, message& msg)
+	{
+		std::streampos pos = is.tellg();
+		parsemsg_cp(is, msg);
+		is.seekg(pos);
+		return msg.parse(is);
+	}
+	friend std::istream& parsemsg(std::istream&& is, message& msg)
+	{
+		return parsemsg(is, msg);
+	}
+
+	friend std::ostream& printmsg(std::ostream& os, const message& m);
 };
 
 // NUL, CR, LF, " " and ":"
@@ -422,9 +450,11 @@ typedef message_set::iterator message_set_iter;
 typedef message_set::const_iterator message_set_citer;
 
 // TODO: Sort this mess out
-void bug_message_cp(const std::string& K, const std::string& V, const message_cp& msg);
+//void bug_message_cp(const std::string& K, const std::string& V, const message_cp& msg);
+void bug_message(const std::string& K, const std::string& V, const message& msg);
 
-#define BUG_MSG_CP(m,M) do{ bug_message_cp(#M, M, m); }while(false)
+#define BUG_MSG_CP(m,M) do{ bug_message(#M, M, m); }while(false)
+#define BUG_MSG(m,M) do{ bug_message(#M, M, m); }while(false)
 
 }} // skivvy::ircbot
 

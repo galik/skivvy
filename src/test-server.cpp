@@ -192,7 +192,7 @@ private:
 		else
 		{
 			middle = is.get();
-			while(is && soo::find(nospcrlf, is.peek()) == nospcrlf.end())
+			while(is && is.peek() != EOF && soo::find(nospcrlf, is.peek()) == nospcrlf.end())
 				middle += is.get();
 		}
 		return is;
@@ -204,6 +204,9 @@ private:
 		//         : | (SPACE middle){14}   [SPACE [ ":" ] trailing]
 		// middle  : nospcrlfcl *( ":" / nospcrlfcl )
 		// trailing: *( ":" / " " / nospcrlfcl )
+
+		// TODO: Fails to pickip param
+		// :Monixa!Skivvy0x@127.0.0.1 JOIN #skivvy
 
 		middles.clear();
 		trailing.clear();
