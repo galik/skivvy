@@ -88,7 +88,8 @@ server::~server()
 {
 	done = true;
 	if(clean_fut.valid())
-		clean_fut.get();
+		if(clean_fut.wait_for(std::chrono::seconds(3)) == std::future_status::ready)
+			clean_fut.get();
 }
 
 void server::insert(int cs)
@@ -163,7 +164,7 @@ bool server::bind(long port, const std::string& iface)
 	return ::bind(ss, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) != -1;
 }
 
-void server::listen(long port)
+void server::listen(long port, const std::string& iface)
 {
 	if(!bind(port)) throw_server_exception(strerror(errno));
 	if(::listen(ss, 10) == -1) throw_server_exception(strerror(errno));
@@ -189,4 +190,4 @@ void server::listen(long port)
 void server::set_handler(void(*func)(int)) { this->func = func; }
 void server::set_handler(const std::function<void(int)>& func) { this->func = func; }
 
-}} // sookee::net
+}} // skivvy::net

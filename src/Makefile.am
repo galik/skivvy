@@ -70,7 +70,7 @@ skivvy_include_HEADERS = \
 	$(srcdir)/include/skivvy/Timers.h \
 	$(srcdir)/include/skivvy/types.h
 	
-BOTLIBS = -L.libs -lskivvy -ldl -lpcrecpp
+BOTLIBS = -L.libs -lskivvy -ldl -lpcrecpp -L/usr/lib/sookee -lsookee
 # -Wl,-E is required for programs that load plugin's
 BOTFLAGS = -Wl,-E
 
@@ -113,14 +113,11 @@ noinst_PROGRAMS = \
 #test_props_SOURCES = test-props.cpp
 #test_props_LDADD = $(BOTLIBS)
 
-#test_server_SOURCES = test-server.cpp
-#test_server_LDADD = $(BOTLIBS)
-
 #convert_cvars_SOURCES = convert-cvars.cpp
 #convert_cvars_LDADD = $(BOTLIBS)
 
 # Skivvy IrcBot
-bin_PROGRAMS = skivvy skivvy-client
+bin_PROGRAMS = skivvy skivvy-client test-server
 
 skivvy_SOURCES = skivvy.cpp
 skivvy_LDADD = -lskivvy -ldl -lpcrecpp -lreadline -L/usr/lib/sookee -lsookee
@@ -132,6 +129,9 @@ skivvy_client_LDADD = $(BOTLIBS) -lreadline
 skivlet_SOURCES = skivlet.cpp
 skivlet_LDADD = $(BOTLIBS)
 skivlet_LDFLAGS =
+
+test_server_SOURCES = test-server.cpp
+test_server_LDADD = $(BOTLIBS)
 
 skivvy_manuals_DATA = $(top_srcdir)/docs/skivvy-manual.text
 

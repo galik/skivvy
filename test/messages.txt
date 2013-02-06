@@ -1,0 +1,60 @@
+PASS none
+NICK Skivvy
+USER Skivvy 0 * :Skivvy
+PRIVMSG Q@CServe.quakenet.org :AUTH Skivvy password
+MODE Skivvy +x
+JOIN #skivvy
+PRIVMSG #skivvy :IrcBot v0.2-20130202-204322-0034-1F8EDD6
+PRIVMSG #skivvy :weeeeeeee...
+PART #skivvy
+QUIT :Going off line...
+:dreamhack.se.quakenet.org 252 Skivvy 65 :operator(s) online
+:dreamhack.se.quakenet.org 253 Skivvy 2 :unknown connection(s)
+:aclown!aclown@v2201205126538297.yourvserver.net NICK :a_way
+:wing_9!~tobias@p548CDCA9.dip.t-dialin.net QUIT :Quit: Konversation terminated!
+NOTICE AUTH :*** Looking up your hostname
+NOTICE AUTH :*** Checking Ident
+NOTICE AUTH :*** Found your hostname
+recv: NOTICE AUTH :*** No ident response
+:dreamhack.se.quakenet.org 001 Skivvy :Welcome to the QuakeNet IRC Network, Skivvy
+:dreamhack.se.quakenet.org 002 Skivvy :Your host is dreamhack.se.quakenet.org, running version u2.10.12.10+snircd(1.3.4a)
+:dreamhack.se.quakenet.org 003 Skivvy :This server was created Fri Jun 22 2012 at 20:47:31 CEST
+:dreamhack.se.quakenet.org 004 Skivvy dreamhack.se.quakenet.org u2.10.12.10+snircd(1.3.4a) dioswkgxRXInP biklmnopstvrDcCNuMT bklov
+:dreamhack.se.quakenet.org 005 Skivvy WHOX WALLCHOPS WALLVOICES USERIP CPRIVMSG CNOTICE SILENCE=15 MODES=6 MAXCHANNELS=20 MAXBANS=45 NICKLEN=15 :are supported by this server
+:dreamhack.se.quakenet.org 005 Skivvy MAXNICKLEN=15 TOPICLEN=250 AWAYLEN=160 KICKLEN=250 CHANNELLEN=200 MAXCHANNELLEN=200 CHANTYPES=#& PREFIX=(ov)@+ STATUSMSG=@+ CHANMODES=b,k,l,imnpstrDducCNMT CASEMAPPING=rfc1459 NETWORK=QuakeNet :are supported by this server
+:dreamhack.se.quakenet.org 251 Skivvy :There are 16 users and 61463 invisible on 38 servers
+:dreamhack.se.quakenet.org 252 Skivvy 65 :operator(s) online
+:dreamhack.se.quakenet.org 254 Skivvy 41143 :channels formed
+:dreamhack.se.quakenet.org 255 Skivvy :I have 3349 clients and 1 servers
+:dreamhack.se.quakenet.org NOTICE Skivvy :Highest connection count: 4411 (4410 clients)
+:dreamhack.se.quakenet.org 375 Skivvy :- dreamhack.se.quakenet.org Message of the Day - 
+:dreamhack.se.quakenet.org 376 Skivvy :End of /MOTD command.
+:dreamhack.se.quakenet.org NOTICE Skivvy :on 3 ca 1(4) ft 20(20) tr
+:dreamhack.se.quakenet.org 221 Skivvy +i
+:Skivvy!~Skivvy@cpc2-pool13-2-0-cust799.15-1.cable.virginmedia.com MODE Skivvy +i
+:Skivvy!~Skivvy@cpc2-pool13-2-0-cust799.15-1.cable.virginmedia.com MODE Skivvy +x
+:dreamhack.se.quakenet.org 396 Skivvy Skivvy.users.quakenet.org :is now your hidden host
+:Q!TheQBot@CServe.quakenet.org NOTICE Skivvy :You are now logged in as Skivvy.
+:Q!TheQBot@CServe.quakenet.org NOTICE Skivvy :Remember: NO-ONE from QuakeNet will ever ask for your password.  NEVER send your password to ANYONE except Q@CServe.quakenet.org.
+:Skivvy!~Skivvy@Skivvy.users.quakenet.org JOIN #openarenahelp
+:dreamhack.se.quakenet.org 332 Skivvy #openarenahelp :Reclaimed by Skivvy (Suckit up Hit|er)
+:dreamhack.se.quakenet.org 333 Skivvy #openarenahelp SooKee 1358062256
+:dreamhack.se.quakenet.org 353 Skivvy = #openarenahelp :Skivvy +wing_9 +Light3r @Zimmer106 +Zim-blackberry @Zimmermint +Siju +]c[razy @ali3n +capo @Pixelized @SooKee +pet @Q
+:dreamhack.se.quakenet.org 366 Skivvy #openarenahelp :End of /NAMES list.
+:Q!TheQBot@CServe.quakenet.org MODE #openarenahelp +o Skivvy
+NOTICE AUTH :*** Looking up your hostname
+NOTICE AUTH :*** Checking Ident
+NOTICE AUTH :*** Found your hostname
+recv: NOTICE AUTH :*** No ident response
+:dreamhack.se.quakenet.org 001 Skivvy :Welcome to the QuakeNet IRC Network, Skivvy
+:dreamhack.se.quakenet.org 002 Skivvy :Your host is dreamhack.se.quakenet.org, running version u2.10.12.10+snircd(1.3.4a)
+:dreamhack.se.quakenet.org 003 Skivvy :This server was created Fri Jun 22 2012 at 20:47:31 CEST
+:dreamhack.se.quakenet.org 004 Skivvy dreamhack.se.quakenet.org u2.10.12.10+snircd(1.3.4a) dioswkgxRXInP biklmnopstvrDcCNuMT bklov
+:dreamhack.se.quakenet.org 005 Skivvy WHOX WALLCHOPS WALLVOICES USERIP CPRIVMSG CNOTICE SILENCE=15 MODES=6 MAXCHANNELS=20 MAXBANS=45 NICKLEN=15 :are supported by this server
+:dreamhack.se.quakenet.org 005 Skivvy MAXNICKLEN=15 TOPICLEN=250 AWAYLEN=160 KICKLEN=250 CHANNELLEN=200 MAXCHANNELLEN=200 CHANTYPES=#& PREFIX=(ov)@+ STATUSMSG=@+ CHANMODES=b,k,l,imnpstrDducCNMT CASEMAPPING=rfc1459 NETWORK=QuakeNet :are supported by this server
+:dreamhack.se.quakenet.org 251 Skivvy :There are 18 users and 61739 invisible on 38 servers
+:dreamhack.se.quakenet.org 252 Skivvy 65 :operator(s) online
+:dreamhack.se.quakenet.org 253 Skivvy 2 :unknown connection(s)
+:dreamhack.se.quakenet.org 254 Skivvy 41215 :channels formed
+:dreamhack.se.quakenet.org 255 Skivvy :I have 3354 clients and 1 servers
+:dreamhack.se.quakenet.org NOTICE Skivvy :Highest connection count: 4411 (4410 clients)

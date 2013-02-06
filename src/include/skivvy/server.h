@@ -77,7 +77,8 @@ public:
 	server();
 	~server();
 
-	void listen(long port);
+	void listen(long port, const std::string& iface = "0.0.0.0");
+	void stop() { done = true; }
 	void set_handler(void(*func)(int));
 	void set_handler(const std::function<void(int)>& func);
 };

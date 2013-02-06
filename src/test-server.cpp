@@ -1,3 +1,5 @@
+//#undef DEBUG
+
 #include <skivvy/server.h>
 #include <skivvy/socketstream.h>
 
@@ -31,26 +33,49 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <iostream>
 #include <functional>
 
+#include <sookee/stl.h>
+#include <sookee/str.h>
+
 #include <skivvy/types.h>
 #include <skivvy/logrep.h>
 #include <skivvy/server.h>
 #include <skivvy/socketstream.h>
 
+//using namespace sookee;
+
 using namespace skivvy;
 using namespace skivvy::types;
 using namespace skivvy::utils;
 //using namespace skivvy::ircbot;
-
 #define bug_in(i) do{bug(i.peek());}while(false)
 
 namespace irc {
 
+str hex(char c)
+{
+	soss oss;
+	oss << "\\x" << std::hex << siz(c);
+	return oss.str();
+}
+
+str bugify(const str& s)
+{
+	str r = s;
+	soo::replace(r, str(1, '\0'), "\\0");
+	soo::replace(r, str(1, '\n'), "\\n");
+	soo::replace(r, str(1, '\r'), "\\r");
+	soo::replace(r, str(1, '\t'), "\\t");
+	return r;
+}
+
 struct message
 {
-	static const str spcrlfcl;
+	static const str crlfspcl;
 	static const str ztcrlfspco;
 	static const str ztcrlf;
 	static const str ztcrlfsp;
+	static const str nospcrlfcl; // any octet except NUL, CR, LF, " " and ":"
+	static const str nospcrlf; // (":" / nospcrlfcl)
 
 	str prefix;
 	str cmd; // TODO: Change this to command to refactor changes throughout
@@ -100,99 +125,7 @@ struct message
 
 	str line; // working
 
-//	std::istream& getparam(std::istream& is, str_vec& middles, str& trailing)
-//	{
-//		bug_func();
-//		// params:   (SPACE middle){0,14} [SPACE ":" trailing]
-//		//       : | (SPACE middle){14}   [SPACE [ ":" ] trailing]
-//
-//		middles.clear();
-//		trailing.clear();
-//
-//		char c;
-//		str middle;
-//		siz n;
-//
-//		bug("do middle");
-//		for(n = 0; n < 14 && is; ++n)
-//		{
-//			bug("n: " << n);
-//			if(is.peek() != ' ')
-//			{
-//				bug("end of middle: " << std::hex << int(is.peek()));
-//				if(is.eof())
-//					is.clear();
-//				return is;
-//			}
-//
-//			is.get(c);
-//			bug("c: " << std::hex << int(c));
-//
-//			if(is.peek() == ':')
-//			{
-//				bug("only trailing:");
-//				// trailing: (":" | " " | nospcrlfcl)*
-//				while(is && (is.peek() == ':' || is.peek() == ' ' || spcrlfcl.find(char(is.peek())) == str::npos))
-//					if(is.get(c))
-//						trailing.append(1, c);
-//				if(is.eof())
-//					is.clear();
-//				return is;
-//			}
-//
-//			bug("middle:" << middle);
-//
-//			// middle:  nospcrlfcl *( ":" / nospcrlfcl )
-//			if(spcrlfcl.find(char(is.peek())) != str::npos)
-//			{
-//				bug("err: " << std::hex << int(is.peek()));
-//				is.setstate(std::ios_base::failbit);
-//				return is;
-//			}
-//
-//			bug("init: " << bool(is));
-//			if(is.get(c))
-//				middle.append(1, c);
-//			bug("middle: " << middle);
-//
-//			bug("repeats:" << bool(is));
-//			while(is && (is.peek() == ':' || spcrlfcl.find(char(is.peek())) == str::npos))
-//				if(is.get(c))
-//				{
-//					middle.append(1, c);
-//					//bug("middle: " << middle);
-//				}
-//			if(is.eof())
-//				is.clear();
-//			if(is)
-//				middles.push_back(middle);
-//		}
-//
-//		bug("is      :" << bool(is));
-//		if(is.peek() != ' ')
-//		{
-//			if(is.eof())
-//				is.clear();
-//			return is;
-//		}
-//		is.get();
-//
-//		if(n == 14 && is.peek() == ':')
-//			is.get();
-//
-//		// trailing: (":" | " " | nospcrlfcl)*
-//		while(is && (is.peek() == ':' || is.peek() == ' ' || spcrlfcl.find(char(is.peek())) == str::npos))
-//		{
-//			bug("is.peek(): " << is.peek());
-//			if(is.get(c))
-//				trailing.append(1, c);
-//		}
-//		if(is.eof())
-//			is.clear();
-//		return is;
-//	}
-
-	std::istream& gettrailing(std::istream& is, str& trailing)
+	siss& gettrailing(siss& is, str& trailing)
 	{
 		// trailing: *(":" / " " / nospcrlfcl)
 		// trailing: ("\0"|"\n"|"\r")^*
@@ -206,23 +139,23 @@ struct message
 		return is;
 	}
 
-	std::istream& getmiddle(std::istream& is, str& middle)
+	siss& getmiddle(siss& is, str& middle)
 	{
 		// middle: nospcrlfcl *(":" / nospcrlfcl)
 		// middle: ("\0"|"\n"|"\r"|" "|":")^ ("\0"|"\n"|"\r"|" ")^*
-		char c;
-		middle.clear();
-		if(is && spcrlfcl.find(is.peek()) == str::npos && is.get(c))
-			middle.append(1, c);
-		while(is && ztcrlfsp.find(is.peek()) == str::npos && is.get(c))
-//		while(is && (is.peek() == ':' || spcrlfcl.find(is.peek()) == str::npos) && is.get(c))
-			middle.append(1, c);
-		if(is.eof())
-			is.clear();
+
+		if(is && soo::find(nospcrlfcl, is.peek()) != nospcrlfcl.cend())
+			is.setstate(std::ios::failbit);
+		else
+		{
+			middle = is.get();
+			while(is && soo::find(nospcrlf, is.peek()) == nospcrlf.end())
+				middle += is.get();
+		}
 		return is;
 	}
 
-	std::istream& getparam(std::istream& is, str_vec& middles, str& trailing)
+	siss& getparams(siss& is, str_vec& middles, str& trailing)
 	{
 		bug_func();
 		// params  :   (SPACE middle){0,14} [SPACE ":" trailing]
@@ -244,30 +177,30 @@ struct message
 				return gettrailing(is, trailing);
 
 			str middle;
-			if(getmiddle(is, middle))
+			if(getmiddle(is, middle) && ++n)
 				middles.push_back(middle);
 		}
 
 		if(n == 14 && is.peek() == ' ' && is.get(c))
 			if(is.peek() != ':' || is.get(c))
 				return gettrailing(is, trailing);
-
-		if(is.eof())
-			is.clear();
 		return is;
 	}
 
-	bool getparam(std::istream&& is, str_vec& middles, str& trailing)
+	siss& getparams(siss&& is, str_vec& middles, str& trailing)
 	{
 		bug_func();
-		return getparam(is, middles, trailing);
+		return getparams(is, middles, trailing);
 	}
 
-	bool getparam(str_vec& middles, str& trailing)
+	bool getparams(str_vec& middles, str& trailing)
 	{
 		bug_func();
-		bug("params: " << params);
-		return getparam(std::istringstream(params), middles, trailing);
+		bug_var(params);
+		bug_var(soo::found(nospcrlf, ' '));
+		bug_var(bugify(nospcrlf));
+//		bug("nospcrlf: " << bugify(nospcrlf));
+		return getparams(siss(params), middles, trailing);
 	}
 
 	// MUST handle both
@@ -285,10 +218,13 @@ struct message
 	friend std::istream& operator>>(std::istream& is, message& msg) { return msg.parse(is); }
 };
 
-const str message::spcrlfcl = "\0\n\r :";
-const str message::ztcrlfspco = "\0\n\r :";
-const str message::ztcrlf = "\0\n\r :";
-const str message::ztcrlfsp = "\0\n\r :";
+// NUL, CR, LF, " " and ":"
+const str message::crlfspcl("\r\n :", 4);
+const str message::ztcrlfspco("\0\t\r\n :", 6);
+const str message::ztcrlf("\0\t\r\n", 4);
+const str message::ztcrlfsp("\0\r\n ", 4);
+const str message::nospcrlfcl("\0 \r\n:", 5); // any octet except NUL, CR, LF, " " and ":"
+const str message::nospcrlf("\0 \r\n", 4); // (":" / nospcrlfcl)
 
 }
 
@@ -355,29 +291,46 @@ int main(int argc, char* argv[])
 	irc::message msg;
 
 	//std::istringstream iss(":WiZ!jto@tolsun.oulu.fi NICK Kilroy");
-	std::ifstream ifs("test-messages.txt");
-	std::ofstream ofs("test-messages-out.txt");
+	std::ifstream ifs("test/messages.txt");
+	if(!ifs)
+	{
+		log("Could not open input file.");
+		return 1;
+	}
+
+
+	std::ofstream ofs("test/messages-out.txt");
+	if(!ofs)
+	{
+		log("Could not open output file.");
+		return 1;
+	}
 
 	botlog(&ofs);
 
 	str line;
 //	while(ifs >> msg)
-	while(std::getline(ifs, line) && std::istringstream(line) >> msg)
+	while(sgl(ifs, line))
 	{
-		log("====================================================");
+		log(str(68, '=')); //"====================================================");
 		log(line);
-		log("----------------------------------------------------");
+		log(str(68, '-')); // "----------------------------------------------------");
+		if(!(siss(line) >> msg))
+		{
+			log("ERROR: parsing line: " << line);
+			continue;
+		}
 		log("prefix        : " << msg.prefix);
 		log("cmd           : " << msg.cmd);
 		log("params        : " << msg.params);
-		log("get_servername: " << msg.get_servername());
-		log("get_nickname  : " << msg.get_nickname());
-		log("get_user      : " << msg.get_user());
-		log("get_host      : " << msg.get_host());
+//		log("get_servername: " << msg.get_servername());
+//		log("get_nickname  : " << msg.get_nickname());
+//		log("get_user      : " << msg.get_user());
+//		log("get_host      : " << msg.get_host());
 
 		str_vec middles;
 		str trailing;
-		msg.getparam(middles, trailing);
+		msg.getparams(middles, trailing);
 		for(const str& middle: middles)
 			log("middle        : " << middle);
 		log("trailing      : " << trailing);

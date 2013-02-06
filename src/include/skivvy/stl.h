@@ -47,17 +47,7 @@ size_t count_if(const Container& c, Pred pred)
 	return std::count_if(c.begin(), c.end(), pred);
 }
 
-template<typename Container, typename T> inline
-typename Container::iterator find(Container& c, const T& t)
-{
-	return std::find(c.begin(), c.end(), t);
-}
-
-//template<typename Container, typename T> inline
-//bool found(const Container& c, const T& t)
-//{
-//	return std::find(c.cbegin(), c.cend(), t) != c.cend();
-//}
+// map ready
 
 template<typename Container> inline
 bool found(const Container& c, const typename Container::key_type& k)
@@ -71,11 +61,31 @@ bool found(const Container& c, const typename Container::value_type& v)
 	return std::find(c.cbegin(), c.cend(), v) != c.cend();
 }
 
-template<typename Container, typename T> inline
-typename Container::const_iterator find(const Container& c, const T& t)
+template<typename Container> inline
+typename Container::iterator find(Container& c, const typename Container::key_type& k)
 {
-	return std::find(c.cbegin(), c.cend(), t);
+	return c.find(k);
 }
+
+template<typename Container> inline
+typename Container::iterator find(Container& c, const typename Container::value_type& v)
+{
+	return std::find(c.begin(), c.end(), v);
+}
+
+template<typename Container> inline
+typename Container::const_iterator find(const Container& c, const typename Container::key_type& k)
+{
+	return c.find(k);
+}
+
+template<typename Container> inline
+typename Container::const_iterator find(const Container& c, const typename Container::value_type& v)
+{
+	return std::find(c.cbegin(), c.cend(), v);
+}
+
+// end of map ready
 
 template<typename Container, typename Pred> inline
 typename Container::iterator find_if(const Container& c, Pred pred)
