@@ -4,7 +4,7 @@
 #include <skivvy/socketstream.h>
 
 /*-----------------------------------------------------------------.
-| Copyright (C) 2011 SooKee oaskivvy@gmail.com               |
+| Copyright (C) 2011 SooKee oaskivvy@gmail.com                     |
 '------------------------------------------------------------------'
 
 This program is free software; you can redistribute it and/or
@@ -48,6 +48,9 @@ using namespace skivvy::types;
 using namespace skivvy::utils;
 //using namespace skivvy::ircbot;
 #define bug_in(i) do{bug(i.peek());}while(false)
+#define CSTRING(s) s,sizeof(s)
+#define STRC(c) str(1, c)
+
 
 namespace irc {
 
@@ -61,78 +64,118 @@ str hex(char c)
 str bugify(const str& s)
 {
 	str r = s;
-	soo::replace(r, str(1, '\0'), "\\0");
-	soo::replace(r, str(1, '\n'), "\\n");
-	soo::replace(r, str(1, '\r'), "\\r");
-	soo::replace(r, str(1, '\t'), "\\t");
+	soo::replace(r, STRC('\0'), "\\0");
+	soo::replace(r, STRC('\n'), "\\n");
+	soo::replace(r, STRC('\r'), "\\r");
+	soo::replace(r, STRC('\t'), "\\t");
 	return r;
 }
 
 struct message
 {
-	static const str crlfspcl;
-	static const str ztcrlfspco;
-	static const str ztcrlf;
-	static const str ztcrlfsp;
+	// The Augmented BNF representation for this is:
+	//
+	// message    =  [ ":" prefix SPACE ] command [ params ] crlf
+	// prefix     =  servername / ( nickname [ [ "!" user ] "@" host ] )
+	// command    =  1*letter / 3digit
+	// params     =  *14( SPACE middle ) [ SPACE ":" trailing ]
+	//            =/ 14( SPACE middle ) [ SPACE [ ":" ] trailing ]
+	//
+	// nospcrlfcl =  %x01-09 / %x0B-0C / %x0E-1F / %x21-39 / %x3B-FF
+	//                 ; any octet except NUL, CR, LF, " " and ":"
+	// middle     =  nospcrlfcl *( ":" / nospcrlfcl )
+	// trailing   =  *( ":" / " " / nospcrlfcl )
+	//
+	// SPACE      =  %x20        ; space character
+	// crlf       =  %x0D %x0A   ; "carriage return" "linefeed"
+	//
+	//  NOTES:
+	//     1) After extracting the parameter list, all parameters are equal
+	//        whether matched by <middle> or <trailing>. <trailing> is just a
+	//        syntactic trick to allow SPACE within the parameter.
+	//
+	//     2) The NUL (%x00) character is not special in message framing, and
+	//        basically could end up inside a parameter, but it would cause
+	//        extra complexities in normal C string handling. Therefore, NUL
+	//        is not allowed within messages.
+	//
+	//  Most protocol messages specify additional semantics and syntax for
+	//  the extracted parameter strings dictated by their position in the
+	//  list.  For example, many server commands will assume that the first
+	//  parameter after the command is the list of targets, which can be
+	//  described with:
+	//
+	// target     =  nickname / server
+	// msgtarget  =  msgto *( "," msgto )
+	// msgto      =  channel / ( user [ "%" host ] "@" servername )
+	// msgto      =/ ( user "%" host ) / targetmask
+	// msgto      =/ nickname / ( nickname "!" user "@" host )
+	// channel    =  ( "#" / "+" / ( "!" channelid ) / "&" ) chanstring
+	//               [ ":" chanstring ]
+	// servername =  hostname
+	// host       =  hostname / hostaddr
+	// hostname   =  shortname *( "." shortname )
+	// shortname  =  ( letter / digit ) *( letter / digit / "-" )
+	//               *( letter / digit )
+	//                 ; as specified in RFC 1123 [HNAME]
+	// hostaddr   =  ip4addr / ip6addr
+	// ip4addr    =  1*3digit "." 1*3digit "." 1*3digit "." 1*3digit
+	// ip6addr    =  1*hexdigit 7( ":" 1*hexdigit )
+	// ip6addr    =/ "0:0:0:0:0:" ( "0" / "FFFF" ) ":" ip4addr
+	// nickname   =  ( letter / special ) *8( letter / digit / special / "-" )
+	// targetmask =  ( "$" / "#" ) mask
+	//                 ; see details on allowed masks in section 3.3.1
+	// chanstring =  %x01-07 / %x08-09 / %x0B-0C / %x0E-1F / %x21-2B
+	// chanstring =/ %x2D-39 / %x3B-FF
+	//                 ; any octet except NUL, BELL, CR, LF, " ", "," and ":"
+	// channelid  = 5( %x41-5A / digit )   ; 5( A-Z / 0-9 )
+	// user       =  1*( %x01-09 / %x0B-0C / %x0E-1F / %x21-3F / %x41-FF )
+	//                 ; any octet except NUL, CR, LF, " " and "@"
+	// key        =  1*23( %x01-05 / %x07-08 / %x0C / %x0E-1F / %x21-7F )
+	//                 ; any 7-bit US_ASCII character,
+	//                 ; except NUL, CR, LF, FF, h/v TABs, and " "
+	// letter     =  %x41-5A / %x61-7A       ; A-Z / a-z
+	// digit      =  %x30-39                 ; 0-9
+	// hexdigit   =  digit / "A" / "B" / "C" / "D" / "E" / "F"
+	// special    =  %x5B-60 / %x7B-7D
+	//                  ; "[", "]", "\", "`", "_", "^", "{", "|", "}"
+	//
+	// NOTES:
+	//     1) The <hostaddr> syntax is given here for the sole purpose of
+	//        indicating the format to follow for IP addresses.  This
+	//        reflects the fact that the only available implementations of
+	//        this protocol uses TCP/IP as underlying network protocol but is
+	//        not meant to prevent other protocols to be used.
+	//
+	//     2) <hostname> has a maximum length of 63 characters.  This is a
+	//        limitation of the protocol as internet hostnames (in
+	//        particular) can be longer.  Such restriction is necessary
+	//        because IRC messages are limited to 512 characters in length.
+	//        Clients connecting from a host which name is longer than 63
+	//        characters are registered using the host (numeric) address
+	//        instead of the host name.
+	//
+	//     3) Some parameters used in the following sections of this
+	//        documents are not defined here as there is nothing specific
+	//        about them besides the name that is used for convenience.
+	//        These parameters follow the general syntax defined for
+	//        <params>.
+
+private:
 	static const str nospcrlfcl; // any octet except NUL, CR, LF, " " and ":"
 	static const str nospcrlf; // (":" / nospcrlfcl)
-
-	str prefix;
-	str cmd; // TODO: Change this to command to refactor changes throughout
-	str params;
-
-	// params:   (SPACE middle){0,14} [SPACE ":" trailing]
-	//       : | (SPACE middle){14}   [SPACE [ ":" ] trailing]
-	str_vec middles;
-	str trailing;
-
-
-	// prefix: servername | (nickname [[ "!" user ] "@" host ])
-
-	str get_servername()
-	{
-		if(prefix.find('!') != str::npos || prefix.find('@') != str::npos)
-			return "";
-		return prefix;
-	}
-
-	str get_nickname()
-	{
-		str::size_type pos;
-		if((pos = prefix.find('!')) != str::npos)
-			return prefix.substr(0, pos);
-		if((pos = prefix.find('@')) != str::npos)
-			return prefix.substr(0, pos);
-		return prefix;
-	}
-
-	str get_user()
-	{
-		str::size_type beg = 0, end;
-		if((end = prefix.find('@')) != str::npos)
-			if((beg = prefix.find('!')) < end)
-				return prefix.substr(beg + 1, end - (beg + 1));
-		return "";
-	}
-
-	str get_host()
-	{
-		str::size_type pos;
-		if((pos = prefix.find('@')) != str::npos && pos < prefix.size() - 1)
-			return prefix.substr(pos + 1);
-		return "";
-	}
-
-	str line; // working
+	static const str nocrlf; // (" " / ":" / nospcrlfcl)
+	static const str nospcrlfat; // any octet except NUL, CR, LF, " " and "@"
+	static const str bnf_special; // any octet except NUL, CR, LF, " " and "@"
 
 	siss& gettrailing(siss& is, str& trailing)
 	{
 		// trailing: *(":" / " " / nospcrlfcl)
 		// trailing: ("\0"|"\n"|"\r")^*
+
 		char c;
 		trailing.clear();
-		while(is && ztcrlf.find(c) == str::npos && is.get(c))
-//		while(is && ((c = is.peek()) == ':' || c == ' ' || spcrlfcl.find(c) == str::npos) && is.get(c))
+		while(is && nocrlf.find(c) == str::npos && is.get(c))
 			trailing.append(1, c);
 		if(is.eof())
 			is.clear();
@@ -157,13 +200,10 @@ struct message
 
 	siss& getparams(siss& is, str_vec& middles, str& trailing)
 	{
-		bug_func();
 		// params  :   (SPACE middle){0,14} [SPACE ":" trailing]
 		//         : | (SPACE middle){14}   [SPACE [ ":" ] trailing]
 		// middle  : nospcrlfcl *( ":" / nospcrlfcl )
 		// trailing: *( ":" / " " / nospcrlfcl )
-
-		// abcd :efgh
 
 		middles.clear();
 		trailing.clear();
@@ -189,28 +229,131 @@ struct message
 
 	siss& getparams(siss&& is, str_vec& middles, str& trailing)
 	{
-		bug_func();
 		return getparams(is, middles, trailing);
 	}
 
-	bool getparams(str_vec& middles, str& trailing)
+public:
+	// message    =  [ ":" prefix SPACE ] command [ params ] crlf
+	str prefix;
+	str command; // TODO: Change this to command to refactor changes throughout
+	str params;
+
+	str get_servername()
 	{
-		bug_func();
-		bug_var(params);
-		bug_var(soo::found(nospcrlf, ' '));
-		bug_var(bugify(nospcrlf));
-//		bug("nospcrlf: " << bugify(nospcrlf));
+		// prefix: servername | (nickname [[ "!" user ] "@" host ])
+		if(prefix.find('!') != str::npos || prefix.find('@') != str::npos)
+			return "";
+		return prefix;
+	}
+
+	bool is_nick(const str& nick)
+	{
+		if(nick.empty())
+			return false;
+		if(!isalpha(nick[0]) && soo::find(bnf_special, nick[0]) == bnf_special.cend())
+			return false;
+		for(char c: nick)
+			if(!isalnum(c) && soo::find(bnf_special, c) == bnf_special.cend())
+				return false;
+		return true;
+	}
+
+	str allow_nick(const str& nick)
+	{
+		if(!is_nick(nick))
+			return "";
+		return nick;
+	}
+
+	str get_nickname()
+	{
+		// prefix: servername | (nickname [[ "!" user ] "@" host ])
+		// nickname   =  ( letter / special ) *8( letter / digit / special / "-" )
+		// letter     =  %x41-5A / %x61-7A       ; A-Z / a-z
+		// digit      =  %x30-39                 ; 0-9
+		// special    =  %x5B-60 / %x7B-7D
+		//                  ; "[", "]", "\", "`", "_", "^", "{", "|", "}"
+		str::size_type pos;
+		if((pos = prefix.find('!')) != str::npos)
+			return allow_nick(prefix.substr(0, pos));
+		if((pos = prefix.find('@')) != str::npos)
+			return allow_nick(prefix.substr(0, pos));
+		return allow_nick(prefix);
+	}
+
+	bool is_user(const str& user)
+	{
+		for(char c: user)
+			if(soo::find(nospcrlfat, c) != nospcrlfat.cend())
+				return false;
+		return true;
+	}
+
+	str allow_user(const str& user)
+	{
+		if(is_user(user))
+			return user;
+		return "";
+	}
+
+	str get_user()
+	{
+		// prefix: servername | (nickname [[ "!" user ] "@" host ])
+		str::size_type beg = 0, end;
+		if((end = prefix.find('@')) != str::npos)
+			if((beg = prefix.find('!')) < end)
+				return allow_user(prefix.substr(beg + 1, end - (beg + 1)));
+		return "";
+	}
+
+	str get_host()
+	{
+		// prefix: servername | (nickname [[ "!" user ] "@" host ])
+		str::size_type pos;
+		if((pos = prefix.find('@')) != str::npos && pos < prefix.size() - 1)
+			return prefix.substr(pos + 1);
+		return "";
+	}
+
+	bool get_params(str_vec& middles, str& trailing)
+	{
 		return getparams(siss(params), middles, trailing);
 	}
 
-	// MUST handle both
-	// [":" prefix SPACE] command [params] cr
-	// [":" prefix SPACE] command [params] crlf
+	str_vec get_params()
+	{
+		// treat all params equally (middles and trailing)
+		str trailing;
+		str_vec middles;
+		if(get_params(middles, trailing))
+			middles.push_back(trailing);
+		return middles;
+	}
+
+	str_vec get_middles()
+	{
+		str trailing;
+		str_vec middles;
+		get_params(middles, trailing);
+		return middles;
+	}
+
+	str get_trailing()
+	{
+		str trailing;
+		str_vec middles;
+		get_params(middles, trailing);
+		return trailing;
+	}
+
 	std::istream& parse(std::istream& is)
 	{
+		// MUST handle both
+		// [":" prefix SPACE] command [params] cr
+		// [":" prefix SPACE] command [params] crlf
 		if(char c = is.peek() == ':') // optional prefix
 			is.get(c) >> prefix;
-		return std::getline(is >> cmd, params, '\r') >> std::ws;
+		return std::getline(is >> command, params, '\r') >> std::ws;
 	}
 
 	bool parse(std::istream&& is) { return parse(is); }
@@ -219,12 +362,11 @@ struct message
 };
 
 // NUL, CR, LF, " " and ":"
-const str message::crlfspcl("\r\n :", 4);
-const str message::ztcrlfspco("\0\t\r\n :", 6);
-const str message::ztcrlf("\0\t\r\n", 4);
-const str message::ztcrlfsp("\0\r\n ", 4);
-const str message::nospcrlfcl("\0 \r\n:", 5); // any octet except NUL, CR, LF, " " and ":"
-const str message::nospcrlf("\0 \r\n", 4); // (":" / nospcrlfcl)
+const str message::nospcrlfcl(CSTRING("\0 \r\n:")); // any octet except NUL, CR, LF, " " and ":"
+const str message::nospcrlf(CSTRING("\0 \r\n")); // (":" / nospcrlfcl)
+const str message::nocrlf(CSTRING("\0\r\n")); // (":" / nospcrlfcl)
+const str message::nospcrlfat(CSTRING("\0 \r\n@")); // any octet except NUL, CR, LF, " " and "@"
+const str message::bnf_special(CSTRING("[]\\`_^{|}")); // "[", "]", "\", "`", "_", "^", "{", "|", "}"
 
 }
 
@@ -266,13 +408,13 @@ void irc_service(int cs)
 	irc::message msg;
 	while(!done && std::getline(ss, line) && std::istringstream(line) >> msg)
 	{
-		if(msg.cmd == "QUIT")
+		if(msg.command == "QUIT")
 		{
 		//	ss << msg("ERROR Client terminated.") << std::endl;
 			ss << ":" << server_name << " ERROR Client terminated." << crlf;
 			done = true;
 		}
-		else if(msg.cmd == "PASS")
+		else if(msg.command == "PASS")
 		{
 		//	pass = msg.get_user_cmd();
 		}
@@ -321,19 +463,19 @@ int main(int argc, char* argv[])
 			continue;
 		}
 		log("prefix        : " << msg.prefix);
-		log("cmd           : " << msg.cmd);
+		log("cmd           : " << msg.command);
 		log("params        : " << msg.params);
-//		log("get_servername: " << msg.get_servername());
-//		log("get_nickname  : " << msg.get_nickname());
-//		log("get_user      : " << msg.get_user());
-//		log("get_host      : " << msg.get_host());
+		log("get_servername: " << msg.get_servername());
+		log("get_nickname  : " << msg.get_nickname());
+		log("get_user      : " << msg.get_user());
+		log("get_host      : " << msg.get_host());
 
-		str_vec middles;
-		str trailing;
-		msg.getparams(middles, trailing);
-		for(const str& middle: middles)
+//		str_vec middles;
+//		str trailing;
+//		msg.getparams(middles, trailing);
+		for(const str& middle: msg.get_middles())
 			log("middle        : " << middle);
-		log("trailing      : " << trailing);
+		log("trailing      : " << msg.get_trailing());
 	}
 
 	return 0;
