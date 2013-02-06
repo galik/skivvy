@@ -79,13 +79,13 @@ skivvy_library_LTLIBRARIES = \
 
 # IrcBot framework
 libskivvy_la_SOURCES = \
+	message.cpp \
 	cal.cpp \
 	FloodController.cpp \
 	ios.cpp \
 	ircbot.cpp \
 	irc.cpp \
 	logrep.cpp \
-	message.cpp \
 	network.cpp \
 	props.cpp \
 	RemoteIrcServer.cpp \
