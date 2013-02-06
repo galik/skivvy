@@ -396,31 +396,31 @@ void TrivialIrcBotPlugin::exit()
 
 void TrivialIrcBotPlugin::event(const message& msg)
 {
-	if(msg.cmd == "PRIVMSG")
+	if(msg.cmd_cp == "PRIVMSG")
 	{
 //		bug("event() RECEIVED");
 //		bug("accepting_answers" << accepting_answers);
 //		bug("msg.text" << msg.text);
 		siz ans;
-		if(accepting_answers && std::istringstream(msg.text) >> ans)
+		if(accepting_answers && std::istringstream(msg.text_cp) >> ans)
 		{
-			if(stl::find(answered, msg.get_nick()) != answered.end())
+			if(stl::find(answered, msg.get_nick_cp()) != answered.end())
 			{
-				bot.fc_reply(msg, msg.get_nick() + ": You only get one try.");
+				bot.fc_reply(msg, msg.get_nick_cp() + ": You only get one try.");
 			}
 			else if(stl::find(answers, ans) != answers.end())
 			{
 				answer_found = true;
 				accepting_answers = false;
 				bug("event() ANSWER FOUND");
-				++totals[msg.get_nick()];
+				++totals[msg.get_nick_cp()];
 				std::ostringstream oss;
-				oss << msg.get_nick() << " has the right answer!";
-				oss << " Total: " << totals[msg.get_nick()] << " points.";
+				oss << msg.get_nick_cp() << " has the right answer!";
+				oss << " Total: " << totals[msg.get_nick_cp()] << " points.";
 				bot.fc_reply(msg, oss.str());
 //				++current_question;
 			}
-			answered.push_back(msg.get_nick());
+			answered.push_back(msg.get_nick_cp());
 		}
 	}
 }

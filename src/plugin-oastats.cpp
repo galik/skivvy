@@ -227,10 +227,10 @@ void OAStatsIrcBotPlugin::oa1v1(const message& msg)
 	sub_vec subs;
 	cal::year_t year = cal::get_year();
 	cal::month_t month = cal::get_month();
-	std::istringstream iss(msg.get_user_params());
-	bug("msg.get_user_params(): " << msg.get_user_params());
+	std::istringstream iss(msg.get_user_params_cp());
+	bug("msg.get_user_params(): " << msg.get_user_params_cp());
 
-	extract_y_and_m(msg.get_user_params(), year, month);
+	extract_y_and_m(msg.get_user_params_cp(), year, month);
 
 	sub s;
 	str param;
@@ -409,10 +409,10 @@ void OAStatsIrcBotPlugin::oastat(const message& msg)
 	cal::year_t year = cal::get_year();
 	cal::month_t month = cal::get_month();
 
-	extract_y_and_m(msg.get_user_params(), year, month);
+	extract_y_and_m(msg.get_user_params_cp(), year, month);
 
 	str param;
-	std::istringstream iss(msg.get_user_params());
+	std::istringstream iss(msg.get_user_params_cp());
 
 	while(iss >> param && !param.empty())
 	{
@@ -447,7 +447,7 @@ void OAStatsIrcBotPlugin::oastat(const message& msg)
 
 	if(type.empty())
 	{
-		bot.fc_reply(msg, help(msg.get_user_cmd()));
+		bot.fc_reply(msg, help(msg.get_user_cmd_cp()));
 		return;
 	}
 
@@ -715,7 +715,7 @@ void OAStatsIrcBotPlugin::oatop(const message& msg)
 	BUG_COMMAND(msg);
 
 	stats_vector v;
-	get_oatop(msg.get_user_params(), v);
+	get_oatop(msg.get_user_params_cp(), v);
 
 	if(v.empty())
 	{
@@ -727,7 +727,7 @@ void OAStatsIrcBotPlugin::oatop(const message& msg)
 	size_t factor = 1;
 
 	str param;
-	std::istringstream iss(msg.get_user_params());
+	std::istringstream iss(msg.get_user_params_cp());
 
 	while(iss >> param && !param.empty())
 	{
@@ -736,7 +736,7 @@ void OAStatsIrcBotPlugin::oatop(const message& msg)
 			factor = 10;
 			if(!(std::istringstream(param.substr(1)) >> min))
 			{
-				bot.fc_reply(msg, help(msg.get_user_cmd()));
+				bot.fc_reply(msg, help(msg.get_user_cmd_cp()));
 				return;
 			}
 		}
@@ -794,8 +794,8 @@ void OAStatsIrcBotPlugin::oastats_on(const message& msg)
 	timer.set_mindelay(delay);
 	timer.set_maxdelay(delay);
 	lock_guard lock(channels_mtx);
-	channels.insert(msg.reply_to());
-	if(timer.on(&(*channels.find(msg.reply_to()))))
+	channels.insert(msg.reply_to_cp());
+	if(timer.on(&(*channels.find(msg.reply_to_cp()))))
 	{
 		std::ostringstream oss;
 		oss.precision(2);
@@ -816,8 +816,8 @@ void OAStatsIrcBotPlugin::oastats_off(const message& msg)
 {
 	bug_func();
 	lock_guard lock(channels_mtx);
-	channels.insert(msg.reply_to());
-	if(timer.off(&(*channels.find(msg.reply_to()))))
+	channels.insert(msg.reply_to_cp());
+	if(timer.off(&(*channels.find(msg.reply_to_cp()))))
 		bot.fc_reply(msg, "Regular stats have been disabled for this channel.");
 	else
 		bot.fc_reply(msg, "Regular stats were not enabled for this channel.");
@@ -829,8 +829,8 @@ void OAStatsIrcBotPlugin::regular_stats(const str& channel)
 //	irc->mode(channel, "+m");
 	// TODO finish this
 	message msg;
-	msg.from = bot.nick;
-	msg.to = channel;
+	msg.from_cp = bot.nick;
+	msg.to_cp = channel;
 
 	std::this_thread::get_id();
 
@@ -842,7 +842,7 @@ void OAStatsIrcBotPlugin::regular_stats(const str& channel)
 	std::this_thread::sleep_for(std::chrono::seconds(10));
 	for(siz i = 1; i < (divisions + 1); ++i)
 	{
-		msg.text = "!oatop #" + std::to_string(i);
+		msg.text_cp = "!oatop #" + std::to_string(i);
 		oatop(msg);
 	}
 

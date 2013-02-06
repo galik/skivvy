@@ -40,66 +40,66 @@ using namespace skivvy::types;
 using namespace skivvy::string;
 using namespace skivvy::utils;
 
-std::istream& parsemsg(std::istream& is, message& m)
+std::istream& parsemsg_cp(std::istream& is, message& m)
 {
-	std::getline(is, m.line);
-	trim(m.line);
+	std::getline(is, m.line_cp);
+	trim(m.line_cp);
 	// :SooKee!~SooKee@SooKee.users.quakenet.org MODE #skivvy-admin +o Zim-blackberry
 
-	if(!m.line.empty())
+	if(!m.line_cp.empty())
 	{
-		if(m.line[0] == ':')
+		if(m.line_cp[0] == ':')
 		{
-			siss iss(m.line.substr(1));
-			iss >> m.from >> m.cmd;
-			std::getline(iss, m.params, ':');
-			std::getline(iss, m.text);
+			siss iss(m.line_cp.substr(1));
+			iss >> m.from_cp >> m.cmd_cp;
+			std::getline(iss, m.params_cp, ':');
+			std::getline(iss, m.text_cp);
 			iss.clear();
-			iss.str(m.params);
-			iss >> m.to;
+			iss.str(m.params_cp);
+			iss >> m.to_cp;
 		}
 		else
 		{
-			siss iss(m.line);
-			iss >> m.cmd;
-			std::getline(iss, m.params, ':');
-			std::getline(iss, m.text);
+			siss iss(m.line_cp);
+			iss >> m.cmd_cp;
+			std::getline(iss, m.params_cp, ':');
+			std::getline(iss, m.text_cp);
 			iss.clear();
-			iss.str(m.params);
-			iss >> m.to;
+			iss.str(m.params_cp);
+			iss >> m.to_cp;
 		}
 
-		trim(m.from);
-		trim(m.cmd);
-		trim(m.params);
-		trim(m.to);
-		trim(m.text);
+		trim(m.from_cp);
+		trim(m.cmd_cp);
+		trim(m.params_cp);
+		trim(m.to_cp);
+		trim(m.text_cp);
 	}
 
 	return is;
 }
 
-std::istream& parsemsg(std::istream&& is, message& m)
+std::istream& parsemsg_cp(std::istream&& is, message& m)
 {
-	return parsemsg(is, m);
+	return parsemsg_cp(is, m);
 }
 
-std::ostream& printmsg(std::ostream& os, const message& m)
+std::ostream& printmsg_cp(std::ostream& os, const message& m)
 {
-	os << "//                  line: " << m.line << '\n';
-	os << "//                  from: " << m.from << '\n';
-	os << "//                   cmd: " << m.cmd << '\n';
-	os << "//                params: " << m.params << '\n';
-	os << "//                    to: " << m.to << '\n';
-	os << "//                  text: " << m.text << '\n';
-	os << "// msg.from_channel()   : " << m.from_channel() << '\n';
-	os << "// msg.get_nick()       : " << m.get_nick() << '\n';
-	os << "// msg.get_user()       : " << m.get_user() << '\n';
-	os << "// msg.get_host()       : " << m.get_host() << '\n';
-	os << "// msg.get_userhost()   : " << m.get_userhost() << '\n';
-	os << "// msg.get_user_cmd()   : " << m.get_user_cmd() << '\n';
-	os << "// msg.get_user_params(): " << m.get_user_params() << '\n';
-	os << "// msg.reply_to()       : " << m.reply_to() << '\n';
+	os << "//                  line: " << m.line_cp << '\n';
+	os << "//                  from: " << m.from_cp << '\n';
+	os << "//                   cmd: " << m.cmd_cp << '\n';
+	os << "//                params: " << m.params_cp << '\n';
+	os << "//                    to: " << m.to_cp << '\n';
+	os << "//                  text: " << m.text_cp << '\n';
+	os << "// msg.from_channel()   : " << m.from_channel_cp() << '\n';
+	os << "// msg.get_nick()       : " << m.get_nick_cp() << '\n';
+	os << "// msg.get_user()       : " << m.get_user_cp() << '\n';
+	os << "// msg.get_host()       : " << m.get_host_cp() << '\n';
+	os << "// msg.get_userhost()   : " << m.get_userhost_cp() << '\n';
+	os << "// msg.get_user_cmd()   : " << m.get_user_cmd_cp() << '\n';
+	os << "// msg.get_user_params(): " << m.get_user_params_cp() << '\n';
+	os << "// msg.reply_to()       : " << m.reply_to_cp() << '\n';
 	return os << std::flush;
 }
 
@@ -108,72 +108,72 @@ std::istream& operator>>(std::istream& is, message& m)
 	str o;
 	if(!getobject(is, o))
 		return is;
-	if(!parsemsg(siss(unescaped(o)), m))
+	if(!parsemsg_cp(siss(unescaped(o)), m))
 		is.setstate(std::ios::failbit); // protocol error
 	return is;
 }
 
 std::ostream& operator<<(std::ostream& os, const message& m)
 {
-	return os << '{' << escaped(m.line) << '}';
+	return os << '{' << escaped(m.line_cp) << '}';
 }
 
 // MyNick!~User@server.com
 
-str message::get_nick() const
+str message::get_nick_cp() const
 {
 //	bug_func();
-	return from.substr(0, from.find("!"));
+	return from_cp.substr(0, from_cp.find("!"));
 }
 
-str message::get_user() const
+str message::get_user_cp() const
 {
 //	bug_func();
-	return from.substr(from.find("!") + 1, from.find("@") - from.find("!") - 1);
+	return from_cp.substr(from_cp.find("!") + 1, from_cp.find("@") - from_cp.find("!") - 1);
 }
 
-str message::get_host() const
+str message::get_host_cp() const
 {
 //	bug_func();
-	return from.substr(from.find("@") + 1);
+	return from_cp.substr(from_cp.find("@") + 1);
 }
 
-str message::get_userhost() const
+str message::get_userhost_cp() const
 {
 //	bug_func();
-	return from.substr(from.find("!") + 1);
+	return from_cp.substr(from_cp.find("!") + 1);
 }
 
-str message::get_user_cmd() const
+str message::get_user_cmd_cp() const
 {
 	str cmd;
-	std::istringstream iss(text);
+	std::istringstream iss(text_cp);
 	std::getline(iss, cmd, ' ');
 	return trim(cmd);
 }
 
-str message::get_user_params() const
+str message::get_user_params_cp() const
 {
 	str params;
-	std::istringstream iss(text);
+	std::istringstream iss(text_cp);
 	std::getline(iss, params, ' ');
 	if(!std::getline(iss, params))
 		return "";
 	return trim(params);
 }
 
-bool message::from_channel() const
+bool message::from_channel_cp() const
 {
-	return !to.empty() && to[0] == '#';
+	return !to_cp.empty() && to_cp[0] == '#';
 }
 
-str message::reply_to() const
+str message::reply_to_cp() const
 {
-	return from_channel() ? to : get_nick();
+	return from_channel_cp() ? to_cp : get_nick_cp();
 }
 
 // TODO: Sort this mess out
-void bug_message(const std::string& K, const std::string& V, const message& msg)
+void bug_message_cp(const std::string& K, const std::string& V, const message& msg)
 {
 	bug("===============================");
 	bug(K << ": " << V);

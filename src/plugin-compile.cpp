@@ -92,7 +92,7 @@ CompileIrcBotPlugin::~CompileIrcBotPlugin() {}
 void CompileIrcBotPlugin::cpp(const message& msg, bool cpp11)
 {
 	BUG_COMMAND(msg);
-	str text = msg.get_user_params();
+	str text = msg.get_user_params_cp();
 	if(!text.empty() && text[0] == '{')
 	{
 		lock_guard lock(mtx);

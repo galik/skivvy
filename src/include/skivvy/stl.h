@@ -61,11 +61,11 @@ bool found(const Container& c, const typename Container::value_type& v)
 	return std::find(c.cbegin(), c.cend(), v) != c.cend();
 }
 
-template<typename Container> inline
-typename Container::iterator find(Container& c, const typename Container::key_type& k)
-{
-	return c.find(k);
-}
+//template<typename Container> inline
+//typename Container::iterator find(Container& c, const typename Container::key_type& k)
+//{
+//	return c.find(k);
+//}
 
 template<typename Container> inline
 typename Container::iterator find(Container& c, const typename Container::value_type& v)
@@ -73,11 +73,11 @@ typename Container::iterator find(Container& c, const typename Container::value_
 	return std::find(c.begin(), c.end(), v);
 }
 
-template<typename Container> inline
-typename Container::const_iterator find(const Container& c, const typename Container::key_type& k)
-{
-	return c.find(k);
-}
+//template<typename Container> inline
+//typename Container::const_iterator find(const Container& c, const typename Container::key_type& k)
+//{
+//	return c.find(k);
+//}
 
 template<typename Container> inline
 typename Container::const_iterator find(const Container& c, const typename Container::value_type& v)

@@ -122,7 +122,7 @@ const str_map langmap =
 
 void DictionIrcBotPlugin::langs(const message& msg)
 {
-	str lang = lowercase(msg.get_user_params());
+	str lang = lowercase(msg.get_user_params_cp());
 	trim(lang);
 
 	str sep;
@@ -156,7 +156,7 @@ void DictionIrcBotPlugin::trans(const message& msg)
 {
 	BUG_COMMAND(msg);
 
-	std::istringstream iss(msg.get_user_params());
+	std::istringstream iss(msg.get_user_params_cp());
 
 	str from = "en";
 	str to = "en";
@@ -241,7 +241,7 @@ void DictionIrcBotPlugin::ddg_dict(const message& msg)
 {
 	BUG_COMMAND(msg);
 
-	const str word = net::urlencode(msg.get_user_params());
+	const str word = net::urlencode(msg.get_user_params_cp());
 
 	net::socketstream ss;
 	ss.open("duckduckgo.com", 80);
@@ -315,7 +315,7 @@ void DictionIrcBotPlugin::google_dict(const message& msg)
 {
 	BUG_COMMAND(msg);
 
-	const str word = net::urlencode(msg.get_user_params());
+	const str word = net::urlencode(msg.get_user_params_cp());
 
 	net::socketstream ss;
 	ss.open("www.merriam-webster.com", 80);
@@ -389,7 +389,7 @@ void DictionIrcBotPlugin::dict(const message& msg)
 	BUG_COMMAND(msg);
 	google_dict(msg);
 	return;
-	std::string word = msg.get_user_params();
+	std::string word = msg.get_user_params_cp();
 
 	net::socketstream ss;
 	//ss.open("miranda.org", 2628);

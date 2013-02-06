@@ -97,7 +97,7 @@ private:
 	struct comp
 	{
 	  bool operator()(const message& lhs, const message& rhs) const
-	  {return lhs.reply_to() < rhs.reply_to();}
+	  {return lhs.reply_to_cp() < rhs.reply_to_cp();}
 	};
 
 	typedef std::set<message, comp> message_set;
