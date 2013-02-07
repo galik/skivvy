@@ -40,80 +40,62 @@ using namespace skivvy::types;
 using namespace skivvy::utils;
 using namespace skivvy::string;
 
-bool RemoteIrcServer::send(const str& cmd)
+// BASE
+
+bool BaseIrcServer::send(const str& cmd)
 {
 	log("send: " << cmd);
 	return send_unlogged(cmd);
 }
 
-bool RemoteIrcServer::send_unlogged(const str& cmd)
-{
-	lock_guard lock(mtx_ss);
-	ss << cmd.substr(0, 510) << "\r\n" << std::flush;
-	if(!ss)
-		log("ERROR: send failed.");
-	return ss;
-}
-
-RemoteIrcServer::RemoteIrcServer()
-{
-}
-
-bool RemoteIrcServer::connect(const str& host, long port)
-{
-	ss.clear();
-	ss.open(host, port);
-	return ss;
-}
-
-bool RemoteIrcServer::pass(const str& pwd)
+bool BaseIrcServer::pass(const str& pwd)
 {
 	if(pwd.empty())
 		return send(PASS + " none");
 	return send(PASS + " " + pwd);
 }
 
-bool RemoteIrcServer::nick(const str& n)
+bool BaseIrcServer::nick(const str& n)
 {
 	return send(NICK + " " + n);
 }
 
-bool RemoteIrcServer::user(const str& u, const str m, const str r)
+bool BaseIrcServer::user(const str& u, const str m, const str r)
 {
 	return send(USER + " " + u + " " + m + " * :" + r);
 }
 
-bool RemoteIrcServer::join(const str& channel, const str& key)
+bool BaseIrcServer::join(const str& channel, const str& key)
 {
 	return send(JOIN + " " + channel + " " + key);
 }
 
-bool RemoteIrcServer::part(const str& channel, const str& message)
+bool BaseIrcServer::part(const str& channel, const str& message)
 {
 	return send(PART + " " + channel + " " + message);
 }
 
-bool RemoteIrcServer::ping(const str& info)
+bool BaseIrcServer::ping(const str& info)
 {
 	return send_unlogged(PING + " " + info);
 }
 
-bool RemoteIrcServer::pong(const str& info)
+bool BaseIrcServer::pong(const str& info)
 {
 	return send_unlogged(PONG + " " + info);
 }
 
-bool RemoteIrcServer::say(const str& to, const str& text)
+bool BaseIrcServer::say(const str& to, const str& text)
 {
 	return send(PRIVMSG + " " + to + " :" + text);
 }
 
-bool RemoteIrcServer::whois(const str& n)
+bool BaseIrcServer::whois(const str& n)
 {
 	return send(WHOIS + " " + n);
 }
 
-bool RemoteIrcServer::quit(const str& reason)
+bool BaseIrcServer::quit(const str& reason)
 {
 	return send(QUIT + " :" + reason);
 }
@@ -122,7 +104,7 @@ bool RemoteIrcServer::quit(const str& reason)
 
 // Parameters: <channel> *( "," <channel> ) <user> *( "," <user> ) [<comment>]
 // KICK KICK #skivvy Skivvy :
-bool RemoteIrcServer::kick(const str_vec& chans, const str_vec&users, const str& comment)
+bool BaseIrcServer::kick(const str_vec& chans, const str_vec&users, const str& comment)
 {
 	str cmd = KICK;
 
@@ -138,35 +120,35 @@ bool RemoteIrcServer::kick(const str_vec& chans, const str_vec&users, const str&
 }
 
 // non standard??
-bool RemoteIrcServer::auth(const str& user, const str& pass)
+bool BaseIrcServer::auth(const str& user, const str& pass)
 {
 	return send(AUTH + " " + user + " " + pass);
 }
 
-bool RemoteIrcServer::me(const str& to, const str& text)
+bool BaseIrcServer::me(const str& to, const str& text)
 {
 	return say(to, "\001ACTION " + text + "\001");
 }
 
-bool RemoteIrcServer::query(const str& nick)
+bool BaseIrcServer::query(const str& nick)
 {
 	return send(QUERY + " " + nick);
 }
 
 // MODE #skivvy-admin +o Zim-blackberry
 
-bool RemoteIrcServer::mode(const str& chan, const str& mode, const str& nick)
+bool BaseIrcServer::mode(const str& chan, const str& mode, const str& nick)
 {
 	return send(MODE + " " + chan + " " + mode + " " + nick);
 }
 
 // correct???
-bool RemoteIrcServer::mode(const str& nick, const str& mode)
+bool BaseIrcServer::mode(const str& nick, const str& mode)
 {
 	return send(MODE + " " + nick + " " + mode);
 }
 
-bool RemoteIrcServer::reply(const message& msg, const str& text)
+bool BaseIrcServer::reply(const message& msg, const str& text)
 {
 	str from;
 	if(!msg.prefix.empty())
@@ -180,14 +162,72 @@ bool RemoteIrcServer::reply(const message& msg, const str& text)
 	return false;
 }
 
-bool RemoteIrcServer::reply_pm(const message& msg, const str& text)
+bool BaseIrcServer::reply_pm(const message& msg, const str& text)
 {
 	return say(msg.get_nick(), text);
+}
+
+// REMOTE
+
+bool RemoteIrcServer::send_unlogged(const str& cmd)
+{
+	lock_guard lock(mtx_ss);
+	ss << cmd.substr(0, 510) << "\r\n" << std::flush;
+	if(!ss)
+		log("ERROR: send failed.");
+	return ss;
+}
+
+bool RemoteIrcServer::connect(const str& host, long port)
+{
+	ss.clear();
+	ss.open(host, port);
+	return ss;
 }
 
 bool RemoteIrcServer::receive(str& line)
 {
 	return std::getline(ss, line);
+}
+
+// TEST
+
+bool TestIrcServer::send_unlogged(const str& cmd)
+{
+	ofs << cmd.substr(0, 510) << "\r\n" << std::flush;
+	if(!ofs)
+		log("ERROR: send failed.");
+	return ofs;
+}
+
+bool TestIrcServer::connect(const str& host, long port)
+{
+//	str ifile = "test/" + host + "-" + std::to_string(port) + "-in.txt";
+//	str ofile = "test/" + host + "-" + std::to_string(port) + "-out.txt";
+
+	str ifile = host + "-" + (port<10?"0":"") + std::to_string(port) + "-in.txt";
+	str ofile = host + "-" + (port<10?"0":"") + std::to_string(port) + "-out.txt";
+
+	bug_var(ifile);
+	bug_var(ofile);
+
+	ifs.clear();
+	ifs.open(ifile);
+	bug_var(ifs);
+	ofs.clear();
+	ofs.open(ofile);
+	bug_var(ofs);
+	return ifs && ofs;
+}
+
+bool TestIrcServer::receive(str& line)
+{
+	static siz no = 0;
+	++no;
+//	bug_var(no);
+	skivvy::utils::botbug() << no << ": ";
+	std::getline(ifs, line);
+	return ifs;
 }
 
 }} // skivvy::ircbot

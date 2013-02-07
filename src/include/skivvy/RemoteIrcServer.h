@@ -64,26 +64,16 @@ using namespace skivvy::types;
  * str line;
  * while(irc.receive(line))
  * {
- * 		// ... deal with incoming lines from the
- * 		// IRC server here.
+ *     // ... deal with incoming lines from the
+ *     // IRC server here.
  * }
  * </pre>
  */
-class RemoteIrcServer
+class IrcServer
 {
-private:
-	std::mutex mtx_ss;
-	net::socketstream ss;
-
 public:
-	bool send(const str& cmd);
-	bool send_unlogged(const str& cmd);
-
-	/**
-	 * Construct a RemoteIrcServer object.
-	 *
-	 */
-	RemoteIrcServer();
+	virtual bool send(const str& cmd) = 0;
+	virtual bool send_unlogged(const str& cmd) = 0;
 
 	/**
 	 * Open a TCP/IP connection to the host on the given port
@@ -93,20 +83,20 @@ public:
 	 * @port The port the IRC server is accepting requests on.
 	 * @return false on failure.
 	 */
-	bool connect(const str& host, long port = 6667);
+	virtual bool connect(const str& host, long port = 6667) = 0;
 
 	/**
 	 * Initiate the dialogue between the client and the server
 	 * by sending an (optionally blank) password.
 	 */
-	bool pass(const str& pwd);
+	virtual bool pass(const str& pwd) = 0;
 
 	/**
 	 * Tell the server the nick you will be using. This may
 	 * be rejected later so this call may need to be made again
 	 * with an alternative nick.
 	 */
-	bool nick(const str& n);
+	virtual bool nick(const str& n) = 0;
 
 	/**
 	 * Provide the user information for the given nick. If the nick is rejected
@@ -117,7 +107,7 @@ public:
 	 * @param m User Mode
 	 * @param r Real Name
 	 */
-	bool user(const str& u, const str m, const str r);
+	virtual bool user(const str& u, const str m, const str r) = 0;
 
 	/**
 	 * Join a specific channel.
@@ -125,7 +115,7 @@ public:
 	 * @channel The channel to join, eg. #stuff
 	 * @return false on failure.
 	 */
-	bool join(const str& channel, const str& key = "");
+	virtual bool join(const str& channel, const str& key = "") = 0;
 
 	/**
 	 * Part (leave) a channel.
@@ -134,19 +124,19 @@ public:
 	 * @message an optional leaving message
 	 * @return false on failure.
 	 */
-	bool part(const str& channel, const str& message = "");
+	virtual bool part(const str& channel, const str& message = "") = 0;
 
 	/**
 	 * Send a PING message.
 	 * @return false on failure.
 	 */
-	bool ping(const str& info);
+	virtual bool ping(const str& info) = 0;
 
 	/**
 	 * Send a PONG message.
 	 * @return false on failure.
 	 */
-	bool pong(const str& info);
+	virtual bool pong(const str& info) = 0;
 
 	/**
 	 * Say something to either a channel or a specific user.
@@ -156,12 +146,12 @@ public:
 	 * @text The text of the message.
 	 * @return false on failure.
 	 */
-	bool say(const str& to, const str& text);
+	virtual bool say(const str& to, const str& text) = 0;
 
-	bool kick(const str_vec& chans, const str_vec&users, const str& comment);
+	virtual bool kick(const str_vec& chans, const str_vec&users, const str& comment) = 0;
 
 	// non standard??
-	bool auth(const str& user, const str& pass);
+	virtual bool auth(const str& user, const str& pass) = 0;
 
 	/**
 	 * Emote something to either a channel or a specific user.
@@ -171,21 +161,21 @@ public:
 	 * @text The text of the emotion.
 	 * @return false on failure.
 	 */
-	bool me(const str& to, const str& text);
+	virtual bool me(const str& to, const str& text) = 0;
 
 	/**
 	 * Open a one on one session with a specific user.
 	 * @return false on failure.
 	 */
-	bool query(const str& nick);
+	virtual bool query(const str& nick) = 0;
 
 	/**
 	 * Close client session.
 	 * @return false on failure.
 	 */
-	bool quit(const str& reason);
+	virtual bool quit(const str& reason) = 0;
 
-	bool whois(const str& nick);
+	virtual bool whois(const str& nick) = 0;
 
 	/**
 	 * Change mode settings for nick.
@@ -195,7 +185,7 @@ public:
 	 * @nick the nick of the user to change mode flags for.
 	 * @return false on failure.
 	 */
-	bool mode(const str& chan, const str& mode, const str& nick);
+	virtual bool mode(const str& chan, const str& mode, const str& nick) = 0;
 
 	/**
 	 * Change mode settings for nick. // CORRECT???
@@ -204,7 +194,7 @@ public:
 	 * @mode The mode flags.
 	 * @return false on failure.
 	 */
-	bool mode(const str& nick, const str& mode);
+	virtual bool mode(const str& nick, const str& mode) = 0;
 
 	/**
 	 * Reply is like say() but it deduces who to send the reply
@@ -214,7 +204,7 @@ public:
 	 *
 	 * @return false on failure.
 	 */
-	bool reply(const message& msg, const str& text);
+	virtual bool reply(const message& msg, const str& text) = 0;
 
 	/**
 	 * This function is like reply except that it always sends a PM (QUERY)
@@ -223,13 +213,65 @@ public:
 	 * @param msg The message from the person you wish to
 	 * reply to using PM (QUERY).
 	 */
-	bool reply_pm(const message& msg, const str& text);
+	virtual bool reply_pm(const message& msg, const str& text) = 0;
 
 	/**
 	 * Get a line from the IRC server.
 	 *
 	 * @return false on failure.
 	 */
+	virtual bool receive(str& line) = 0;
+};
+
+class BaseIrcServer
+: public IrcServer
+{
+public:
+	bool send(const str& cmd);
+	bool pass(const str& pwd);
+	bool nick(const str& n);
+	bool user(const str& u, const str m, const str r);
+	bool join(const str& channel, const str& key = "");
+	bool part(const str& channel, const str& message = "");
+	bool ping(const str& info);
+	bool pong(const str& info);
+	bool say(const str& to, const str& text);
+	bool kick(const str_vec& chans, const str_vec&users, const str& comment);
+	bool auth(const str& user, const str& pass);
+	bool me(const str& to, const str& text);
+	bool query(const str& nick);
+	bool quit(const str& reason);
+	bool whois(const str& nick);
+	bool mode(const str& chan, const str& mode, const str& nick);
+	bool mode(const str& nick, const str& mode);
+	bool reply(const message& msg, const str& text);
+	bool reply_pm(const message& msg, const str& text);
+};
+
+class RemoteIrcServer
+: public BaseIrcServer
+{
+private:
+	std::mutex mtx_ss;
+	net::socketstream ss;
+
+public:
+	bool send_unlogged(const str& cmd);
+	bool connect(const str& host, long port = 6667);
+	bool receive(str& line);
+};
+
+class TestIrcServer
+: public BaseIrcServer
+{
+private:
+	std::mutex mtx_ifs;
+	std::ifstream ifs;
+	std::ofstream ofs;
+
+public:
+	bool send_unlogged(const str& cmd);
+	bool connect(const str& host, long port = 6667);
 	bool receive(str& line);
 };
 

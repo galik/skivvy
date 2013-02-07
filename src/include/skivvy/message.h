@@ -44,61 +44,7 @@ namespace skivvy { namespace ircbot {
 
 using namespace skivvy::types;
 
-/**
- * Relevant components from incoming the messages sent
- * by the IRC server.
- */
-class message_cp
-{
-public:
-//	str line_cp; // original message line
-//	str from_cp; // ":Nick!user@network"
-//	str cmd_cp; // "PRIVMSG"
-//	str params_cp; // not same as user_params()
-//	str to_cp; // "#oa-ictf" | Nick;
-//	str text_cp; // "evening all";
-
-	void clear()
-	{
-//		from_cp.clear();
-//		cmd_cp.clear();
-//		params_cp.clear();
-//		to_cp.clear();
-//		text_cp.clear();
-	}
-
-	/**
-	 * Parse an incoming line from the IRC server and break it down into
-	 * its relevant parts.
-	 */
-	friend std::istream& parsemsg_cp(std::istream& is, message_cp& m);
-	friend std::istream& parsemsg_cp(std::istream&& is, message_cp& m);
-
-	/**
-	 * Output the message parts for diagnostics.
-	 */
-	friend std::ostream& printmsg_cp(std::ostream& os, const message_cp& m);
-
-	/**
-	 * Extract the nick of the message sender from the surrounding
-	 * server qualifier. Eg from "MyNick!~User@server.com it will"
-	 * extract "MyNick" as the 'sender'.
-	 */
-//	str get_nick_cp() const; // MyNick
-//	str get_user_cp() const; // ~User
-//	str get_host_cp() const; // server.com
-//	str get_userhost_cp() const; // ~User@server.com
-
-	/**
-	 * Returns true if this message was sent from a channel
-	 * rather than a private message.
-	 */
-//	bool from_channel_cp() const;
-
-};
-
 class message
-: public message_cp
 {
 public:
 
@@ -322,7 +268,7 @@ public:
 
 	void clear()
 	{
-		message_cp::clear();
+//		message_cp::clear();
 		prefix.clear();
 		command.clear();
 		params.clear();
@@ -453,7 +399,7 @@ public:
 
 	friend bool parsemsg(const str& line, message& msg)
 	{
-		parsemsg_cp(siss(line), msg);
+//		parsemsg_cp(siss(line), msg);
 		return msg.parse(line);
 	}
 

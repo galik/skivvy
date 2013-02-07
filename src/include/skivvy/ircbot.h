@@ -357,7 +357,7 @@ public:
 
 protected:
 	IrcBot& bot;
-	RemoteIrcServer* irc;
+	IrcServer* irc = 0;
 	action_map actions;
 
 	/**
@@ -545,9 +545,11 @@ public:
 	typedef nicks_map::const_iterator nick_citer;
 
 private:
-	RemoteIrcServer irc;
 	FloodController fc;
-	Store* store; // TODO: Why is this a pointer?
+
+	// pointers because need to load config before creating
+	IrcServer* irc = 0;
+	Store* store = 0;
 
 	msgevent_map msgevents;
 	std::mutex msgevent_mtx;
@@ -758,7 +760,7 @@ public:
 	void add_channel(const str& c);
 
 
-	RemoteIrcServer& get_irc_server();
+	IrcServer* get_irc_server();
 
 public:
 	str configfile; // current config file

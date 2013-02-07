@@ -105,7 +105,8 @@ void BasicIrcBotPlugin::add(const action& a) { actions.insert(action_pair{a.cmd,
 
 bool BasicIrcBotPlugin::init()
 {
-	irc = &bot.get_irc_server();
+	if(!(irc = bot.get_irc_server()))
+		return false;
 	actions.clear();
 	return initialize();
 }
@@ -303,7 +304,7 @@ void IrcBot::add_rpc_service(IrcBotRPCService& s)
 
 void IrcBot::add_channel(const str& c) { chans.insert(c); }
 
-RemoteIrcServer& IrcBot::get_irc_server() { return irc; }
+IrcServer* IrcBot::get_irc_server() { return irc; }
 
 // Utility
 
@@ -312,28 +313,28 @@ bool IrcBot::fc_reply(const message& msg, const str& text)
 {
 	bug_func();
 	bug_var(text);
-	return fc.send(msg.get_to(), [&,msg,text]()->bool{ return irc.reply(msg, text); });
+	return fc.send(msg.get_to(), [&,msg,text]()->bool{ return irc->reply(msg, text); });
 }
 
 bool IrcBot::fc_reply_help(const message& msg, const str& text, const str& prefix)
 {
 	const str_vec v = split(text, '\n');
 	for(const str& s: v)
-		if(!fc.send(msg.get_to(), [&,msg,prefix,s]()->bool{ return irc.reply(msg, prefix + s); }))
+		if(!fc.send(msg.get_to(), [&,msg,prefix,s]()->bool{ return irc->reply(msg, prefix + s); }))
 			return false;
 	return true;
 }
 
 bool IrcBot::fc_reply_pm(const message& msg, const str& text)//, size_t priority)
 {
-	return fc.send(msg.get_to(), [&,msg,text]()->bool{ return irc.reply_pm(msg, text); });
+	return fc.send(msg.get_to(), [&,msg,text]()->bool{ return irc->reply_pm(msg, text); });
 }
 
 bool IrcBot::fc_reply_pm_help(const message& msg, const str& text, const str& prefix)
 {
 	const str_vec v = split(text, '\n');
 	for(const str& s: v)
-		if(!fc.send(msg.get_to(), [&,msg,prefix,s]()->bool{ return irc.reply_pm(msg, prefix + s); }))
+		if(!fc.send(msg.get_to(), [&,msg,prefix,s]()->bool{ return irc->reply_pm(msg, prefix + s); }))
 			return false;
 	return true;
 }
@@ -367,11 +368,11 @@ void IrcBot::official_join(const str& channel)
 {
 	std::this_thread::sleep_for(std::chrono::seconds(get(PROP_JOIN_DELAY, PROP_JOIN_DELAY_DEFAULT)));
 
-	if(!irc.join(channel))
+	if(!irc->join(channel))
 		return;
 
 	chans.insert(channel);
-	irc.say(channel, get_name() + " v" + get_version());
+	irc->say(channel, get_name() + " v" + get_version());
 
 	str_vec welcomes = get_vec(PROP_WELCOME);
 
@@ -380,7 +381,7 @@ void IrcBot::official_join(const str& channel)
 		bug_var(w);
 
 	if(!welcomes.empty())
-		irc.say(channel, welcomes[rand_int(0, welcomes.size() - 1)]);
+		irc->say(channel, welcomes[rand_int(0, welcomes.size() - 1)]);
 }
 
 // =====================================
@@ -521,7 +522,28 @@ bool IrcBot::init(const str& config_file)
 	// =====================================
 
 	store = new BackupStore(getf(IRCBOT_STORE_FILE, IRCBOT_STORE_FILE_DEFAULT));
-	bug_var(store);
+	if(!store)
+	{
+		log("Error creating Store.");
+		return false;
+	}
+
+	if(get<bool>("irc.test.mode") == true)
+	{
+		irc = new TestIrcServer;
+		str host = get("irc.test.host", "test-host");
+		siz port = get("irc.test.port", 0);
+		if(irc)
+			irc->connect(host, port);
+	}
+	else
+		irc = new RemoteIrcServer;
+
+	if(!irc)
+	{
+		log("Error creating IrcServer.");
+		return false;
+	}
 
 	// =====================================
 	// OPEN LOG FILE
@@ -585,21 +607,32 @@ bool IrcBot::init(const str& config_file)
 		++p;
 	}
 
-	// start pinger
-	png = std::async(std::launch::async, [&]{ pinger(); });
+	bug_var(done);
+
+	if(get<bool>("irc.test.mode") == true)
+		connected = true;
+	else
+		// start pinger
+		png = std::async(std::launch::async, [&]{ pinger(); });
 
 	while(!done && !connected)
 		std::this_thread::sleep_for(std::chrono::seconds(1));
 
-	// start console
-	con = std::async(std::launch::async, [&]{ console(); });
+	if(get<bool>("irc.test.mode") == false)
+		// start console
+		con = std::async(std::launch::async, [&]{ console(); });
 
 	str line;
 	message msg;
 	while(!done)
 	{
-		if(!irc.receive(line))
+		if(!irc->receive(line))
 		{
+			if(get<bool>("irc.test.mode") == true)
+			{
+				done = true;
+				continue;
+			}
 			// signal pinger to reconnect
 			connected = false;
 			registered = false;
@@ -635,13 +668,17 @@ bool IrcBot::init(const str& config_file)
 		if(stl::find(nologs, msg.command) == nologs.cend())
 			log("recv: " << line);
 
-		if(msg.command == PING)
+		if(msg.command == "END_OF_TEST")
 		{
-			irc.pong(msg.get_trailing());
+			done = true;
+		}
+		else if(msg.command == PING)
+		{
+			irc->pong(msg.get_trailing());
 		}
 		else if(msg.command == RPL_WELCOME)
 		{
-			BUG_MSG_CP(msg, RPL_WELCOME);
+			//BUG_MSG_CP(msg, RPL_WELCOME);
 			this->nick = msg.get_to();
 
 			for(str prop: get_vec(PROP_ON_CONNECT))
@@ -654,7 +691,7 @@ bool IrcBot::init(const str& config_file)
 		}
 		else if(msg.command == RPL_NAMREPLY)
 		{
-			BUG_MSG_CP(msg, RPL_NAMREPLY);
+			//BUG_MSG_CP(msg, RPL_NAMREPLY);
 //			std::istringstream iss(msg.params_cp);
 			str channel, nick;
 			str_vec params = msg.get_params();
@@ -668,15 +705,15 @@ bool IrcBot::init(const str& config_file)
 		}
 		else if(msg.command == ERR_NOORIGIN)
 		{
-			BUG_MSG_CP(msg, ERR_NOORIGIN);
+			//BUG_MSG_CP(msg, ERR_NOORIGIN);
 		}
 		else if(msg.command == ERR_NICKNAMEINUSE)
 		{
-			BUG_MSG_CP(msg, ERR_NICKNAMEINUSE);
+			//BUG_MSG_CP(msg, ERR_NICKNAMEINUSE);
 			if(nick_number < info.nicks.size())
 			{
-				irc.nick(info.nicks[nick_number++]);
-				irc.user(info.user, info.mode, info.real);
+				irc->nick(info.nicks[nick_number++]);
+				irc->user(info.user, info.mode, info.real);
 			}
 			else
 			{
@@ -686,29 +723,11 @@ bool IrcBot::init(const str& config_file)
 		}
 		else if(msg.command == RPL_WHOISCHANNELS)
 		{
-			BUG_MSG_CP(msg, RPL_WHOISCHANNELS);
+			//BUG_MSG_CP(msg, RPL_WHOISCHANNELS);
 		}
 		else if(msg.command == INVITE)
 		{
-			BUG_MSG_CP(msg, INVITE);
-			// ===============================
-			// INVITE: INVITE
-			// -------------------------------
-			//                  from: SooKee!~SooKee@SooKee.users.quakenet.org
-			//                   cmd: INVITE
-			//                params: Skivvy00 #skivvy-test
-			//                    to: Skivvy00
-			//                  text:
-			// msg.from_channel()   : false
-			// msg.get_nick()       : SooKee
-			// msg.get_user()       : ~SooKee
-			// msg.get_host()       : SooKee.users.quakenet.org
-			// msg.get_userhost()   : ~SooKee@SooKee.users.quakenet.org
-			// msg.get_user_cmd()   :
-			// msg.get_user_params():
-			// msg.reply_to()       : SooKee
-			// -------------------------------
-
+			//BUG_MSG_CP(msg, INVITE);
 			str who, chan;
 			str_vec params = msg.get_params();
 
@@ -720,7 +739,7 @@ bool IrcBot::init(const str& config_file)
 			if(who == nick)
 			{
 				official_join(chan);
-				irc.say(chan, "I was invited by " + msg.get_nickname());
+				irc->say(chan, "I was invited by " + msg.get_nickname());
 				store->add("invite", chan);
 			}
 		}
@@ -772,9 +791,9 @@ bool IrcBot::init(const str& config_file)
 						for(const str& c: chans)
 						{
 							if(!goodbyes.empty())
-//								irc.part(c, goodbyes[rand_int(0, goodbyes.size() - 1)]);
-								irc.say(c, goodbyes[rand_int(0, goodbyes.size() - 1)]);
-							irc.part(c);
+//								irc->part(c, goodbyes[rand_int(0, goodbyes.size() - 1)]);
+								irc->say(c, goodbyes[rand_int(0, goodbyes.size() - 1)]);
+							irc->part(c);
 						}
 						done = true;
 					}
@@ -791,7 +810,7 @@ bool IrcBot::init(const str& config_file)
 					{
 						if(!have(PROP_PASSWORD) || get(PROP_PASSWORD) == param[1])
 						{
-							if(irc.join(param[0]))
+							if(irc->join(param[0]))
 							{
 								chans.insert(param[0]);
 								fc_reply(msg, nick + " has requested to join " + param[0]);
@@ -815,7 +834,7 @@ bool IrcBot::init(const str& config_file)
 					{
 						if(!have(PROP_PASSWORD) || get(PROP_PASSWORD) == param[1])
 						{
-							if(irc.part(param[0]))
+							if(irc->part(param[0]))
 							{
 								chans.insert(param[0]);
 								fc_reply(msg, nick + " has requested to part " + param[0]);
@@ -1074,7 +1093,7 @@ void IrcBot::exit()
 		if(con.wait_for(std::chrono::seconds(10)) == std::future_status::ready)
 			con.get();
 
-	irc.quit(restart ? "Reeeeeeeeeeeeeeeeeeboot!" : "Going off line...");
+	irc->quit(restart ? "Reeeeeeeeeeeeeeeeeeboot!" : "Going off line...");
 	log("ENDED");
 }
 
@@ -1106,7 +1125,7 @@ void IrcBot::exec(const std::string& cmd, std::ostream* os)
 			{
 				sgl(iss, line);
 				bug_var(line);
-				irc.say(chan, line);
+				irc->say(chan, line);
 				if(os)
 					(*os) << "OK";
 			}
@@ -1120,13 +1139,13 @@ void IrcBot::exec(const std::string& cmd, std::ostream* os)
 		{
 			str raw;
 			if(std::getline(iss, raw))
-				irc.send(raw);
+				irc->send(raw);
 		}
 		else if(cmd == "/nick")
 		{
 			str nick;
 			if(iss >> nick)
-				irc.nick(nick);
+				irc->nick(nick);
 		}
 		else if(cmd == "/botnick")
 		{
@@ -1140,8 +1159,8 @@ void IrcBot::exec(const std::string& cmd, std::ostream* os)
 			for(const str& c: chans)
 			{
 				if(!goodbyes.empty())
-					irc.say(c, goodbyes[rand_int(0, goodbyes.size() - 1)]);
-				irc.part(c);
+					irc->say(c, goodbyes[rand_int(0, goodbyes.size() - 1)]);
+				irc->part(c);
 			}
 			done = true;
 		}
@@ -1152,8 +1171,8 @@ void IrcBot::exec(const std::string& cmd, std::ostream* os)
 			for(const str& c: chans)
 			{
 				if(!goodbyes.empty())
-					irc.say(c, goodbyes[rand_int(0, goodbyes.size() - 1)]);
-				irc.part(c);
+					irc->say(c, goodbyes[rand_int(0, goodbyes.size() - 1)]);
+				irc->part(c);
 			}
 			restart = true;
 			done = true;
@@ -1198,27 +1217,27 @@ void IrcBot::exec(const std::string& cmd, std::ostream* os)
 			str to, s;
 			iss >> to >> std::ws;
 			if(std::getline(iss, s))
-				irc.say(to, s);
+				irc->say(to, s);
 		}
 		else if(cmd == "/auth")
 		{
 			// TODO: FIXME
 			str user, pass;
 			if(iss >> user >> pass)
-				irc.auth(user, pass);
+				irc->auth(user, pass);
 		}
 		else if(cmd == "/mode")
 		{
 			str nick, mode;
 			iss >> nick >> std::ws;
 			if(std::getline(iss, mode))
-				irc.mode(nick, mode);
+				irc->mode(nick, mode);
 		}
 		else if(cmd == "/whois")
 		{
 			str nick;
 			iss >> nick;
-			irc.whois(nick);
+			irc->whois(nick);
 		}
 		else if(cmd == "/me")
 		{
@@ -1227,7 +1246,7 @@ void IrcBot::exec(const std::string& cmd, std::ostream* os)
 			if(!trim(channel).empty() && channel[0] == '#')
 			{
 				std::getline(iss, line);
-				irc.me(channel, line);
+				irc->me(channel, line);
 				if(os)
 					(*os) << "OK";
 			}
@@ -1240,7 +1259,7 @@ void IrcBot::exec(const std::string& cmd, std::ostream* os)
 			iss >> channel >> key >> std::ws;
 			if(!trim(channel).empty() && channel[0] == '#')
 			{
-				if(irc.join(channel, key))
+				if(irc->join(channel, key))
 					chans.insert(channel);
 				if(os)
 					(*os) << "OK";
@@ -1255,7 +1274,7 @@ void IrcBot::exec(const std::string& cmd, std::ostream* os)
 			if(!trim(channel).empty() && channel[0] == '#')
 			{
 				std::getline(iss, line);
-				if(chans.erase(channel)) irc.part(channel, trim(line));
+				if(chans.erase(channel)) irc->part(channel, trim(line));
 				if(os) (*os) << "OK";
 			}
 			else if(os)
@@ -1265,7 +1284,7 @@ void IrcBot::exec(const std::string& cmd, std::ostream* os)
 		{
 			str dest;
 			std::getline(iss, dest);
-			if(!irc.ping(dest)) { if(os) (*os) << "OK"; }
+			if(!irc->ping(dest)) { if(os) (*os) << "OK"; }
 			else if(os)
 				(*os) << "ERROR: Ping failure.\n";
 		}
@@ -1274,7 +1293,7 @@ void IrcBot::exec(const std::string& cmd, std::ostream* os)
 			// TODO: not this - invoke pinger() reconnect cycle instead!
 			str host = get(SERVER_HOST, SERVER_HOST_DEFAULT);
 			siz port = get(SERVER_PORT, SERVER_PORT_DEFAULT);
-			if(irc.connect(host, port)) { if(os) (*os) << "OK"; }
+			if(irc->connect(host, port)) { if(os) (*os) << "OK"; }
 			else if(os)
 				(*os) << "ERROR: Unable to reconnect.\n";
 		}
@@ -1389,7 +1408,7 @@ void IrcBot::console()
 void IrcBot::pinger()
 {
 	bug_func();
-	while(!done)
+	while(!done && irc)
 	{
 		const siz retries = get<int>(PROP_SERVER_RETRIES, 10);
 		bug_var(retries);
@@ -1399,7 +1418,7 @@ void IrcBot::pinger()
 
 		str	host = get(SERVER_HOST, SERVER_HOST_DEFAULT);
 		siz	port = get(SERVER_PORT, SERVER_PORT_DEFAULT);
-		for(attempt = 0; !done && !irc.connect(host, port) && attempt < retries; ++attempt)
+		for(attempt = 0; !done && !irc->connect(host, port) && attempt < retries; ++attempt)
 		{
 			log("Re-connection attempt: " << (attempt + 1));
 			for(time_t now = time(0); !done && time(0) - now < 10;)
@@ -1418,11 +1437,11 @@ void IrcBot::pinger()
 			connected = true;
 			registered = false;
 
-			irc.pass(get(PROP_SERVER_PASSWORD));
+			irc->pass(get(PROP_SERVER_PASSWORD));
 
 			// Attempt to connect with the first nick
-			irc.nick(info.nicks[nick_number++]);
-			irc.user(info.user, info.mode, info.real);
+			irc->nick(info.nicks[nick_number++]);
+			irc->user(info.user, info.mode, info.real);
 
 			while(!done && connected && !registered)
 				std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -1433,7 +1452,7 @@ void IrcBot::pinger()
 			std::ostringstream oss;
 			oss << std::rand();
 
-			irc.ping(oss.str());
+			irc->ping(oss.str());
 			size_t count = 60 * 3; // 3 minutes
 			while(!done && --count)
 				std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -1454,7 +1473,7 @@ void IrcBot::pinger()
 			if(info.nicks.size() > 1 && nick != info.nicks[0])
 			{
 				nick_number = 0;
-				irc.nick(info.nicks[nick_number++]);
+				irc->nick(info.nicks[nick_number++]);
 			}
 		}
 	}

@@ -43,69 +43,6 @@ using namespace skivvy::types;
 using namespace skivvy::string;
 using namespace skivvy::utils;
 
-std::istream& parsemsg_cp(std::istream& is, message_cp& m)
-{
-//	std::getline(is, m.line_cp);
-//	trim(m.line_cp);
-//	// :SooKee!~SooKee@SooKee.users.quakenet.org MODE #skivvy-admin +o Zim-blackberry
-//
-//	if(!m.line_cp.empty())
-//	{
-//		if(m.line_cp[0] == ':')
-//		{
-//			siss iss(m.line_cp.substr(1));
-//			iss >> m.from_cp >> m.cmd_cp;
-//			std::getline(iss, m.params_cp, ':');
-//			std::getline(iss, m.text_cp);
-//			iss.clear();
-//			iss.str(m.params_cp);
-//			iss >> m.to_cp;
-//		}
-//		else
-//		{
-//			siss iss(m.line_cp);
-//			iss >> m.cmd_cp;
-//			std::getline(iss, m.params_cp, ':');
-//			std::getline(iss, m.text_cp);
-//			iss.clear();
-//			iss.str(m.params_cp);
-//			iss >> m.to_cp;
-//		}
-//
-//		trim(m.from_cp);
-//		trim(m.cmd_cp);
-//		trim(m.params_cp);
-//		trim(m.to_cp);
-//		trim(m.text_cp);
-//	}
-//
-	return is;
-}
-
-std::istream& parsemsg_cp(std::istream&& is, message_cp& m)
-{
-	return parsemsg_cp(is, m);
-}
-
-std::ostream& printmsg_cp(std::ostream& os, const message_cp& m)
-{
-//	os << "//                  line: " << m.line_cp << '\n';
-//	os << "//                  from: " << m.from_cp << '\n';
-//	os << "//                   cmd: " << m.cmd_cp << '\n';
-//	os << "//                params: " << m.params_cp << '\n';
-//	os << "//                    to: " << m.to_cp << '\n';
-//	os << "//                  text: " << m.text_cp << '\n';
-//	os << "// msg.from_channel()   : " << m.from_channel_cp() << '\n';
-//	os << "// msg.get_nick()       : " << m.get_nick_cp() << '\n';
-//	os << "// msg.get_user()       : " << m.get_user_cp() << '\n';
-//	os << "// msg.get_host()       : " << m.get_host_cp() << '\n';
-//	os << "// msg.get_userhost()   : " << m.get_userhost_cp() << '\n';
-//	os << "// msg.get_user_cmd()   : " << m.get_user_cmd_cp() << '\n';
-//	os << "// msg.get_user_params(): " << m.get_user_params_cp() << '\n';
-//	os << "// msg.reply_to()       : " << m.reply_to_cp() << '\n';
-	return os << std::flush;
-}
-
 std::istream& operator>>(std::istream& is, message& m)
 {
 	str o;
@@ -120,34 +57,6 @@ std::ostream& operator<<(std::ostream& os, const message& m)
 {
 	return os << '{' << escaped(m.line) << '}';
 }
-
-// MyNick!~User@server.com
-
-//str message_cp::get_nick_cp() const
-//{
-////	bug_func();
-//	return from_cp.substr(0, from_cp.find("!"));
-//}
-//
-//str message_cp::get_user_cp() const
-//{
-////	bug_func();
-//	return from_cp.substr(from_cp.find("!") + 1, from_cp.find("@") - from_cp.find("!") - 1);
-//}
-//
-//str message_cp::get_host_cp() const
-//{
-////	bug_func();
-//	return from_cp.substr(from_cp.find("@") + 1);
-//}
-//
-//str message_cp::get_userhost_cp() const
-//{
-////	bug_func();
-//	return from_cp.substr(from_cp.find("!") + 1);
-//}
-//
-//
 
 bool message::from_channel() const
 {
@@ -208,9 +117,6 @@ static const str chan_start = "#&+!";
 
 str message::get_chan() const
 {
-	// TODO: this must be sensitive t the particular
-	// command of this message. Mostly (I think) this will be
-	// the first parameter...
 	str_vec params = get_params();
 
 	for(siz i = 0; i < chan_params.size(); ++i)
@@ -222,7 +128,6 @@ str message::get_chan() const
 
 std::ostream& printmsg(std::ostream& os, const message& m)
 {
-	printmsg_cp(os, m);
 	os << "//                  line: " << m.line << '\n';
 	os << "//                prefix: " << m.prefix << '\n';
 	os << "//               command: " << m.command << '\n';
@@ -238,18 +143,10 @@ std::ostream& printmsg(std::ostream& os, const message& m)
 	os << "// trailing             : " << m.get_trailing() << '\n';
 	os << "// get_nick()           : " << m.get_nick() << '\n';
 	os << "// get_chan()           : " << m.get_chan() << '\n';
+	os << "// get_user_cmd()       : " << m.get_user_cmd() << '\n';
+	os << "// get_user_params()    : " << m.get_user_params() << '\n';
 	return os << std::flush;
 }
-
-// TODO: Sort this mess out
-//void bug_message_cp(const std::string& K, const std::string& V, const message_cp& msg)
-//{
-//	bug("===============================");
-//	bug(K << ": " << V);
-//	bug("-------------------------------");
-//	bug_msg(msg);
-//	bug("-------------------------------");
-//}
 
 void bug_message(const std::string& K, const std::string& V, const message& msg)
 {
