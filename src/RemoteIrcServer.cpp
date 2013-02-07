@@ -169,11 +169,11 @@ bool RemoteIrcServer::mode(const str& nick, const str& mode)
 bool RemoteIrcServer::reply(const message& msg, const str& text)
 {
 	str from;
-	if(!msg.from_cp.empty())
-		from = msg.from_cp.substr(0, msg.from_cp.find("!"));
+	if(!msg.prefix.empty())
+		from = msg.prefix.substr(0, msg.prefix.find("!"));
 
-	if(!msg.to_cp.empty() && msg.to_cp[0] == '#')
-		return say(msg.to_cp, text);
+	if(!msg.get_to().empty() && msg.get_to()[0] == '#')
+		return say(msg.get_to(), text);
 	else
 		return say(from, text);
 
@@ -182,7 +182,7 @@ bool RemoteIrcServer::reply(const message& msg, const str& text)
 
 bool RemoteIrcServer::reply_pm(const message& msg, const str& text)
 {
-	return say(msg.get_nick_cp(), text);
+	return say(msg.get_nick(), text);
 }
 
 bool RemoteIrcServer::receive(str& line)

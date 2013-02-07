@@ -216,32 +216,32 @@ public:
 			if(!std::getline(ss, line))
 				continue;
 //			bug("recv: " << line);
-			std::istringstream iss(line);
-			parsemsg_cp(iss, msg);
+			//std::istringstream iss(line);
+			parsemsg(line, msg);
 //			bug_msg(msg);
 
-			if(msg.cmd_cp == "001")
+			if(msg.command == "001")
 				connected = true;
-			else if(msg.cmd_cp == "JOIN")
+			else if(msg.command == "JOIN")
 			{
 				// :Skivlet!~Skivlet@cpc21-pool13-2-0-cust125.15-1.cable.virginmedia.com JOIN #teammega
 //				prompt("recv: " << line);
 //				bug_msg(msg);
-				prompt(msg.get_nick_cp() << " has joined " << msg.params_cp);
+				prompt(msg.get_nick() << " has joined " << msg.get_chan());
 			}
-			else if(msg.cmd_cp == "QUIT")
-				prompt(msg.get_nick_cp() << " has quit: " << msg.text_cp);
-			else if(msg.cmd_cp == "PING")
-				send("PONG " + msg.text_cp);
-			else if(msg.cmd_cp == "332") // RPL_TOPIC
+			else if(msg.command == "QUIT")
+				prompt(msg.get_nick() << " has quit: " << msg.get_trailing());
+			else if(msg.command == "PING")
+				send("PONG " + msg.get_trailing());
+			else if(msg.command == "332") // RPL_TOPIC
 				;
-			else if(msg.cmd_cp == "333") // Undocumented
+			else if(msg.command == "333") // Undocumented
 				;
-			else if(msg.cmd_cp == "353") // RPL_NAMREPLY
+			else if(msg.command == "353") // RPL_NAMREPLY
 			{
 				str nick;
 				str_vec ops, vocs, nons;
-				std::istringstream iss(msg.text_cp);
+				std::istringstream iss(msg.get_trailing());
 				while(iss >> nick)
 				{
 					if(nick.empty())
@@ -263,22 +263,22 @@ public:
 				for(const str& nick: nons)
 					prompt(nick);
 			}
-			else if(msg.cmd_cp == "372") // RPL_MOTD
-				prompt("MOTD: " << msg.text_cp);
-			else if(msg.cmd_cp == "376") // RPL_ENDOFMOTD
-				prompt("MOTD: " << msg.text_cp);
-			else if(msg.cmd_cp == "433") // NICK IN USE
+			else if(msg.command == "372") // RPL_MOTD
+				prompt("MOTD: " << msg.get_trailing());
+			else if(msg.command == "376") // RPL_ENDOFMOTD
+				prompt("MOTD: " << msg.get_trailing());
+			else if(msg.command == "433") // NICK IN USE
 			{
 				++uniq;
 				if(uniq >= nick.size())
 					uniq = 0;
 			}
-			else if(msg.cmd_cp == "PONG")
-				pong = msg.text_cp;
-			else if(msg.cmd_cp == "NOTICE")
-				prompt("NOTICE: " << msg.text_cp);
-			else if(msg.cmd_cp == "PRIVMSG")
-				prompt(msg.to_cp << ": <" << msg.get_nick_cp() << "> " << msg.text_cp);
+			else if(msg.command == "PONG")
+				pong = msg.get_trailing();
+			else if(msg.command == "NOTICE")
+				prompt("NOTICE: " << msg.get_trailing());
+			else if(msg.command == "PRIVMSG")
+				prompt(msg.get_to() << ": <" << msg.get_nick() << "> " << msg.get_trailing());
 			else
 				prompt("recv: " << line);
 		}

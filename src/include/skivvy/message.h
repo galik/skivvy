@@ -51,20 +51,20 @@ using namespace skivvy::types;
 class message_cp
 {
 public:
-	str line_cp; // original message line
-	str from_cp; // ":Nick!user@network"
-	str cmd_cp; // "PRIVMSG"
-	str params_cp; // not same as user_params()
-	str to_cp; // "#oa-ictf" | Nick;
-	str text_cp; // "evening all";
+//	str line_cp; // original message line
+//	str from_cp; // ":Nick!user@network"
+//	str cmd_cp; // "PRIVMSG"
+//	str params_cp; // not same as user_params()
+//	str to_cp; // "#oa-ictf" | Nick;
+//	str text_cp; // "evening all";
 
 	void clear()
 	{
-		from_cp.clear();
-		cmd_cp.clear();
-		params_cp.clear();
-		to_cp.clear();
-		text_cp.clear();
+//		from_cp.clear();
+//		cmd_cp.clear();
+//		params_cp.clear();
+//		to_cp.clear();
+//		text_cp.clear();
 	}
 
 	/**
@@ -80,56 +80,80 @@ public:
 	friend std::ostream& printmsg_cp(std::ostream& os, const message_cp& m);
 
 	/**
-	 * deserialize
-	 */
-	friend std::istream& operator>>(std::istream& is, message_cp& m);
-
-	/**
-	 * serialize
-	 */
-	friend std::ostream& operator<<(std::ostream& os, const message_cp& m);
-
-	/**
 	 * Extract the nick of the message sender from the surrounding
 	 * server qualifier. Eg from "MyNick!~User@server.com it will"
 	 * extract "MyNick" as the 'sender'.
 	 */
-	str get_nick_cp() const; // MyNick
-	str get_user_cp() const; // ~User
-	str get_host_cp() const; // server.com
-	str get_userhost_cp() const; // ~User@server.com
-
-	/**
-	 * Extract the user command out from a channel/query message.
-	 * That is the first word (command word) of the text line that the bot uses
-	 * to test if it recognises it as a command, for example "!help".
-	 */
-	str get_user_cmd_cp() const;
-
-	/**
-	 * Extract the parameters out from a channel/query message.
-	 * That is everything after the first word (command word) of the text line that
-	 * the bot uses as parameters to a command that it recognises.
-	 */
-	str get_user_params_cp() const;
+//	str get_nick_cp() const; // MyNick
+//	str get_user_cp() const; // ~User
+//	str get_host_cp() const; // server.com
+//	str get_userhost_cp() const; // ~User@server.com
 
 	/**
 	 * Returns true if this message was sent from a channel
 	 * rather than a private message.
 	 */
-	bool from_channel_cp() const;
+//	bool from_channel_cp() const;
+
+};
+
+class message
+: public message_cp
+{
+public:
+
+	/**
+	 * Returns true if this message was sent from a channel
+	 * rather than a private message.
+	 */
+	bool from_channel() const;
+
+	/**
+	 * The first parameter (if present)
+	 * @return usually the channl or the nick (PM)
+	 */
+	str get_to() const;
 
 	/**
 	 * Returns either the command sender, or the sender's channel.
 	 * This is the correct person to sent replies to because
 	 * it will correctly deal with QUERY sessions.
 	 */
-	str reply_to_cp() const;
-};
+	str reply_to() const;
 
-class message
-: public message_cp
-{
+	/**
+	 * Extract the user command out from a channel/query message.
+	 * That is the first word (command word) of the text line that the bot uses
+	 * to test if it recognises it as a command, for example "!help".
+	 */
+	str get_user_cmd() const;
+
+	/**
+	 * Extract the parameters out from a channel/query message.
+	 * That is everything after the first word (command word) of the text line that
+	 * the bot uses as parameters to a command that it recognises.
+	 */
+	str get_user_params() const;
+
+	/**
+	 * Extract the nick of the message sender from the surrounding
+	 * server qualifier. Eg from "MyNick!~User@server.com it will"
+	 * extract "MyNick" as the 'sender'.
+	 */
+	str get_nick() const; // MyNick
+//	str get_user() const; // ~User
+//	str get_host() const; // server.com
+	str get_userhost() const; // ~User@server.com
+
+	/**
+	 * Return the relevant channel field (if any) for the
+	 * particular command this message contains.
+	 * @return
+	 */
+	str get_chan() const;
+
+	// TODO: get_subject() & get_object() ?
+
 	// The Augmented BNF representation for this is:
 	//
 	// message    =  [ ":" prefix SPACE ] command [ params ] crlf
@@ -239,22 +263,6 @@ private:
 		return is;
 	}
 
-//	siss& getmiddle(siss& is, str& middle) const
-//	{
-//		// middle: nospcrlfcl *(":" / nospcrlfcl)
-//		// middle: ("\0"|"\n"|"\r"|" "|":")^ ("\0"|"\n"|"\r"|" ")^*
-//
-//		if(is && soo::find(nospcrlfcl, is.peek()) != nospcrlfcl.cend())
-//			is.setstate(std::ios::failbit);
-//		else
-//		{
-//			middle = is.get();
-//			while(is && soo::find(nospcrlf, is.peek()) == nospcrlf.end())
-//				middle += is.get();
-//		}
-//		return is;
-//	}
-
 	siss& getmiddle(siss& is, str& middle) const
 	{
 		// middle: nospcrlfcl *(":" / nospcrlfcl)
@@ -311,6 +319,14 @@ public:
 	str prefix;
 	str command;
 	str params;
+
+	void clear()
+	{
+		message_cp::clear();
+		prefix.clear();
+		command.clear();
+		params.clear();
+	}
 
 	str get_servername() const
 	{
@@ -420,17 +436,6 @@ public:
 		return trailing;
 	}
 
-//	std::istream& parse(std::istream& is)
-//	{
-//		// MUST handle both
-//		// [":" prefix SPACE] command [params] cr
-//		// [":" prefix SPACE] command [params] crlf
-//		if(char c = is.peek() == ':') // optional prefix
-//			is.get(c) >> prefix;
-//		return std::getline(is >> command, params, '\r') >> std::ws;
-//	}
-
-//	bool parse(std::istream&& is) { return parse(is); }
 	bool parse(const str& line)
 	{
 		if(line.empty())
@@ -452,18 +457,16 @@ public:
 		return msg.parse(line);
 	}
 
-//	friend std::istream& parsemsg(std::istream& is, message& msg)
-//	{
-//		std::streampos pos = is.tellg();
-//		parsemsg_cp(is, msg);
-//		is.seekg(pos);
-//		return msg.parse(is);
-//	}
-//
-//	friend std::istream& parsemsg(std::istream&& is, message& msg)
-//	{
-//		return parsemsg(is, msg);
-//	}
+	/**
+	 * deserialize
+	 */
+	friend std::istream& operator>>(std::istream& is, message& m);
+
+	/**
+	 * serialize
+	 */
+	friend std::ostream& operator<<(std::ostream& os, const message& m);
+
 
 	friend std::ostream& printmsg(std::ostream& os, const message& m);
 };

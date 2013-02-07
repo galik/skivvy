@@ -312,41 +312,41 @@ bool IrcBot::fc_reply(const message& msg, const str& text)
 {
 	bug_func();
 	bug_var(text);
-	return fc.send(msg.to_cp, [&,msg,text]()->bool{ return irc.reply(msg, text); });
+	return fc.send(msg.get_to(), [&,msg,text]()->bool{ return irc.reply(msg, text); });
 }
 
 bool IrcBot::fc_reply_help(const message& msg, const str& text, const str& prefix)
 {
 	const str_vec v = split(text, '\n');
 	for(const str& s: v)
-		if(!fc.send(msg.to_cp, [&,msg,prefix,s]()->bool{ return irc.reply(msg, prefix + s); }))
+		if(!fc.send(msg.get_to(), [&,msg,prefix,s]()->bool{ return irc.reply(msg, prefix + s); }))
 			return false;
 	return true;
 }
 
 bool IrcBot::fc_reply_pm(const message& msg, const str& text)//, size_t priority)
 {
-	return fc.send(msg.to_cp, [&,msg,text]()->bool{ return irc.reply_pm(msg, text); });
+	return fc.send(msg.get_to(), [&,msg,text]()->bool{ return irc.reply_pm(msg, text); });
 }
 
 bool IrcBot::fc_reply_pm_help(const message& msg, const str& text, const str& prefix)
 {
 	const str_vec v = split(text, '\n');
 	for(const str& s: v)
-		if(!fc.send(msg.to_cp, [&,msg,prefix,s]()->bool{ return irc.reply_pm(msg, prefix + s); }))
+		if(!fc.send(msg.get_to(), [&,msg,prefix,s]()->bool{ return irc.reply_pm(msg, prefix + s); }))
 			return false;
 	return true;
 }
 
 bool IrcBot::cmd_error(const message& msg, const str& text, bool rv)
 {
-	fc_reply(msg, msg.get_user_cmd_cp() + ": " + text);
+	fc_reply(msg, msg.get_user_cmd() + ": " + text);
 	return rv;
 }
 
 bool IrcBot::cmd_error_pm(const message& msg, const str& text, bool rv)
 {
-	fc_reply_pm(msg, msg.get_user_cmd_cp() + ": " + text);
+	fc_reply_pm(msg, msg.get_user_cmd() + ": " + text);
 	return rv;
 }
 
@@ -469,7 +469,7 @@ void IrcBot::dispatch_msgevent(const message& msg)
 	lock_guard lock(msgevent_mtx);
 
 	msgevent_map::iterator mei;
-	if((mei = msgevents.find(msg.cmd_cp)) != msgevents.end())
+	if((mei = msgevents.find(msg.command)) != msgevents.end())
 	{
 		msgevent_lst& lst = mei->second;
 		msgevent_lst::iterator li;
@@ -632,17 +632,17 @@ bool IrcBot::init(const str& config_file)
 			"PING", "PONG", "372"
 		};
 
-		if(stl::find(nologs, msg.cmd_cp) == nologs.cend())
+		if(stl::find(nologs, msg.command) == nologs.cend())
 			log("recv: " << line);
 
-		if(msg.cmd_cp == PING)
+		if(msg.command == PING)
 		{
-			irc.pong(msg.text_cp);
+			irc.pong(msg.get_trailing());
 		}
-		else if(msg.cmd_cp == RPL_WELCOME)
+		else if(msg.command == RPL_WELCOME)
 		{
 			BUG_MSG_CP(msg, RPL_WELCOME);
-			this->nick = msg.to_cp;
+			this->nick = msg.get_to();
 
 			for(str prop: get_vec(PROP_ON_CONNECT))
 				exec(replace(prop, "$me", nick));
@@ -652,24 +652,25 @@ bool IrcBot::init(const str& config_file)
 				official_join(chan);
 			registered = true;
 		}
-		else if(msg.cmd_cp == RPL_NAMREPLY)
+		else if(msg.command == RPL_NAMREPLY)
 		{
 			BUG_MSG_CP(msg, RPL_NAMREPLY);
-			std::istringstream iss(msg.params_cp);
+//			std::istringstream iss(msg.params_cp);
 			str channel, nick;
-			iss >> channel >> channel >> channel;
+			str_vec params = msg.get_params();
+			if(params.size() > 2)
+				channel = params[2];
 			bug("channel: " << channel);
-			iss.clear();
-			iss.str(msg.text_cp);
+			siss iss(msg.get_trailing());
 			while(iss >> nick)
 				if(!nick.empty())
 					nicks[channel].insert((nick[0] == '@' || nick[0] == '+') ? nick.substr(1) : nick);
 		}
-		else if(msg.cmd_cp == ERR_NOORIGIN)
+		else if(msg.command == ERR_NOORIGIN)
 		{
 			BUG_MSG_CP(msg, ERR_NOORIGIN);
 		}
-		else if(msg.cmd_cp == ERR_NICKNAMEINUSE)
+		else if(msg.command == ERR_NICKNAMEINUSE)
 		{
 			BUG_MSG_CP(msg, ERR_NICKNAMEINUSE);
 			if(nick_number < info.nicks.size())
@@ -683,11 +684,11 @@ bool IrcBot::init(const str& config_file)
 				done = true;
 			}
 		}
-		else if(msg.cmd_cp == RPL_WHOISCHANNELS)
+		else if(msg.command == RPL_WHOISCHANNELS)
 		{
 			BUG_MSG_CP(msg, RPL_WHOISCHANNELS);
 		}
-		else if(msg.cmd_cp == INVITE)
+		else if(msg.command == INVITE)
 		{
 			BUG_MSG_CP(msg, INVITE);
 			// ===============================
@@ -709,53 +710,62 @@ bool IrcBot::init(const str& config_file)
 			// -------------------------------
 
 			str who, chan;
-			siss(msg.params_cp) >> who >> chan; // Skivvy00 #skivvy-test
+			str_vec params = msg.get_params();
+
+			if(params.size() > 0)
+				who = params[0];
+			if(params.size() > 1)
+				chan = params[1];
 
 			if(who == nick)
 			{
 				official_join(chan);
-				irc.say(chan, "I was invited by " + msg.get_nick_cp());
+				irc.say(chan, "I was invited by " + msg.get_nickname());
 				store->add("invite", chan);
 			}
 		}
-		else if(msg.cmd_cp == JOIN)
+		else if(msg.command == JOIN)
 		{
 			BUG_MSG_CP(msg, JOIN);
 			// track known nicks
-			const str who = msg.get_nick_cp();
-			str_set& known = nicks[msg.params_cp];
-			if(who != nick && known.find(who) == known.end())
-				known.insert(who);
+			const str who = msg.get_nickname();
+			str_vec params = msg.get_params();
+			if(!params.empty())
+			{
+				str_set& known = nicks[params[0]];
+				if(who != nick && known.find(who) == known.end())
+					known.insert(who);
+			}
 		}
-		else if(msg.cmd_cp == PART)
+		else if(msg.command == PART)
 		{
 			BUG_MSG_CP(msg, PART);
 		}
-		else if(msg.cmd_cp == KICK)
+		else if(msg.command == KICK)
 		{
 			BUG_MSG_CP(msg, KICK);
 		}
-		else if(msg.cmd_cp == NICK)
+		else if(msg.command == NICK)
 		{
 			// If the bot changed its own nick
-			if(msg.get_nick_cp() == nick)
-				nick = msg.text_cp;
+			if(msg.get_nickname() == nick)
+				nick = msg.get_trailing();
 		}
-		else if(msg.cmd_cp == PONG)
+		else if(msg.command == PONG)
 		{
 			pinger_info_mtx.lock();
-			pinger_info = msg.text_cp;
+			pinger_info = msg.get_trailing();
 			pinger_info_mtx.unlock();
 		}
-		else if(msg.cmd_cp == PRIVMSG)
+		else if(msg.command == PRIVMSG)
 		{
-			if(!msg.text_cp.empty() && msg.text_cp[0] == '!')
+			if(!msg.get_trailing().empty() && msg.get_trailing()[0] == '!')
 			{
-				str cmd = lowercase(msg.get_user_cmd_cp());
+				str cmd = lowercase(msg.get_user_cmd());
 				log("Processing command: " << cmd);
 				if(cmd == "!die")
 				{
-					if(!have(PROP_PASSWORD) || get(PROP_PASSWORD) == msg.get_user_params_cp())
+					if(!have(PROP_PASSWORD) || get(PROP_PASSWORD) == msg.get_user_params())
 					{
 						str_vec goodbyes = get_vec(PROP_GOODBYE);
 
@@ -775,7 +785,7 @@ bool IrcBot::init(const str& config_file)
 				}
 				else if(cmd == "!join")
 				{
-					str_vec param = split_params(msg.get_user_params_cp(), ' ');
+					str_vec param = split_params(msg.get_user_params(), ' ');
 
 					if(param.size() == 2)
 					{
@@ -799,7 +809,7 @@ bool IrcBot::init(const str& config_file)
 				}
 				else if(cmd == "!part")
 				{
-					str_vec param = split_params(msg.get_user_params_cp(), ' ');
+					str_vec param = split_params(msg.get_user_params(), ' ');
 
 					if(param.size() == 2)
 					{
@@ -820,7 +830,7 @@ bool IrcBot::init(const str& config_file)
 				else if(cmd == "!reconfigure")
 				{
 					str pass;
-					if(!(ios::getstring(siss(msg.get_user_params_cp()), pass)))
+					if(!(ios::getstring(siss(msg.get_user_params()), pass)))
 					{
 						fc_reply(msg, "!restart <password>");
 						continue;
@@ -836,7 +846,7 @@ bool IrcBot::init(const str& config_file)
 				else if(cmd == "!restart")
 				{
 					str pass;
-					std::istringstream iss(msg.get_user_params_cp());
+					std::istringstream iss(msg.get_user_params());
 
 					if(!(ios::getstring(iss, pass)))
 					{
@@ -855,7 +865,7 @@ bool IrcBot::init(const str& config_file)
 					//str_vec params = split_params(msg.get_user_params(), ' ');
 
 					str pass;
-					std::istringstream iss(msg.get_user_params_cp());
+					std::istringstream iss(msg.get_user_params());
 
 					if(!(ios::getstring(iss, pass)))
 					{
@@ -910,8 +920,8 @@ bool IrcBot::init(const str& config_file)
 				}
 				else if(cmd == "!help")
 				{
-					const str sender = msg.get_nick_cp();
-					const str params = msg.get_user_params_cp();
+					const str sender = msg.get_nickname();
+					const str params = msg.get_user_params();
 
 					if(!params.empty())
 					{
@@ -919,7 +929,7 @@ bool IrcBot::init(const str& config_file)
 						continue;
 					}
 
-					if(msg.from_cp.empty())
+					if(msg.prefix.empty())
 						continue;
 
 					fc_reply_pm(msg, "List of commands:");
@@ -944,18 +954,18 @@ bool IrcBot::init(const str& config_file)
 				else
 				{
 					for(const str& ban: get_vec("ban"))
-						if(wild_match(ban, msg.get_userhost_cp()))
+						if(wild_match(ban, msg.get_userhost()))
 						{
-							log("BANNED: " << msg.get_nick_cp());
+							log("BANNED: " << msg.get_nickname());
 							continue;
 						}
 					std::async(std::launch::async, [&]{ execute(cmd, msg); });
 				}
 			}
-			else if(!msg.text_cp.empty() && msg.to_cp == nick)
+			else if(!msg.get_trailing().empty() && msg.get_to() == nick)
 			{
 				// PM to bot accepts commands without !
-				str cmd = lowercase(msg.get_user_cmd_cp());
+				str cmd = lowercase(msg.get_user_cmd());
 				if(commands.find(cmd) != commands.end())
 					execute(cmd, msg);
 			}
@@ -999,8 +1009,8 @@ bool IrcBot::allow_cmd_access(const str& cmd, const message& msg)
 	if(has_access(cmd, "*"))
 		return true;
 
-	if(msg.from_channel_cp())
-		if(has_access(cmd, msg.to_cp))
+	if(msg.from_channel())
+		if(has_access(cmd, msg.get_to()))
 			return true;
 
 	if(has_access(cmd, "PM"))
@@ -1023,12 +1033,12 @@ void IrcBot::execute(const str& cmd, const message& msg)
 	{
 		if(allow_cmd_access(cmd, msg))
 			commands[cmd]->execute(cmd, msg);
-		else if(msg.from_channel_cp())
+		else if(msg.from_channel())
 			log("PLUGIN " << commands[cmd]->get_name()
-				<< " NOT AUTHORISED FOR CHANNEL: " << msg.to_cp);
+				<< " NOT AUTHORISED FOR CHANNEL: " << msg.get_to());
 		else
 			log("PLUGIN " << commands[cmd]->get_name()
-				<< " NOT AUTHORISED FOR PM TO: " << msg.get_nick_cp());
+				<< " NOT AUTHORISED FOR PM TO: " << msg.get_nickname());
 	}
 }
 
@@ -1452,12 +1462,12 @@ void IrcBot::pinger()
 
 bool IrcBot::extract_params(const message& msg, std::initializer_list<str*> args, bool report)
 {
-	std::istringstream iss(msg.get_user_params_cp());
+	std::istringstream iss(msg.get_user_params());
 	for(str* arg: args)
 		if(!(ios::getstring(iss, *arg)))
 		{
 			if(report)
-				fc_reply_help(msg, help(msg.get_user_cmd_cp()), "04" + msg.get_user_cmd_cp() + ": 01");
+				fc_reply_help(msg, help(msg.get_user_cmd()), "04" + msg.get_user_cmd() + ": 01");
 			return false;
 		}
 	return true;

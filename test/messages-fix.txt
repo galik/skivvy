@@ -1,545 +1,842 @@
-2013-02-06 13:51:16: ====================================================================
-2013-02-06 13:51:16: PASS none
-2013-02-06 13:51:16: --------------------------------------------------------------------
-2013-02-06 13:51:16: prefix        : 
-2013-02-06 13:51:16: cmd           : PASS
-2013-02-06 13:51:16: params        :  none
-2013-02-06 13:51:16: trailing      : 
-2013-02-06 13:51:16: ====================================================================
-2013-02-06 13:51:16: NICK Skivvy
-2013-02-06 13:51:16: --------------------------------------------------------------------
-2013-02-06 13:51:16: prefix        : 
-2013-02-06 13:51:16: cmd           : NICK
-2013-02-06 13:51:16: params        :  Skivvy
-2013-02-06 13:51:16: trailing      : 
-2013-02-06 13:51:16: ====================================================================
-2013-02-06 13:51:16: USER Skivvy 0 * :Skivvy
-2013-02-06 13:51:16: --------------------------------------------------------------------
-2013-02-06 13:51:16: prefix        : 
-2013-02-06 13:51:16: cmd           : USER
-2013-02-06 13:51:16: params        :  Skivvy 0 * :Skivvy
-2013-02-06 13:51:16: middle        : Skivvy
-2013-02-06 13:51:16: middle        : 0
-2013-02-06 13:51:16: middle        : *
-2013-02-06 13:51:16: trailing      : Skivvy
-2013-02-06 13:51:16: ====================================================================
-2013-02-06 13:51:16: PRIVMSG Q@CServe.quakenet.org :AUTH Skivvy password
-2013-02-06 13:51:16: --------------------------------------------------------------------
-2013-02-06 13:51:16: prefix        : 
-2013-02-06 13:51:16: cmd           : PRIVMSG
-2013-02-06 13:51:16: params        :  Q@CServe.quakenet.org :AUTH Skivvy password
-2013-02-06 13:51:16: middle        : Q@CServe.quakenet.org
-2013-02-06 13:51:16: trailing      : AUTH Skivvy password
-2013-02-06 13:51:16: ====================================================================
-2013-02-06 13:51:16: MODE Skivvy +x
-2013-02-06 13:51:16: --------------------------------------------------------------------
-2013-02-06 13:51:16: prefix        : 
-2013-02-06 13:51:16: cmd           : MODE
-2013-02-06 13:51:16: params        :  Skivvy +x
-2013-02-06 13:51:16: middle        : Skivvy
-2013-02-06 13:51:16: trailing      : 
-2013-02-06 13:51:16: ====================================================================
-2013-02-06 13:51:16: JOIN #skivvy
-2013-02-06 13:51:16: --------------------------------------------------------------------
-2013-02-06 13:51:16: prefix        : 
-2013-02-06 13:51:16: cmd           : JOIN
-2013-02-06 13:51:16: params        :  #skivvy
-2013-02-06 13:51:16: trailing      : 
-2013-02-06 13:51:16: ====================================================================
-2013-02-06 13:51:16: PRIVMSG #skivvy :IrcBot v0.2-20130202-204322-0034-1F8EDD6
-2013-02-06 13:51:16: --------------------------------------------------------------------
-2013-02-06 13:51:16: prefix        : 
-2013-02-06 13:51:16: cmd           : PRIVMSG
-2013-02-06 13:51:16: params        :  #skivvy :IrcBot v0.2-20130202-204322-0034-1F8EDD6
-2013-02-06 13:51:16: middle        : #skivvy
-2013-02-06 13:51:16: trailing      : IrcBot v0.2-20130202-204322-0034-1F8EDD6
-2013-02-06 13:51:16: ====================================================================
-2013-02-06 13:51:16: PRIVMSG #skivvy :weeeeeeee...
-2013-02-06 13:51:16: --------------------------------------------------------------------
-2013-02-06 13:51:16: prefix        : 
-2013-02-06 13:51:16: cmd           : PRIVMSG
-2013-02-06 13:51:16: params        :  #skivvy :weeeeeeee...
-2013-02-06 13:51:16: middle        : #skivvy
-2013-02-06 13:51:16: trailing      : weeeeeeee...
-2013-02-06 13:51:16: ====================================================================
-2013-02-06 13:51:16: PART #skivvy
-2013-02-06 13:51:16: --------------------------------------------------------------------
-2013-02-06 13:51:16: prefix        : 
-2013-02-06 13:51:16: cmd           : PART
-2013-02-06 13:51:16: params        :  #skivvy
-2013-02-06 13:51:16: trailing      : 
-2013-02-06 13:51:16: ====================================================================
-2013-02-06 13:51:16: QUIT :Going off line...
-2013-02-06 13:51:16: --------------------------------------------------------------------
-2013-02-06 13:51:16: prefix        : 
-2013-02-06 13:51:16: cmd           : QUIT
-2013-02-06 13:51:16: params        :  :Going off line...
-2013-02-06 13:51:16: trailing      : Going off line...
-2013-02-06 13:51:16: ====================================================================
-2013-02-06 13:51:16: :dreamhack.se.quakenet.org 252 Skivvy 65 :operator(s) online
-2013-02-06 13:51:16: --------------------------------------------------------------------
-2013-02-06 13:51:16: prefix        : dreamhack.se.quakenet.org
-2013-02-06 13:51:16: cmd           : 252
-2013-02-06 13:51:16: params        :  Skivvy 65 :operator(s) online
-2013-02-06 13:51:16: middle        : Skivvy
-2013-02-06 13:51:16: middle        : 65
-2013-02-06 13:51:16: trailing      : operator(s) online
-2013-02-06 13:51:16: ====================================================================
-2013-02-06 13:51:16: :dreamhack.se.quakenet.org 253 Skivvy 2 :unknown connection(s)
-2013-02-06 13:51:16: --------------------------------------------------------------------
-2013-02-06 13:51:16: prefix        : dreamhack.se.quakenet.org
-2013-02-06 13:51:16: cmd           : 253
-2013-02-06 13:51:16: params        :  Skivvy 2 :unknown connection(s)
-2013-02-06 13:51:16: middle        : Skivvy
-2013-02-06 13:51:16: middle        : 2
-2013-02-06 13:51:16: trailing      : unknown connection(s)
-2013-02-06 13:51:16: ====================================================================
-2013-02-06 13:51:16: :aclown!aclown@v2201205126538297.yourvserver.net NICK :a_way
-2013-02-06 13:51:16: --------------------------------------------------------------------
-2013-02-06 13:51:16: prefix        : aclown!aclown@v2201205126538297.yourvserver.net
-2013-02-06 13:51:16: cmd           : NICK
-2013-02-06 13:51:16: params        :  :a_way
-2013-02-06 13:51:16: trailing      : a_way
-2013-02-06 13:51:16: ====================================================================
-2013-02-06 13:51:16: :wing_9!~tobias@p548CDCA9.dip.t-dialin.net QUIT :Quit: Konversation terminated!
-2013-02-06 13:51:16: --------------------------------------------------------------------
-2013-02-06 13:51:16: prefix        : wing_9!~tobias@p548CDCA9.dip.t-dialin.net
-2013-02-06 13:51:16: cmd           : QUIT
-2013-02-06 13:51:16: params        :  :Quit: Konversation terminated!
-2013-02-06 13:51:16: trailing      : Quit: Konversation terminated!
-2013-02-06 13:51:16: ====================================================================
-2013-02-06 13:51:16: NOTICE AUTH :*** Looking up your hostname
-2013-02-06 13:51:16: --------------------------------------------------------------------
-2013-02-06 13:51:16: prefix        : wing_9!~tobias@p548CDCA9.dip.t-dialin.net
-2013-02-06 13:51:16: cmd           : NOTICE
-2013-02-06 13:51:16: params        :  AUTH :*** Looking up your hostname
-2013-02-06 13:51:16: middle        : AUTH
-2013-02-06 13:51:16: trailing      : *** Looking up your hostname
-2013-02-06 13:51:16: ====================================================================
-2013-02-06 13:51:16: NOTICE AUTH :*** Checking Ident
-2013-02-06 13:51:16: --------------------------------------------------------------------
-2013-02-06 13:51:16: prefix        : wing_9!~tobias@p548CDCA9.dip.t-dialin.net
-2013-02-06 13:51:16: cmd           : NOTICE
-2013-02-06 13:51:16: params        :  AUTH :*** Checking Ident
-2013-02-06 13:51:16: middle        : AUTH
-2013-02-06 13:51:16: trailing      : *** Checking Ident
-2013-02-06 13:51:16: ====================================================================
-2013-02-06 13:51:16: NOTICE AUTH :*** Found your hostname
-2013-02-06 13:51:16: --------------------------------------------------------------------
-2013-02-06 13:51:16: prefix        : wing_9!~tobias@p548CDCA9.dip.t-dialin.net
-2013-02-06 13:51:16: cmd           : NOTICE
-2013-02-06 13:51:16: params        :  AUTH :*** Found your hostname
-2013-02-06 13:51:16: middle        : AUTH
-2013-02-06 13:51:16: trailing      : *** Found your hostname
-2013-02-06 13:51:16: ====================================================================
-2013-02-06 13:51:16: recv: NOTICE AUTH :*** No ident response
-2013-02-06 13:51:16: --------------------------------------------------------------------
-2013-02-06 13:51:16: prefix        : wing_9!~tobias@p548CDCA9.dip.t-dialin.net
-2013-02-06 13:51:16: cmd           : recv:
-2013-02-06 13:51:16: params        :  NOTICE AUTH :*** No ident response
-2013-02-06 13:51:16: middle        : NOTICE
-2013-02-06 13:51:16: middle        : AUTH
-2013-02-06 13:51:16: trailing      : *** No ident response
-2013-02-06 13:51:16: ====================================================================
-2013-02-06 13:51:16: :dreamhack.se.quakenet.org 001 Skivvy :Welcome to the QuakeNet IRC Network, Skivvy
-2013-02-06 13:51:16: --------------------------------------------------------------------
-2013-02-06 13:51:16: prefix        : dreamhack.se.quakenet.org
-2013-02-06 13:51:16: cmd           : 001
-2013-02-06 13:51:16: params        :  Skivvy :Welcome to the QuakeNet IRC Network, Skivvy
-2013-02-06 13:51:16: middle        : Skivvy
-2013-02-06 13:51:16: trailing      : Welcome to the QuakeNet IRC Network, Skivvy
-2013-02-06 13:51:16: ====================================================================
-2013-02-06 13:51:16: :dreamhack.se.quakenet.org 002 Skivvy :Your host is dreamhack.se.quakenet.org, running version u2.10.12.10+snircd(1.3.4a)
-2013-02-06 13:51:16: --------------------------------------------------------------------
-2013-02-06 13:51:16: prefix        : dreamhack.se.quakenet.org
-2013-02-06 13:51:16: cmd           : 002
-2013-02-06 13:51:16: params        :  Skivvy :Your host is dreamhack.se.quakenet.org, running version u2.10.12.10+snircd(1.3.4a)
-2013-02-06 13:51:16: middle        : Skivvy
-2013-02-06 13:51:16: trailing      : Your host is dreamhack.se.quakenet.org, running version u2.10.12.10+snircd(1.3.4a)
-2013-02-06 13:51:16: ====================================================================
-2013-02-06 13:51:16: :dreamhack.se.quakenet.org 003 Skivvy :This server was created Fri Jun 22 2012 at 20:47:31 CEST
-2013-02-06 13:51:16: --------------------------------------------------------------------
-2013-02-06 13:51:16: prefix        : dreamhack.se.quakenet.org
-2013-02-06 13:51:16: cmd           : 003
-2013-02-06 13:51:16: params        :  Skivvy :This server was created Fri Jun 22 2012 at 20:47:31 CEST
-2013-02-06 13:51:16: middle        : Skivvy
-2013-02-06 13:51:16: trailing      : This server was created Fri Jun 22 2012 at 20:47:31 CEST
-2013-02-06 13:51:16: ====================================================================
-2013-02-06 13:51:16: :dreamhack.se.quakenet.org 004 Skivvy dreamhack.se.quakenet.org u2.10.12.10+snircd(1.3.4a) dioswkgxRXInP biklmnopstvrDcCNuMT bklov
-2013-02-06 13:51:16: --------------------------------------------------------------------
-2013-02-06 13:51:16: prefix        : dreamhack.se.quakenet.org
-2013-02-06 13:51:16: cmd           : 004
-2013-02-06 13:51:16: params        :  Skivvy dreamhack.se.quakenet.org u2.10.12.10+snircd(1.3.4a) dioswkgxRXInP biklmnopstvrDcCNuMT bklov
-2013-02-06 13:51:16: middle        : Skivvy
-2013-02-06 13:51:16: middle        : dreamhack.se.quakenet.org
-2013-02-06 13:51:16: middle        : u2.10.12.10+snircd(1.3.4a)
-2013-02-06 13:51:16: middle        : dioswkgxRXInP
-2013-02-06 13:51:16: middle        : biklmnopstvrDcCNuMT
-2013-02-06 13:51:16: trailing      : 
-2013-02-06 13:51:16: ====================================================================
-2013-02-06 13:51:16: :dreamhack.se.quakenet.org 005 Skivvy WHOX WALLCHOPS WALLVOICES USERIP CPRIVMSG CNOTICE SILENCE=15 MODES=6 MAXCHANNELS=20 MAXBANS=45 NICKLEN=15 :are supported by this server
-2013-02-06 13:51:16: --------------------------------------------------------------------
-2013-02-06 13:51:16: prefix        : dreamhack.se.quakenet.org
-2013-02-06 13:51:16: cmd           : 005
-2013-02-06 13:51:16: params        :  Skivvy WHOX WALLCHOPS WALLVOICES USERIP CPRIVMSG CNOTICE SILENCE=15 MODES=6 MAXCHANNELS=20 MAXBANS=45 NICKLEN=15 :are supported by this server
-2013-02-06 13:51:16: middle        : Skivvy
-2013-02-06 13:51:16: middle        : WHOX
-2013-02-06 13:51:16: middle        : WALLCHOPS
-2013-02-06 13:51:16: middle        : WALLVOICES
-2013-02-06 13:51:16: middle        : USERIP
-2013-02-06 13:51:16: middle        : CPRIVMSG
-2013-02-06 13:51:16: middle        : CNOTICE
-2013-02-06 13:51:16: middle        : SILENCE=15
-2013-02-06 13:51:16: middle        : MODES=6
-2013-02-06 13:51:16: middle        : MAXCHANNELS=20
-2013-02-06 13:51:16: middle        : MAXBANS=45
-2013-02-06 13:51:16: middle        : NICKLEN=15
-2013-02-06 13:51:16: trailing      : are supported by this server
-2013-02-06 13:51:16: ====================================================================
-2013-02-06 13:51:16: :dreamhack.se.quakenet.org 005 Skivvy MAXNICKLEN=15 TOPICLEN=250 AWAYLEN=160 KICKLEN=250 CHANNELLEN=200 MAXCHANNELLEN=200 CHANTYPES=#& PREFIX=(ov)@+ STATUSMSG=@+ CHANMODES=b,k,l,imnpstrDducCNMT CASEMAPPING=rfc1459 NETWORK=QuakeNet :are supported by this server
-2013-02-06 13:51:16: --------------------------------------------------------------------
-2013-02-06 13:51:16: prefix        : dreamhack.se.quakenet.org
-2013-02-06 13:51:16: cmd           : 005
-2013-02-06 13:51:16: params        :  Skivvy MAXNICKLEN=15 TOPICLEN=250 AWAYLEN=160 KICKLEN=250 CHANNELLEN=200 MAXCHANNELLEN=200 CHANTYPES=#& PREFIX=(ov)@+ STATUSMSG=@+ CHANMODES=b,k,l,imnpstrDducCNMT CASEMAPPING=rfc1459 NETWORK=QuakeNet :are supported by this server
-2013-02-06 13:51:16: middle        : Skivvy
-2013-02-06 13:51:16: middle        : MAXNICKLEN=15
-2013-02-06 13:51:16: middle        : TOPICLEN=250
-2013-02-06 13:51:16: middle        : AWAYLEN=160
-2013-02-06 13:51:16: middle        : KICKLEN=250
-2013-02-06 13:51:16: middle        : CHANNELLEN=200
-2013-02-06 13:51:16: middle        : MAXCHANNELLEN=200
-2013-02-06 13:51:16: middle        : CHANTYPES=#&
-2013-02-06 13:51:16: middle        : PREFIX=(ov)@+
-2013-02-06 13:51:16: middle        : STATUSMSG=@+
-2013-02-06 13:51:16: middle        : CHANMODES=b,k,l,imnpstrDducCNMT
-2013-02-06 13:51:16: middle        : CASEMAPPING=rfc1459
-2013-02-06 13:51:16: middle        : NETWORK=QuakeNet
-2013-02-06 13:51:16: trailing      : are supported by this server
-2013-02-06 13:51:16: ====================================================================
-2013-02-06 13:51:16: :dreamhack.se.quakenet.org 251 Skivvy :There are 16 users and 61463 invisible on 38 servers
-2013-02-06 13:51:16: --------------------------------------------------------------------
-2013-02-06 13:51:16: prefix        : dreamhack.se.quakenet.org
-2013-02-06 13:51:16: cmd           : 251
-2013-02-06 13:51:16: params        :  Skivvy :There are 16 users and 61463 invisible on 38 servers
-2013-02-06 13:51:16: middle        : Skivvy
-2013-02-06 13:51:16: trailing      : There are 16 users and 61463 invisible on 38 servers
-2013-02-06 13:51:16: ====================================================================
-2013-02-06 13:51:16: :dreamhack.se.quakenet.org 252 Skivvy 65 :operator(s) online
-2013-02-06 13:51:16: --------------------------------------------------------------------
-2013-02-06 13:51:16: prefix        : dreamhack.se.quakenet.org
-2013-02-06 13:51:16: cmd           : 252
-2013-02-06 13:51:16: params        :  Skivvy 65 :operator(s) online
-2013-02-06 13:51:16: middle        : Skivvy
-2013-02-06 13:51:16: middle        : 65
-2013-02-06 13:51:16: trailing      : operator(s) online
-2013-02-06 13:51:16: ====================================================================
-2013-02-06 13:51:16: :dreamhack.se.quakenet.org 254 Skivvy 41143 :channels formed
-2013-02-06 13:51:16: --------------------------------------------------------------------
-2013-02-06 13:51:16: prefix        : dreamhack.se.quakenet.org
-2013-02-06 13:51:16: cmd           : 254
-2013-02-06 13:51:16: params        :  Skivvy 41143 :channels formed
-2013-02-06 13:51:16: middle        : Skivvy
-2013-02-06 13:51:16: middle        : 41143
-2013-02-06 13:51:16: trailing      : channels formed
-2013-02-06 13:51:16: ====================================================================
-2013-02-06 13:51:16: :dreamhack.se.quakenet.org 255 Skivvy :I have 3349 clients and 1 servers
-2013-02-06 13:51:16: --------------------------------------------------------------------
-2013-02-06 13:51:16: prefix        : dreamhack.se.quakenet.org
-2013-02-06 13:51:16: cmd           : 255
-2013-02-06 13:51:16: params        :  Skivvy :I have 3349 clients and 1 servers
-2013-02-06 13:51:16: middle        : Skivvy
-2013-02-06 13:51:16: trailing      : I have 3349 clients and 1 servers
-2013-02-06 13:51:16: ====================================================================
-2013-02-06 13:51:16: :dreamhack.se.quakenet.org NOTICE Skivvy :Highest connection count: 4411 (4410 clients)
-2013-02-06 13:51:16: --------------------------------------------------------------------
-2013-02-06 13:51:16: prefix        : dreamhack.se.quakenet.org
-2013-02-06 13:51:16: cmd           : NOTICE
-2013-02-06 13:51:16: params        :  Skivvy :Highest connection count: 4411 (4410 clients)
-2013-02-06 13:51:16: middle        : Skivvy
-2013-02-06 13:51:16: trailing      : Highest connection count: 4411 (4410 clients)
-2013-02-06 13:51:16: ====================================================================
-2013-02-06 13:51:16: :dreamhack.se.quakenet.org 375 Skivvy :- dreamhack.se.quakenet.org Message of the Day - 
-2013-02-06 13:51:16: --------------------------------------------------------------------
-2013-02-06 13:51:16: prefix        : dreamhack.se.quakenet.org
-2013-02-06 13:51:16: cmd           : 375
-2013-02-06 13:51:16: params        :  Skivvy :- dreamhack.se.quakenet.org Message of the Day - 
-2013-02-06 13:51:16: middle        : Skivvy
-2013-02-06 13:51:16: trailing      : - dreamhack.se.quakenet.org Message of the Day - 
-2013-02-06 13:51:16: ====================================================================
-2013-02-06 13:51:16: :dreamhack.se.quakenet.org 376 Skivvy :End of /MOTD command.
-2013-02-06 13:51:16: --------------------------------------------------------------------
-2013-02-06 13:51:16: prefix        : dreamhack.se.quakenet.org
-2013-02-06 13:51:16: cmd           : 376
-2013-02-06 13:51:16: params        :  Skivvy :End of /MOTD command.
-2013-02-06 13:51:16: middle        : Skivvy
-2013-02-06 13:51:16: trailing      : End of /MOTD command.
-2013-02-06 13:51:16: ====================================================================
-2013-02-06 13:51:16: :dreamhack.se.quakenet.org NOTICE Skivvy :on 3 ca 1(4) ft 20(20) tr
-2013-02-06 13:51:16: --------------------------------------------------------------------
-2013-02-06 13:51:16: prefix        : dreamhack.se.quakenet.org
-2013-02-06 13:51:16: cmd           : NOTICE
-2013-02-06 13:51:16: params        :  Skivvy :on 3 ca 1(4) ft 20(20) tr
-2013-02-06 13:51:16: middle        : Skivvy
-2013-02-06 13:51:16: trailing      : on 3 ca 1(4) ft 20(20) tr
-2013-02-06 13:51:16: ====================================================================
-2013-02-06 13:51:16: :dreamhack.se.quakenet.org 221 Skivvy +i
-2013-02-06 13:51:16: --------------------------------------------------------------------
-2013-02-06 13:51:16: prefix        : dreamhack.se.quakenet.org
-2013-02-06 13:51:16: cmd           : 221
-2013-02-06 13:51:16: params        :  Skivvy +i
-2013-02-06 13:51:16: middle        : Skivvy
-2013-02-06 13:51:16: trailing      : 
-2013-02-06 13:51:16: ====================================================================
-2013-02-06 13:51:16: :Skivvy!~Skivvy@cpc2-pool13-2-0-cust799.15-1.cable.virginmedia.com MODE Skivvy +i
-2013-02-06 13:51:16: --------------------------------------------------------------------
-2013-02-06 13:51:16: prefix        : Skivvy!~Skivvy@cpc2-pool13-2-0-cust799.15-1.cable.virginmedia.com
-2013-02-06 13:51:16: cmd           : MODE
-2013-02-06 13:51:16: params        :  Skivvy +i
-2013-02-06 13:51:16: middle        : Skivvy
-2013-02-06 13:51:16: trailing      : 
-2013-02-06 13:51:16: ====================================================================
-2013-02-06 13:51:16: :Skivvy!~Skivvy@cpc2-pool13-2-0-cust799.15-1.cable.virginmedia.com MODE Skivvy +x
-2013-02-06 13:51:16: --------------------------------------------------------------------
-2013-02-06 13:51:16: prefix        : Skivvy!~Skivvy@cpc2-pool13-2-0-cust799.15-1.cable.virginmedia.com
-2013-02-06 13:51:16: cmd           : MODE
-2013-02-06 13:51:16: params        :  Skivvy +x
-2013-02-06 13:51:16: middle        : Skivvy
-2013-02-06 13:51:16: trailing      : 
-2013-02-06 13:51:16: ====================================================================
-2013-02-06 13:51:16: :dreamhack.se.quakenet.org 396 Skivvy Skivvy.users.quakenet.org :is now your hidden host
-2013-02-06 13:51:16: --------------------------------------------------------------------
-2013-02-06 13:51:16: prefix        : dreamhack.se.quakenet.org
-2013-02-06 13:51:16: cmd           : 396
-2013-02-06 13:51:16: params        :  Skivvy Skivvy.users.quakenet.org :is now your hidden host
-2013-02-06 13:51:16: middle        : Skivvy
-2013-02-06 13:51:16: middle        : Skivvy.users.quakenet.org
-2013-02-06 13:51:16: trailing      : is now your hidden host
-2013-02-06 13:51:16: ====================================================================
-2013-02-06 13:51:16: :Q!TheQBot@CServe.quakenet.org NOTICE Skivvy :You are now logged in as Skivvy.
-2013-02-06 13:51:16: --------------------------------------------------------------------
-2013-02-06 13:51:16: prefix        : Q!TheQBot@CServe.quakenet.org
-2013-02-06 13:51:16: cmd           : NOTICE
-2013-02-06 13:51:16: params        :  Skivvy :You are now logged in as Skivvy.
-2013-02-06 13:51:16: middle        : Skivvy
-2013-02-06 13:51:16: trailing      : You are now logged in as Skivvy.
-2013-02-06 13:51:16: ====================================================================
-2013-02-06 13:51:16: :Q!TheQBot@CServe.quakenet.org NOTICE Skivvy :Remember: NO-ONE from QuakeNet will ever ask for your password.  NEVER send your password to ANYONE except Q@CServe.quakenet.org.
-2013-02-06 13:51:16: --------------------------------------------------------------------
-2013-02-06 13:51:16: prefix        : Q!TheQBot@CServe.quakenet.org
-2013-02-06 13:51:16: cmd           : NOTICE
-2013-02-06 13:51:16: params        :  Skivvy :Remember: NO-ONE from QuakeNet will ever ask for your password.  NEVER send your password to ANYONE except Q@CServe.quakenet.org.
-2013-02-06 13:51:16: middle        : Skivvy
-2013-02-06 13:51:16: trailing      : Remember: NO-ONE from QuakeNet will ever ask for your password.  NEVER send your password to ANYONE except Q@CServe.quakenet.org.
-2013-02-06 13:51:16: ====================================================================
-2013-02-06 13:51:16: :Skivvy!~Skivvy@Skivvy.users.quakenet.org JOIN #openarenahelp
-2013-02-06 13:51:16: --------------------------------------------------------------------
-2013-02-06 13:51:16: prefix        : Skivvy!~Skivvy@Skivvy.users.quakenet.org
-2013-02-06 13:51:16: cmd           : JOIN
-2013-02-06 13:51:16: params        :  #openarenahelp
-2013-02-06 13:51:16: trailing      : 
-2013-02-06 13:51:16: ====================================================================
-2013-02-06 13:51:16: :dreamhack.se.quakenet.org 332 Skivvy #openarenahelp :Reclaimed by Skivvy (Suckit up Hit|er)
-2013-02-06 13:51:16: --------------------------------------------------------------------
-2013-02-06 13:51:16: prefix        : dreamhack.se.quakenet.org
-2013-02-06 13:51:16: cmd           : 332
-2013-02-06 13:51:16: params        :  Skivvy #openarenahelp :Reclaimed by Skivvy (Suckit up Hit|er)
-2013-02-06 13:51:16: middle        : Skivvy
-2013-02-06 13:51:16: middle        : #openarenahelp
-2013-02-06 13:51:16: trailing      : Reclaimed by Skivvy (Suckit up Hit|er)
-2013-02-06 13:51:16: ====================================================================
-2013-02-06 13:51:16: :dreamhack.se.quakenet.org 333 Skivvy #openarenahelp SooKee 1358062256
-2013-02-06 13:51:16: --------------------------------------------------------------------
-2013-02-06 13:51:16: prefix        : dreamhack.se.quakenet.org
-2013-02-06 13:51:16: cmd           : 333
-2013-02-06 13:51:16: params        :  Skivvy #openarenahelp SooKee 1358062256
-2013-02-06 13:51:16: middle        : Skivvy
-2013-02-06 13:51:16: middle        : #openarenahelp
-2013-02-06 13:51:16: middle        : SooKee
-2013-02-06 13:51:16: trailing      : 
-2013-02-06 13:51:16: ====================================================================
-2013-02-06 13:51:16: :dreamhack.se.quakenet.org 353 Skivvy = #openarenahelp :Skivvy +wing_9 +Light3r @Zimmer106 +Zim-blackberry @Zimmermint +Siju +]c[razy @ali3n +capo @Pixelized @SooKee +pet @Q
-2013-02-06 13:51:16: --------------------------------------------------------------------
-2013-02-06 13:51:16: prefix        : dreamhack.se.quakenet.org
-2013-02-06 13:51:16: cmd           : 353
-2013-02-06 13:51:16: params        :  Skivvy = #openarenahelp :Skivvy +wing_9 +Light3r @Zimmer106 +Zim-blackberry @Zimmermint +Siju +]c[razy @ali3n +capo @Pixelized @SooKee +pet @Q
-2013-02-06 13:51:16: middle        : Skivvy
-2013-02-06 13:51:16: middle        : =
-2013-02-06 13:51:16: middle        : #openarenahelp
-2013-02-06 13:51:16: trailing      : Skivvy +wing_9 +Light3r @Zimmer106 +Zim-blackberry @Zimmermint +Siju +]c[razy @ali3n +capo @Pixelized @SooKee +pet @Q
-2013-02-06 13:51:16: ====================================================================
-2013-02-06 13:51:16: :dreamhack.se.quakenet.org 366 Skivvy #openarenahelp :End of /NAMES list.
-2013-02-06 13:51:16: --------------------------------------------------------------------
-2013-02-06 13:51:16: prefix        : dreamhack.se.quakenet.org
-2013-02-06 13:51:16: cmd           : 366
-2013-02-06 13:51:16: params        :  Skivvy #openarenahelp :End of /NAMES list.
-2013-02-06 13:51:16: middle        : Skivvy
-2013-02-06 13:51:16: middle        : #openarenahelp
-2013-02-06 13:51:16: trailing      : End of /NAMES list.
-2013-02-06 13:51:16: ====================================================================
-2013-02-06 13:51:16: :Q!TheQBot@CServe.quakenet.org MODE #openarenahelp +o Skivvy
-2013-02-06 13:51:16: --------------------------------------------------------------------
-2013-02-06 13:51:16: prefix        : Q!TheQBot@CServe.quakenet.org
-2013-02-06 13:51:16: cmd           : MODE
-2013-02-06 13:51:16: params        :  #openarenahelp +o Skivvy
-2013-02-06 13:51:16: middle        : #openarenahelp
-2013-02-06 13:51:16: middle        : +o
-2013-02-06 13:51:16: trailing      : 
-2013-02-06 13:51:16: ====================================================================
-2013-02-06 13:51:16: NOTICE AUTH :*** Looking up your hostname
-2013-02-06 13:51:16: --------------------------------------------------------------------
-2013-02-06 13:51:16: prefix        : Q!TheQBot@CServe.quakenet.org
-2013-02-06 13:51:16: cmd           : NOTICE
-2013-02-06 13:51:16: params        :  AUTH :*** Looking up your hostname
-2013-02-06 13:51:16: middle        : AUTH
-2013-02-06 13:51:16: trailing      : *** Looking up your hostname
-2013-02-06 13:51:16: ====================================================================
-2013-02-06 13:51:16: NOTICE AUTH :*** Checking Ident
-2013-02-06 13:51:16: --------------------------------------------------------------------
-2013-02-06 13:51:16: prefix        : Q!TheQBot@CServe.quakenet.org
-2013-02-06 13:51:16: cmd           : NOTICE
-2013-02-06 13:51:16: params        :  AUTH :*** Checking Ident
-2013-02-06 13:51:16: middle        : AUTH
-2013-02-06 13:51:16: trailing      : *** Checking Ident
-2013-02-06 13:51:16: ====================================================================
-2013-02-06 13:51:16: NOTICE AUTH :*** Found your hostname
-2013-02-06 13:51:16: --------------------------------------------------------------------
-2013-02-06 13:51:16: prefix        : Q!TheQBot@CServe.quakenet.org
-2013-02-06 13:51:16: cmd           : NOTICE
-2013-02-06 13:51:16: params        :  AUTH :*** Found your hostname
-2013-02-06 13:51:16: middle        : AUTH
-2013-02-06 13:51:16: trailing      : *** Found your hostname
-2013-02-06 13:51:16: ====================================================================
-2013-02-06 13:51:16: recv: NOTICE AUTH :*** No ident response
-2013-02-06 13:51:16: --------------------------------------------------------------------
-2013-02-06 13:51:16: prefix        : Q!TheQBot@CServe.quakenet.org
-2013-02-06 13:51:16: cmd           : recv:
-2013-02-06 13:51:16: params        :  NOTICE AUTH :*** No ident response
-2013-02-06 13:51:16: middle        : NOTICE
-2013-02-06 13:51:16: middle        : AUTH
-2013-02-06 13:51:16: trailing      : *** No ident response
-2013-02-06 13:51:16: ====================================================================
-2013-02-06 13:51:16: :dreamhack.se.quakenet.org 001 Skivvy :Welcome to the QuakeNet IRC Network, Skivvy
-2013-02-06 13:51:16: --------------------------------------------------------------------
-2013-02-06 13:51:16: prefix        : dreamhack.se.quakenet.org
-2013-02-06 13:51:16: cmd           : 001
-2013-02-06 13:51:16: params        :  Skivvy :Welcome to the QuakeNet IRC Network, Skivvy
-2013-02-06 13:51:16: middle        : Skivvy
-2013-02-06 13:51:16: trailing      : Welcome to the QuakeNet IRC Network, Skivvy
-2013-02-06 13:51:16: ====================================================================
-2013-02-06 13:51:16: :dreamhack.se.quakenet.org 002 Skivvy :Your host is dreamhack.se.quakenet.org, running version u2.10.12.10+snircd(1.3.4a)
-2013-02-06 13:51:16: --------------------------------------------------------------------
-2013-02-06 13:51:16: prefix        : dreamhack.se.quakenet.org
-2013-02-06 13:51:16: cmd           : 002
-2013-02-06 13:51:16: params        :  Skivvy :Your host is dreamhack.se.quakenet.org, running version u2.10.12.10+snircd(1.3.4a)
-2013-02-06 13:51:16: middle        : Skivvy
-2013-02-06 13:51:16: trailing      : Your host is dreamhack.se.quakenet.org, running version u2.10.12.10+snircd(1.3.4a)
-2013-02-06 13:51:16: ====================================================================
-2013-02-06 13:51:16: :dreamhack.se.quakenet.org 003 Skivvy :This server was created Fri Jun 22 2012 at 20:47:31 CEST
-2013-02-06 13:51:16: --------------------------------------------------------------------
-2013-02-06 13:51:16: prefix        : dreamhack.se.quakenet.org
-2013-02-06 13:51:16: cmd           : 003
-2013-02-06 13:51:16: params        :  Skivvy :This server was created Fri Jun 22 2012 at 20:47:31 CEST
-2013-02-06 13:51:16: middle        : Skivvy
-2013-02-06 13:51:16: trailing      : This server was created Fri Jun 22 2012 at 20:47:31 CEST
-2013-02-06 13:51:16: ====================================================================
-2013-02-06 13:51:16: :dreamhack.se.quakenet.org 004 Skivvy dreamhack.se.quakenet.org u2.10.12.10+snircd(1.3.4a) dioswkgxRXInP biklmnopstvrDcCNuMT bklov
-2013-02-06 13:51:16: --------------------------------------------------------------------
-2013-02-06 13:51:16: prefix        : dreamhack.se.quakenet.org
-2013-02-06 13:51:16: cmd           : 004
-2013-02-06 13:51:16: params        :  Skivvy dreamhack.se.quakenet.org u2.10.12.10+snircd(1.3.4a) dioswkgxRXInP biklmnopstvrDcCNuMT bklov
-2013-02-06 13:51:16: middle        : Skivvy
-2013-02-06 13:51:16: middle        : dreamhack.se.quakenet.org
-2013-02-06 13:51:16: middle        : u2.10.12.10+snircd(1.3.4a)
-2013-02-06 13:51:16: middle        : dioswkgxRXInP
-2013-02-06 13:51:16: middle        : biklmnopstvrDcCNuMT
-2013-02-06 13:51:16: trailing      : 
-2013-02-06 13:51:16: ====================================================================
-2013-02-06 13:51:16: :dreamhack.se.quakenet.org 005 Skivvy WHOX WALLCHOPS WALLVOICES USERIP CPRIVMSG CNOTICE SILENCE=15 MODES=6 MAXCHANNELS=20 MAXBANS=45 NICKLEN=15 :are supported by this server
-2013-02-06 13:51:16: --------------------------------------------------------------------
-2013-02-06 13:51:16: prefix        : dreamhack.se.quakenet.org
-2013-02-06 13:51:16: cmd           : 005
-2013-02-06 13:51:16: params        :  Skivvy WHOX WALLCHOPS WALLVOICES USERIP CPRIVMSG CNOTICE SILENCE=15 MODES=6 MAXCHANNELS=20 MAXBANS=45 NICKLEN=15 :are supported by this server
-2013-02-06 13:51:16: middle        : Skivvy
-2013-02-06 13:51:16: middle        : WHOX
-2013-02-06 13:51:16: middle        : WALLCHOPS
-2013-02-06 13:51:16: middle        : WALLVOICES
-2013-02-06 13:51:16: middle        : USERIP
-2013-02-06 13:51:16: middle        : CPRIVMSG
-2013-02-06 13:51:16: middle        : CNOTICE
-2013-02-06 13:51:16: middle        : SILENCE=15
-2013-02-06 13:51:16: middle        : MODES=6
-2013-02-06 13:51:16: middle        : MAXCHANNELS=20
-2013-02-06 13:51:16: middle        : MAXBANS=45
-2013-02-06 13:51:16: middle        : NICKLEN=15
-2013-02-06 13:51:16: trailing      : are supported by this server
-2013-02-06 13:51:16: ====================================================================
-2013-02-06 13:51:16: :dreamhack.se.quakenet.org 005 Skivvy MAXNICKLEN=15 TOPICLEN=250 AWAYLEN=160 KICKLEN=250 CHANNELLEN=200 MAXCHANNELLEN=200 CHANTYPES=#& PREFIX=(ov)@+ STATUSMSG=@+ CHANMODES=b,k,l,imnpstrDducCNMT CASEMAPPING=rfc1459 NETWORK=QuakeNet :are supported by this server
-2013-02-06 13:51:16: --------------------------------------------------------------------
-2013-02-06 13:51:16: prefix        : dreamhack.se.quakenet.org
-2013-02-06 13:51:16: cmd           : 005
-2013-02-06 13:51:16: params        :  Skivvy MAXNICKLEN=15 TOPICLEN=250 AWAYLEN=160 KICKLEN=250 CHANNELLEN=200 MAXCHANNELLEN=200 CHANTYPES=#& PREFIX=(ov)@+ STATUSMSG=@+ CHANMODES=b,k,l,imnpstrDducCNMT CASEMAPPING=rfc1459 NETWORK=QuakeNet :are supported by this server
-2013-02-06 13:51:16: middle        : Skivvy
-2013-02-06 13:51:16: middle        : MAXNICKLEN=15
-2013-02-06 13:51:16: middle        : TOPICLEN=250
-2013-02-06 13:51:16: middle        : AWAYLEN=160
-2013-02-06 13:51:16: middle        : KICKLEN=250
-2013-02-06 13:51:16: middle        : CHANNELLEN=200
-2013-02-06 13:51:16: middle        : MAXCHANNELLEN=200
-2013-02-06 13:51:16: middle        : CHANTYPES=#&
-2013-02-06 13:51:16: middle        : PREFIX=(ov)@+
-2013-02-06 13:51:16: middle        : STATUSMSG=@+
-2013-02-06 13:51:16: middle        : CHANMODES=b,k,l,imnpstrDducCNMT
-2013-02-06 13:51:16: middle        : CASEMAPPING=rfc1459
-2013-02-06 13:51:16: middle        : NETWORK=QuakeNet
-2013-02-06 13:51:16: trailing      : are supported by this server
-2013-02-06 13:51:16: ====================================================================
-2013-02-06 13:51:16: :dreamhack.se.quakenet.org 251 Skivvy :There are 18 users and 61739 invisible on 38 servers
-2013-02-06 13:51:16: --------------------------------------------------------------------
-2013-02-06 13:51:16: prefix        : dreamhack.se.quakenet.org
-2013-02-06 13:51:16: cmd           : 251
-2013-02-06 13:51:16: params        :  Skivvy :There are 18 users and 61739 invisible on 38 servers
-2013-02-06 13:51:16: middle        : Skivvy
-2013-02-06 13:51:16: trailing      : There are 18 users and 61739 invisible on 38 servers
-2013-02-06 13:51:16: ====================================================================
-2013-02-06 13:51:16: :dreamhack.se.quakenet.org 252 Skivvy 65 :operator(s) online
-2013-02-06 13:51:16: --------------------------------------------------------------------
-2013-02-06 13:51:16: prefix        : dreamhack.se.quakenet.org
-2013-02-06 13:51:16: cmd           : 252
-2013-02-06 13:51:16: params        :  Skivvy 65 :operator(s) online
-2013-02-06 13:51:16: middle        : Skivvy
-2013-02-06 13:51:16: middle        : 65
-2013-02-06 13:51:16: trailing      : operator(s) online
-2013-02-06 13:51:16: ====================================================================
-2013-02-06 13:51:16: :dreamhack.se.quakenet.org 253 Skivvy 2 :unknown connection(s)
-2013-02-06 13:51:16: --------------------------------------------------------------------
-2013-02-06 13:51:16: prefix        : dreamhack.se.quakenet.org
-2013-02-06 13:51:16: cmd           : 253
-2013-02-06 13:51:16: params        :  Skivvy 2 :unknown connection(s)
-2013-02-06 13:51:16: middle        : Skivvy
-2013-02-06 13:51:16: middle        : 2
-2013-02-06 13:51:16: trailing      : unknown connection(s)
-2013-02-06 13:51:16: ====================================================================
-2013-02-06 13:51:16: :dreamhack.se.quakenet.org 254 Skivvy 41215 :channels formed
-2013-02-06 13:51:16: --------------------------------------------------------------------
-2013-02-06 13:51:16: prefix        : dreamhack.se.quakenet.org
-2013-02-06 13:51:16: cmd           : 254
-2013-02-06 13:51:16: params        :  Skivvy 41215 :channels formed
-2013-02-06 13:51:16: middle        : Skivvy
-2013-02-06 13:51:16: middle        : 41215
-2013-02-06 13:51:16: trailing      : channels formed
-2013-02-06 13:51:16: ====================================================================
-2013-02-06 13:51:16: :dreamhack.se.quakenet.org 255 Skivvy :I have 3354 clients and 1 servers
-2013-02-06 13:51:16: --------------------------------------------------------------------
-2013-02-06 13:51:16: prefix        : dreamhack.se.quakenet.org
-2013-02-06 13:51:16: cmd           : 255
-2013-02-06 13:51:16: params        :  Skivvy :I have 3354 clients and 1 servers
-2013-02-06 13:51:16: middle        : Skivvy
-2013-02-06 13:51:16: trailing      : I have 3354 clients and 1 servers
-2013-02-06 13:51:16: ====================================================================
-2013-02-06 13:51:16: :dreamhack.se.quakenet.org NOTICE Skivvy :Highest connection count: 4411 (4410 clients)
-2013-02-06 13:51:16: --------------------------------------------------------------------
-2013-02-06 13:51:16: prefix        : dreamhack.se.quakenet.org
-2013-02-06 13:51:16: cmd           : NOTICE
-2013-02-06 13:51:16: params        :  Skivvy :Highest connection count: 4411 (4410 clients)
-2013-02-06 13:51:16: middle        : Skivvy
-2013-02-06 13:51:16: trailing      : Highest connection count: 4411 (4410 clients)
+===============================================
+//                  line: :wing_9!~tobias@p548CDCA9.dip.t-dialin.net QUIT :Quit: Konversation terminated!
+//                prefix: wing_9!~tobias@p548CDCA9.dip.t-dialin.net
+//               command: QUIT
+//                params:  :Quit: Konversation terminated!
+// get_servername()     : 
+// get_nickname()       : wing_9
+// get_user()           : ~tobias
+// get_host()           : p548CDCA9.dip.t-dialin.net
+// param                : Quit: Konversation terminated!
+// trailing             : Quit: Konversation terminated!
+// get_nick()           : wing_9
+// get_chan()           : 
+===============================================
+//                  line: PASS none
+//                prefix: 
+//               command: PASS
+//                params:  none
+// get_servername()     : 
+// get_nickname()       : 
+// get_user()           : 
+// get_host()           : 
+// param                : none
+// middle               : none
+// trailing             : 
+// get_nick()           : 
+// get_chan()           : 
+===============================================
+//                  line: NICK Skivvy
+//                prefix: 
+//               command: NICK
+//                params:  Skivvy
+// get_servername()     : 
+// get_nickname()       : 
+// get_user()           : 
+// get_host()           : 
+// param                : Skivvy
+// middle               : Skivvy
+// trailing             : 
+// get_nick()           : 
+// get_chan()           : 
+===============================================
+//                  line: USER Skivvy 0 * :Skivvy
+//                prefix: 
+//               command: USER
+//                params:  Skivvy 0 * :Skivvy
+// get_servername()     : 
+// get_nickname()       : 
+// get_user()           : 
+// get_host()           : 
+// param                : Skivvy
+// param                : 0
+// param                : *
+// param                : Skivvy
+// middle               : Skivvy
+// middle               : 0
+// middle               : *
+// trailing             : Skivvy
+// get_nick()           : 
+// get_chan()           : 
+===============================================
+//                  line: PRIVMSG Q@CServe.quakenet.org :AUTH Skivvy password
+//                prefix: 
+//               command: PRIVMSG
+//                params:  Q@CServe.quakenet.org :AUTH Skivvy password
+// get_servername()     : 
+// get_nickname()       : 
+// get_user()           : 
+// get_host()           : 
+// param                : Q@CServe.quakenet.org
+// param                : AUTH Skivvy password
+// middle               : Q@CServe.quakenet.org
+// trailing             : AUTH Skivvy password
+// get_nick()           : 
+// get_chan()           : Q@CServe.quakenet.org
+===============================================
+//                  line: MODE Skivvy +x
+//                prefix: 
+//               command: MODE
+//                params:  Skivvy +x
+// get_servername()     : 
+// get_nickname()       : 
+// get_user()           : 
+// get_host()           : 
+// param                : Skivvy
+// param                : +x
+// middle               : Skivvy
+// middle               : +x
+// trailing             : 
+// get_nick()           : 
+// get_chan()           : Skivvy
+===============================================
+//                  line: JOIN #skivvy
+//                prefix: 
+//               command: JOIN
+//                params:  #skivvy
+// get_servername()     : 
+// get_nickname()       : 
+// get_user()           : 
+// get_host()           : 
+// param                : #skivvy
+// middle               : #skivvy
+// trailing             : 
+// get_nick()           : 
+// get_chan()           : #skivvy
+===============================================
+//                  line: PART #skivvy
+//                prefix: 
+//               command: PART
+//                params:  #skivvy
+// get_servername()     : 
+// get_nickname()       : 
+// get_user()           : 
+// get_host()           : 
+// param                : #skivvy
+// middle               : #skivvy
+// trailing             : 
+// get_nick()           : 
+// get_chan()           : #skivvy
+===============================================
+//                  line: :dreamhack.se.quakenet.org 252 Skivvy 65 :operator(s) online
+//                prefix: dreamhack.se.quakenet.org
+//               command: 252
+//                params:  Skivvy 65 :operator(s) online
+// get_servername()     : dreamhack.se.quakenet.org
+// get_nickname()       : 
+// get_user()           : 
+// get_host()           : 
+// param                : Skivvy
+// param                : 65
+// param                : operator(s) online
+// middle               : Skivvy
+// middle               : 65
+// trailing             : operator(s) online
+// get_nick()           : 
+// get_chan()           : 
+===============================================
+//                  line: :dreamhack.se.quakenet.org 253 Skivvy 2 :unknown connection(s)
+//                prefix: dreamhack.se.quakenet.org
+//               command: 253
+//                params:  Skivvy 2 :unknown connection(s)
+// get_servername()     : dreamhack.se.quakenet.org
+// get_nickname()       : 
+// get_user()           : 
+// get_host()           : 
+// param                : Skivvy
+// param                : 2
+// param                : unknown connection(s)
+// middle               : Skivvy
+// middle               : 2
+// trailing             : unknown connection(s)
+// get_nick()           : 
+// get_chan()           : 
+===============================================
+//                  line: NOTICE AUTH :*** Looking up your hostname
+//                prefix: 
+//               command: NOTICE
+//                params:  AUTH :*** Looking up your hostname
+// get_servername()     : 
+// get_nickname()       : 
+// get_user()           : 
+// get_host()           : 
+// param                : AUTH
+// param                : *** Looking up your hostname
+// middle               : AUTH
+// trailing             : *** Looking up your hostname
+// get_nick()           : 
+// get_chan()           : 
+===============================================
+//                  line: recv: NOTICE AUTH :*** No ident response
+//                prefix: 
+//               command: recv:
+//                params:  NOTICE AUTH :*** No ident response
+// get_servername()     : 
+// get_nickname()       : 
+// get_user()           : 
+// get_host()           : 
+// param                : NOTICE
+// param                : AUTH
+// param                : *** No ident response
+// middle               : NOTICE
+// middle               : AUTH
+// trailing             : *** No ident response
+// get_nick()           : 
+// get_chan()           : 
+===============================================
+//                  line: :dreamhack.se.quakenet.org 001 Skivvy :Welcome to the QuakeNet IRC Network, Skivvy
+//                prefix: dreamhack.se.quakenet.org
+//               command: 001
+//                params:  Skivvy :Welcome to the QuakeNet IRC Network, Skivvy
+// get_servername()     : dreamhack.se.quakenet.org
+// get_nickname()       : 
+// get_user()           : 
+// get_host()           : 
+// param                : Skivvy
+// param                : Welcome to the QuakeNet IRC Network, Skivvy
+// middle               : Skivvy
+// trailing             : Welcome to the QuakeNet IRC Network, Skivvy
+// get_nick()           : 
+// get_chan()           : 
+===============================================
+//                  line: :dreamhack.se.quakenet.org 002 Skivvy :Your host is dreamhack.se.quakenet.org, running version u2.10.12.10+snircd(1.3.4a)
+//                prefix: dreamhack.se.quakenet.org
+//               command: 002
+//                params:  Skivvy :Your host is dreamhack.se.quakenet.org, running version u2.10.12.10+snircd(1.3.4a)
+// get_servername()     : dreamhack.se.quakenet.org
+// get_nickname()       : 
+// get_user()           : 
+// get_host()           : 
+// param                : Skivvy
+// param                : Your host is dreamhack.se.quakenet.org, running version u2.10.12.10+snircd(1.3.4a)
+// middle               : Skivvy
+// trailing             : Your host is dreamhack.se.quakenet.org, running version u2.10.12.10+snircd(1.3.4a)
+// get_nick()           : 
+// get_chan()           : 
+===============================================
+//                  line: :dreamhack.se.quakenet.org 003 Skivvy :This server was created Fri Jun 22 2012 at 20:47:31 CEST
+//                prefix: dreamhack.se.quakenet.org
+//               command: 003
+//                params:  Skivvy :This server was created Fri Jun 22 2012 at 20:47:31 CEST
+// get_servername()     : dreamhack.se.quakenet.org
+// get_nickname()       : 
+// get_user()           : 
+// get_host()           : 
+// param                : Skivvy
+// param                : This server was created Fri Jun 22 2012 at 20:47:31 CEST
+// middle               : Skivvy
+// trailing             : This server was created Fri Jun 22 2012 at 20:47:31 CEST
+// get_nick()           : 
+// get_chan()           : 
+===============================================
+//                  line: :dreamhack.se.quakenet.org 004 Skivvy dreamhack.se.quakenet.org u2.10.12.10+snircd(1.3.4a) dioswkgxRXInP biklmnopstvrDcCNuMT bklov
+//                prefix: dreamhack.se.quakenet.org
+//               command: 004
+//                params:  Skivvy dreamhack.se.quakenet.org u2.10.12.10+snircd(1.3.4a) dioswkgxRXInP biklmnopstvrDcCNuMT bklov
+// get_servername()     : dreamhack.se.quakenet.org
+// get_nickname()       : 
+// get_user()           : 
+// get_host()           : 
+// param                : Skivvy
+// param                : dreamhack.se.quakenet.org
+// param                : u2.10.12.10+snircd(1.3.4a)
+// param                : dioswkgxRXInP
+// param                : biklmnopstvrDcCNuMT
+// param                : bklov
+// middle               : Skivvy
+// middle               : dreamhack.se.quakenet.org
+// middle               : u2.10.12.10+snircd(1.3.4a)
+// middle               : dioswkgxRXInP
+// middle               : biklmnopstvrDcCNuMT
+// middle               : bklov
+// trailing             : 
+// get_nick()           : 
+// get_chan()           : 
+===============================================
+//                  line: :dreamhack.se.quakenet.org 005 Skivvy WHOX WALLCHOPS WALLVOICES USERIP CPRIVMSG CNOTICE SILENCE=15 MODES=6 MAXCHANNELS=20 MAXBANS=45 NICKLEN=15 :are supported by this server
+//                prefix: dreamhack.se.quakenet.org
+//               command: 005
+//                params:  Skivvy WHOX WALLCHOPS WALLVOICES USERIP CPRIVMSG CNOTICE SILENCE=15 MODES=6 MAXCHANNELS=20 MAXBANS=45 NICKLEN=15 :are supported by this server
+// get_servername()     : dreamhack.se.quakenet.org
+// get_nickname()       : 
+// get_user()           : 
+// get_host()           : 
+// param                : Skivvy
+// param                : WHOX
+// param                : WALLCHOPS
+// param                : WALLVOICES
+// param                : USERIP
+// param                : CPRIVMSG
+// param                : CNOTICE
+// param                : SILENCE=15
+// param                : MODES=6
+// param                : MAXCHANNELS=20
+// param                : MAXBANS=45
+// param                : NICKLEN=15
+// param                : are supported by this server
+// middle               : Skivvy
+// middle               : WHOX
+// middle               : WALLCHOPS
+// middle               : WALLVOICES
+// middle               : USERIP
+// middle               : CPRIVMSG
+// middle               : CNOTICE
+// middle               : SILENCE=15
+// middle               : MODES=6
+// middle               : MAXCHANNELS=20
+// middle               : MAXBANS=45
+// middle               : NICKLEN=15
+// trailing             : are supported by this server
+// get_nick()           : 
+// get_chan()           : 
+===============================================
+//                  line: :dreamhack.se.quakenet.org 251 Skivvy :There are 16 users and 61463 invisible on 38 servers
+//                prefix: dreamhack.se.quakenet.org
+//               command: 251
+//                params:  Skivvy :There are 16 users and 61463 invisible on 38 servers
+// get_servername()     : dreamhack.se.quakenet.org
+// get_nickname()       : 
+// get_user()           : 
+// get_host()           : 
+// param                : Skivvy
+// param                : There are 16 users and 61463 invisible on 38 servers
+// middle               : Skivvy
+// trailing             : There are 16 users and 61463 invisible on 38 servers
+// get_nick()           : 
+// get_chan()           : 
+===============================================
+//                  line: :dreamhack.se.quakenet.org 254 Skivvy 41143 :channels formed
+//                prefix: dreamhack.se.quakenet.org
+//               command: 254
+//                params:  Skivvy 41143 :channels formed
+// get_servername()     : dreamhack.se.quakenet.org
+// get_nickname()       : 
+// get_user()           : 
+// get_host()           : 
+// param                : Skivvy
+// param                : 41143
+// param                : channels formed
+// middle               : Skivvy
+// middle               : 41143
+// trailing             : channels formed
+// get_nick()           : 
+// get_chan()           : 
+===============================================
+//                  line: :dreamhack.se.quakenet.org 255 Skivvy :I have 3349 clients and 1 servers
+//                prefix: dreamhack.se.quakenet.org
+//               command: 255
+//                params:  Skivvy :I have 3349 clients and 1 servers
+// get_servername()     : dreamhack.se.quakenet.org
+// get_nickname()       : 
+// get_user()           : 
+// get_host()           : 
+// param                : Skivvy
+// param                : I have 3349 clients and 1 servers
+// middle               : Skivvy
+// trailing             : I have 3349 clients and 1 servers
+// get_nick()           : 
+// get_chan()           : 
+===============================================
+//                  line: :dreamhack.se.quakenet.org 375 Skivvy :- dreamhack.se.quakenet.org Message of the Day -
+//                prefix: dreamhack.se.quakenet.org
+//               command: 375
+//                params:  Skivvy :- dreamhack.se.quakenet.org Message of the Day -
+// get_servername()     : dreamhack.se.quakenet.org
+// get_nickname()       : 
+// get_user()           : 
+// get_host()           : 
+// param                : Skivvy
+// param                : - dreamhack.se.quakenet.org Message of the Day -
+// middle               : Skivvy
+// trailing             : - dreamhack.se.quakenet.org Message of the Day -
+// get_nick()           : 
+// get_chan()           : 
+===============================================
+//                  line: :dreamhack.se.quakenet.org 376 Skivvy :End of /MOTD command.
+//                prefix: dreamhack.se.quakenet.org
+//               command: 376
+//                params:  Skivvy :End of /MOTD command.
+// get_servername()     : dreamhack.se.quakenet.org
+// get_nickname()       : 
+// get_user()           : 
+// get_host()           : 
+// param                : Skivvy
+// param                : End of /MOTD command.
+// middle               : Skivvy
+// trailing             : End of /MOTD command.
+// get_nick()           : 
+// get_chan()           : 
+===============================================
+//                  line: :dreamhack.se.quakenet.org 221 Skivvy +i
+//                prefix: dreamhack.se.quakenet.org
+//               command: 221
+//                params:  Skivvy +i
+// get_servername()     : dreamhack.se.quakenet.org
+// get_nickname()       : 
+// get_user()           : 
+// get_host()           : 
+// param                : Skivvy
+// param                : +i
+// middle               : Skivvy
+// middle               : +i
+// trailing             : 
+// get_nick()           : 
+// get_chan()           : 
+===============================================
+//                  line: :dreamhack.se.quakenet.org 396 Skivvy Skivvy.users.quakenet.org :is now your hidden host
+//                prefix: dreamhack.se.quakenet.org
+//               command: 396
+//                params:  Skivvy Skivvy.users.quakenet.org :is now your hidden host
+// get_servername()     : dreamhack.se.quakenet.org
+// get_nickname()       : 
+// get_user()           : 
+// get_host()           : 
+// param                : Skivvy
+// param                : Skivvy.users.quakenet.org
+// param                : is now your hidden host
+// middle               : Skivvy
+// middle               : Skivvy.users.quakenet.org
+// trailing             : is now your hidden host
+// get_nick()           : 
+// get_chan()           : 
+===============================================
+//                  line: :dreamhack.se.quakenet.org 332 Skivvy #openarenahelp :Reclaimed by Skivvy (Suckit up Hit|er)
+//                prefix: dreamhack.se.quakenet.org
+//               command: 332
+//                params:  Skivvy #openarenahelp :Reclaimed by Skivvy (Suckit up Hit|er)
+// get_servername()     : dreamhack.se.quakenet.org
+// get_nickname()       : 
+// get_user()           : 
+// get_host()           : 
+// param                : Skivvy
+// param                : #openarenahelp
+// param                : Reclaimed by Skivvy (Suckit up Hit|er)
+// middle               : Skivvy
+// middle               : #openarenahelp
+// trailing             : Reclaimed by Skivvy (Suckit up Hit|er)
+// get_nick()           : 
+// get_chan()           : #openarenahelp
+===============================================
+//                  line: :dreamhack.se.quakenet.org 333 Skivvy #openarenahelp SooKee 1358062256
+//                prefix: dreamhack.se.quakenet.org
+//               command: 333
+//                params:  Skivvy #openarenahelp SooKee 1358062256
+// get_servername()     : dreamhack.se.quakenet.org
+// get_nickname()       : 
+// get_user()           : 
+// get_host()           : 
+// param                : Skivvy
+// param                : #openarenahelp
+// param                : SooKee
+// param                : 1358062256
+// middle               : Skivvy
+// middle               : #openarenahelp
+// middle               : SooKee
+// middle               : 1358062256
+// trailing             : 
+// get_nick()           : 
+// get_chan()           : #openarenahelp
+===============================================
+//                  line: :dreamhack.se.quakenet.org 353 Skivvy = #openarenahelp :Skivvy +wing_9 +Light3r @Zimmer106 +Zim-blackberry @Zimmermint +Siju +]c[razy @ali3n +capo @Pixelized @SooKee +pet @Q
+//                prefix: dreamhack.se.quakenet.org
+//               command: 353
+//                params:  Skivvy = #openarenahelp :Skivvy +wing_9 +Light3r @Zimmer106 +Zim-blackberry @Zimmermint +Siju +]c[razy @ali3n +capo @Pixelized @SooKee +pet @Q
+// get_servername()     : dreamhack.se.quakenet.org
+// get_nickname()       : 
+// get_user()           : 
+// get_host()           : 
+// param                : Skivvy
+// param                : =
+// param                : #openarenahelp
+// param                : Skivvy +wing_9 +Light3r @Zimmer106 +Zim-blackberry @Zimmermint +Siju +]c[razy @ali3n +capo @Pixelized @SooKee +pet @Q
+// middle               : Skivvy
+// middle               : =
+// middle               : #openarenahelp
+// trailing             : Skivvy +wing_9 +Light3r @Zimmer106 +Zim-blackberry @Zimmermint +Siju +]c[razy @ali3n +capo @Pixelized @SooKee +pet @Q
+// get_nick()           : 
+// get_chan()           : #openarenahelp
+===============================================
+//                  line: :dreamhack.se.quakenet.org 366 Skivvy #openarenahelp :End of /NAMES list.
+//                prefix: dreamhack.se.quakenet.org
+//               command: 366
+//                params:  Skivvy #openarenahelp :End of /NAMES list.
+// get_servername()     : dreamhack.se.quakenet.org
+// get_nickname()       : 
+// get_user()           : 
+// get_host()           : 
+// param                : Skivvy
+// param                : #openarenahelp
+// param                : End of /NAMES list.
+// middle               : Skivvy
+// middle               : #openarenahelp
+// trailing             : End of /NAMES list.
+// get_nick()           : 
+// get_chan()           : #openarenahelp
+===============================================
+//                  line: :dreamhack.se.quakenet.org 311 Skivvy SooKee ~SooKee SooKee.users.quakenet.org * :SooKee
+//                prefix: dreamhack.se.quakenet.org
+//               command: 311
+//                params:  Skivvy SooKee ~SooKee SooKee.users.quakenet.org * :SooKee
+// get_servername()     : dreamhack.se.quakenet.org
+// get_nickname()       : 
+// get_user()           : 
+// get_host()           : 
+// param                : Skivvy
+// param                : SooKee
+// param                : ~SooKee
+// param                : SooKee.users.quakenet.org
+// param                : *
+// param                : SooKee
+// middle               : Skivvy
+// middle               : SooKee
+// middle               : ~SooKee
+// middle               : SooKee.users.quakenet.org
+// middle               : *
+// trailing             : SooKee
+// get_nick()           : 
+// get_chan()           : 
+===============================================
+//                  line: :dreamhack.se.quakenet.org 319 Skivvy SooKee :@#skivvy @#openarenahelp +#openarena @#omfg
+//                prefix: dreamhack.se.quakenet.org
+//               command: 319
+//                params:  Skivvy SooKee :@#skivvy @#openarenahelp +#openarena @#omfg
+// get_servername()     : dreamhack.se.quakenet.org
+// get_nickname()       : 
+// get_user()           : 
+// get_host()           : 
+// param                : Skivvy
+// param                : SooKee
+// param                : @#skivvy @#openarenahelp +#openarena @#omfg
+// middle               : Skivvy
+// middle               : SooKee
+// trailing             : @#skivvy @#openarenahelp +#openarena @#omfg
+// get_nick()           : 
+// get_chan()           : 
+===============================================
+//                  line: :dreamhack.se.quakenet.org 312 Skivvy SooKee *.quakenet.org :QuakeNet IRC Server
+//                prefix: dreamhack.se.quakenet.org
+//               command: 312
+//                params:  Skivvy SooKee *.quakenet.org :QuakeNet IRC Server
+// get_servername()     : dreamhack.se.quakenet.org
+// get_nickname()       : 
+// get_user()           : 
+// get_host()           : 
+// param                : Skivvy
+// param                : SooKee
+// param                : *.quakenet.org
+// param                : QuakeNet IRC Server
+// middle               : Skivvy
+// middle               : SooKee
+// middle               : *.quakenet.org
+// trailing             : QuakeNet IRC Server
+// get_nick()           : 
+// get_chan()           : 
+===============================================
+//                  line: :dreamhack.se.quakenet.org 330 Skivvy SooKee SooKee :is authed as
+//                prefix: dreamhack.se.quakenet.org
+//               command: 330
+//                params:  Skivvy SooKee SooKee :is authed as
+// get_servername()     : dreamhack.se.quakenet.org
+// get_nickname()       : 
+// get_user()           : 
+// get_host()           : 
+// param                : Skivvy
+// param                : SooKee
+// param                : SooKee
+// param                : is authed as
+// middle               : Skivvy
+// middle               : SooKee
+// middle               : SooKee
+// trailing             : is authed as
+// get_nick()           : 
+// get_chan()           : 
+===============================================
+//                  line: :dreamhack.se.quakenet.org 318 Skivvy SooKee :End of /WHOIS list.
+//                prefix: dreamhack.se.quakenet.org
+//               command: 318
+//                params:  Skivvy SooKee :End of /WHOIS list.
+// get_servername()     : dreamhack.se.quakenet.org
+// get_nickname()       : 
+// get_user()           : 
+// get_host()           : 
+// param                : Skivvy
+// param                : SooKee
+// param                : End of /WHOIS list.
+// middle               : Skivvy
+// middle               : SooKee
+// trailing             : End of /WHOIS list.
+// get_nick()           : 
+// get_chan()           : 
+===============================================
+//                  line: :SooKee!~SooKee@SooKee.users.quakenet.org TOPIC #openarenahelp :OpenArena | #openarenahelp | Where Noobs Come To Learn From The Veterans ~ to use Skivvy !help ~ HAVE FUN! ~ Please ask a question. | http://openarenahelp.com | Reclaimed by Skivvy (Suckit up Hit|er)
+//                prefix: SooKee!~SooKee@SooKee.users.quakenet.org
+//               command: TOPIC
+//                params:  #openarenahelp :OpenArena | #openarenahelp | Where Noobs Come To Learn From The Veterans ~ to use Skivvy !help ~ HAVE FUN! ~ Please ask a question. | http://openarenahelp.com | Reclaimed by Skivvy (Suckit up Hit|er)
+// get_servername()     : 
+// get_nickname()       : SooKee
+// get_user()           : ~SooKee
+// get_host()           : SooKee.users.quakenet.org
+// param                : #openarenahelp
+// param                : OpenArena | #openarenahelp | Where Noobs Come To Learn From The Veterans ~ to use Skivvy !help ~ HAVE FUN! ~ Please ask a question. | http://openarenahelp.com | Reclaimed by Skivvy (Suckit up Hit|er)
+// middle               : #openarenahelp
+// trailing             : OpenArena | #openarenahelp | Where Noobs Come To Learn From The Veterans ~ to use Skivvy !help ~ HAVE FUN! ~ Please ask a question. | http://openarenahelp.com | Reclaimed by Skivvy (Suckit up Hit|er)
+// get_nick()           : SooKee
+// get_chan()           : #openarenahelp
+===============================================
+//                  line: :Pixelized!~Who@dsl-216-221-36-37.mtl.aei.ca KICK #openarenahelp Pixelized :Pixelized
+//                prefix: Pixelized!~Who@dsl-216-221-36-37.mtl.aei.ca
+//               command: KICK
+//                params:  #openarenahelp Pixelized :Pixelized
+// get_servername()     : 
+// get_nickname()       : Pixelized
+// get_user()           : ~Who
+// get_host()           : dsl-216-221-36-37.mtl.aei.ca
+// param                : #openarenahelp
+// param                : Pixelized
+// param                : Pixelized
+// middle               : #openarenahelp
+// middle               : Pixelized
+// trailing             : Pixelized
+// get_nick()           : Pixelized
+// get_chan()           : #openarenahelp
+===============================================
+//                  line: :dreamhack.se.quakenet.org 404 Skivvy #skivvy :Cannot send to channel
+//                prefix: dreamhack.se.quakenet.org
+//               command: 404
+//                params:  Skivvy #skivvy :Cannot send to channel
+// get_servername()     : dreamhack.se.quakenet.org
+// get_nickname()       : 
+// get_user()           : 
+// get_host()           : 
+// param                : Skivvy
+// param                : #skivvy
+// param                : Cannot send to channel
+// middle               : Skivvy
+// middle               : #skivvy
+// trailing             : Cannot send to channel
+// get_nick()           : 
+// get_chan()           : #skivvy
+===============================================
+//                  line: :dreamhack.se.quakenet.org 474 Skivvy #skivvy :Cannot join channel, you are banned (+b)
+//                prefix: dreamhack.se.quakenet.org
+//               command: 474
+//                params:  Skivvy #skivvy :Cannot join channel, you are banned (+b)
+// get_servername()     : dreamhack.se.quakenet.org
+// get_nickname()       : 
+// get_user()           : 
+// get_host()           : 
+// param                : Skivvy
+// param                : #skivvy
+// param                : Cannot join channel, you are banned (+b)
+// middle               : Skivvy
+// middle               : #skivvy
+// trailing             : Cannot join channel, you are banned (+b)
+// get_nick()           : 
+// get_chan()           : #skivvy
+===============================================
+//                  line: :dreamhack.se.quakenet.org 401 Skivvy ~SooKee :No such nick
+//                prefix: dreamhack.se.quakenet.org
+//               command: 401
+//                params:  Skivvy ~SooKee :No such nick
+// get_servername()     : dreamhack.se.quakenet.org
+// get_nickname()       : 
+// get_user()           : 
+// get_host()           : 
+// param                : Skivvy
+// param                : ~SooKee
+// param                : No such nick
+// middle               : Skivvy
+// middle               : ~SooKee
+// trailing             : No such nick
+// get_nick()           : 
+// get_chan()           : 
+===============================================
+//                  line: ERROR :Closing Link: Skivvy by dreamhack.se.quakenet.org (Excess Flood)
+//                prefix: 
+//               command: ERROR
+//                params:  :Closing Link: Skivvy by dreamhack.se.quakenet.org (Excess Flood)
+// get_servername()     : 
+// get_nickname()       : 
+// get_user()           : 
+// get_host()           : 
+// param                : Closing Link: Skivvy by dreamhack.se.quakenet.org (Excess Flood)
+// trailing             : Closing Link: Skivvy by dreamhack.se.quakenet.org (Excess Flood)
+// get_nick()           : 
+// get_chan()           : 
+===============================================
+//                  line: :dreamhack.se.quakenet.org 301 Skivvy Echo1 :Ich bin gerade nicht hier
+//                prefix: dreamhack.se.quakenet.org
+//               command: 301
+//                params:  Skivvy Echo1 :Ich bin gerade nicht hier
+// get_servername()     : dreamhack.se.quakenet.org
+// get_nickname()       : 
+// get_user()           : 
+// get_host()           : 
+// param                : Skivvy
+// param                : Echo1
+// param                : Ich bin gerade nicht hier
+// middle               : Skivvy
+// middle               : Echo1
+// trailing             : Ich bin gerade nicht hier
+// get_nick()           : 
+// get_chan()           : 
+===============================================
+//                  line: :dreamhack.se.quakenet.org 313 Skivvy Q :is an IRC Operator
+//                prefix: dreamhack.se.quakenet.org
+//               command: 313
+//                params:  Skivvy Q :is an IRC Operator
+// get_servername()     : dreamhack.se.quakenet.org
+// get_nickname()       : 
+// get_user()           : 
+// get_host()           : 
+// param                : Skivvy
+// param                : Q
+// param                : is an IRC Operator
+// middle               : Skivvy
+// middle               : Q
+// trailing             : is an IRC Operator
+// get_nick()           : 
+// get_chan()           : 
+===============================================
+//                  line: :dreamhack.se.quakenet.org 482 Skivvy #skivvy :You're not channel operator
+//                prefix: dreamhack.se.quakenet.org
+//               command: 482
+//                params:  Skivvy #skivvy :You're not channel operator
+// get_servername()     : dreamhack.se.quakenet.org
+// get_nickname()       : 
+// get_user()           : 
+// get_host()           : 
+// param                : Skivvy
+// param                : #skivvy
+// param                : You're not channel operator
+// middle               : Skivvy
+// middle               : #skivvy
+// trailing             : You're not channel operator
+// get_nick()           : 
+// get_chan()           : #skivvy
+===============================================
+//                  line: :Zimmermint!~Zimmy@5ac0ceb1.bb.sky.com INVITE Skivvy #Zimmer106
+//                prefix: Zimmermint!~Zimmy@5ac0ceb1.bb.sky.com
+//               command: INVITE
+//                params:  Skivvy #Zimmer106
+// get_servername()     : 
+// get_nickname()       : Zimmermint
+// get_user()           : ~Zimmy
+// get_host()           : 5ac0ceb1.bb.sky.com
+// param                : Skivvy
+// param                : #Zimmer106
+// middle               : Skivvy
+// middle               : #Zimmer106
+// trailing             : 
+// get_nick()           : Zimmermint
+// get_chan()           : #Zimmer106
+===============================================
+//                  line: :dreamhack.se.quakenet.org 421 Skivvy !rconmsg :Unknown command
+//                prefix: dreamhack.se.quakenet.org
+//               command: 421
+//                params:  Skivvy !rconmsg :Unknown command
+// get_servername()     : dreamhack.se.quakenet.org
+// get_nickname()       : 
+// get_user()           : 
+// get_host()           : 
+// param                : Skivvy
+// param                : !rconmsg
+// param                : Unknown command
+// middle               : Skivvy
+// middle               : !rconmsg
+// trailing             : Unknown command
+// get_nick()           : 
+// get_chan()           : 
+===============================================
+//                  line: ^3OAhelp website ^3- Go to www.openarenahelp.com2013-01-24 23:33:37: recv: :Skivvy!~Skivvy@Skivvy.users.quakenet.org JOIN #Zimmer106
+//                prefix: 
+//               command: ^3OAhelp
+//                params:  website ^3- Go to www.openarenahelp.com2013-01-24 23:33:37: recv: :Skivvy!~Skivvy@Skivvy.users.quakenet.org JOIN #Zimmer106
+// get_servername()     : 
+// get_nickname()       : 
+// get_user()           : 
+// get_host()           : 
+// param                : website
+// param                : ^3-
+// param                : Go
+// param                : to
+// param                : www.openarenahelp.com2013-01-24
+// param                : 23:33:37:
+// param                : recv:
+// param                : Skivvy!~Skivvy@Skivvy.users.quakenet.org JOIN #Zimmer106
+// middle               : website
+// middle               : ^3-
+// middle               : Go
+// middle               : to
+// middle               : www.openarenahelp.com2013-01-24
+// middle               : 23:33:37:
+// middle               : recv:
+// trailing             : Skivvy!~Skivvy@Skivvy.users.quakenet.org JOIN #Zimmer106
+// get_nick()           : 
+// get_chan()           : 
+===============================================
+//                  line: :dreamhack.se.quakenet.org 513 Skivvy :Your client may not be compatible with this server.
+//                prefix: dreamhack.se.quakenet.org
+//               command: 513
+//                params:  Skivvy :Your client may not be compatible with this server.
+// get_servername()     : dreamhack.se.quakenet.org
+// get_nickname()       : 
+// get_user()           : 
+// get_host()           : 
+// param                : Skivvy
+// param                : Your client may not be compatible with this server.
+// middle               : Skivvy
+// trailing             : Your client may not be compatible with this server.
+// get_nick()           : 
+// get_chan()           : 
+===============================================
+//                  line: :dreamhack.se.quakenet.org 433 * Skivvy :Nickname is already in use.
+//                prefix: dreamhack.se.quakenet.org
+//               command: 433
+//                params:  * Skivvy :Nickname is already in use.
+// get_servername()     : dreamhack.se.quakenet.org
+// get_nickname()       : 
+// get_user()           : 
+// get_host()           : 
+// param                : *
+// param                : Skivvy
+// param                : Nickname is already in use.
+// middle               : *
+// middle               : Skivvy
+// trailing             : Nickname is already in use.
+// get_nick()           : 
+// get_chan()           : 
+===============================================
+//                  line: 07:46:12: recv: :SooKee!~SooKee@SooKee.users.quakenet.org JOIN #skivvy
+//                prefix: 
+//               command: 07:46:12:
+//                params:  recv: :SooKee!~SooKee@SooKee.users.quakenet.org JOIN #skivvy
+// get_servername()     : 
+// get_nickname()       : 
+// get_user()           : 
+// get_host()           : 
+// param                : recv:
+// param                : SooKee!~SooKee@SooKee.users.quakenet.org JOIN #skivvy
+// middle               : recv:
+// trailing             : SooKee!~SooKee@SooKee.users.quakenet.org JOIN #skivvy
+// get_nick()           : 
+// get_chan()           : 
+===============================================
+//                  line: :dreamhack.se.quakenet.org 441 Skivvy SooKee #skivvy :They aren't on that channel
+//                prefix: dreamhack.se.quakenet.org
+//               command: 441
+//                params:  Skivvy SooKee #skivvy :They aren't on that channel
+// get_servername()     : dreamhack.se.quakenet.org
+// get_nickname()       : 
+// get_user()           : 
+// get_host()           : 
+// param                : Skivvy
+// param                : SooKee
+// param                : #skivvy
+// param                : They aren't on that channel
+// middle               : Skivvy
+// middle               : SooKee
+// middle               : #skivvy
+// trailing             : They aren't on that channel
+// get_nick()           : 
+// get_chan()           : #skivvy
