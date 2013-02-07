@@ -56,11 +56,11 @@ skivvy_include_HEADERS = \
 	$(srcdir)/include/skivvy/ircbot.h \
 	$(srcdir)/include/skivvy/irc-constants.h \
 	$(srcdir)/include/skivvy/irc.h \
+	$(srcdir)/include/skivvy/IrcServer.h \
 	$(srcdir)/include/skivvy/logrep.h \
 	$(srcdir)/include/skivvy/message.h \
 	$(srcdir)/include/skivvy/network.h \
 	$(srcdir)/include/skivvy/props.h \
-	$(srcdir)/include/skivvy/RemoteIrcServer.h \
 	$(srcdir)/include/skivvy/rpc.h \
 	$(srcdir)/include/skivvy/server.h \
 	$(srcdir)/include/skivvy/socketstream.h \
@@ -85,10 +85,10 @@ libskivvy_la_SOURCES = \
 	ios.cpp \
 	ircbot.cpp \
 	irc.cpp \
+	IrcServer.cpp \
 	logrep.cpp \
 	network.cpp \
 	props.cpp \
-	RemoteIrcServer.cpp \
 	rpc.cpp \
 	server.cpp \
 	store.cpp \

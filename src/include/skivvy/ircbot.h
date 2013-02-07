@@ -37,7 +37,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <skivvy/FloodController.h>
 #include <skivvy/logrep.h>
 #include <skivvy/message.h>
-#include <skivvy/RemoteIrcServer.h>
+#include <skivvy/IrcServer.h>
 #include <skivvy/rpc.h>
 #include <skivvy/socketstream.h>
 #include <skivvy/store.h>

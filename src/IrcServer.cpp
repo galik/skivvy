@@ -28,7 +28,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 '-----------------------------------------------------------------*/
 
-#include <skivvy/RemoteIrcServer.h>
+#include <skivvy/IrcServer.h>
 #include <skivvy/irc-constants.h>
 #include <skivvy/str.h>
 
@@ -202,9 +202,6 @@ bool TestIrcServer::send_unlogged(const str& cmd)
 
 bool TestIrcServer::connect(const str& host, long port)
 {
-//	str ifile = "test/" + host + "-" + std::to_string(port) + "-in.txt";
-//	str ofile = "test/" + host + "-" + std::to_string(port) + "-out.txt";
-
 	str ifile = host + "-" + (port<10?"0":"") + std::to_string(port) + "-in.txt";
 	str ofile = host + "-" + (port<10?"0":"") + std::to_string(port) + "-out.txt";
 
