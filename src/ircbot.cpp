@@ -517,6 +517,8 @@ bool IrcBot::init(const str& config_file)
 
 	config_loaded = std::time(0);
 
+	bug_do_color = get("bug.do.color", true);
+
 	// =====================================
 	// CREATE CRITICAL RESOURCES
 	// =====================================
@@ -678,7 +680,7 @@ bool IrcBot::init(const str& config_file)
 		}
 		else if(msg.command == RPL_WELCOME)
 		{
-			//BUG_MSG_CP(msg, RPL_WELCOME);
+			//BUG_MSG(msg, RPL_WELCOME);
 			this->nick = msg.get_to();
 
 			for(str prop: get_vec(PROP_ON_CONNECT))
@@ -691,7 +693,7 @@ bool IrcBot::init(const str& config_file)
 		}
 		else if(msg.command == RPL_NAMREPLY)
 		{
-			//BUG_MSG_CP(msg, RPL_NAMREPLY);
+			//BUG_MSG(msg, RPL_NAMREPLY);
 //			std::istringstream iss(msg.params_cp);
 			str channel, nick;
 			str_vec params = msg.get_params();
@@ -705,11 +707,11 @@ bool IrcBot::init(const str& config_file)
 		}
 		else if(msg.command == ERR_NOORIGIN)
 		{
-			//BUG_MSG_CP(msg, ERR_NOORIGIN);
+			//BUG_MSG(msg, ERR_NOORIGIN);
 		}
 		else if(msg.command == ERR_NICKNAMEINUSE)
 		{
-			//BUG_MSG_CP(msg, ERR_NICKNAMEINUSE);
+			//BUG_MSG(msg, ERR_NICKNAMEINUSE);
 			if(nick_number < info.nicks.size())
 			{
 				irc->nick(info.nicks[nick_number++]);
@@ -723,11 +725,11 @@ bool IrcBot::init(const str& config_file)
 		}
 		else if(msg.command == RPL_WHOISCHANNELS)
 		{
-			//BUG_MSG_CP(msg, RPL_WHOISCHANNELS);
+			//BUG_MSG(msg, RPL_WHOISCHANNELS);
 		}
 		else if(msg.command == INVITE)
 		{
-			//BUG_MSG_CP(msg, INVITE);
+			//BUG_MSG(msg, INVITE);
 			str who, chan;
 			str_vec params = msg.get_params();
 
@@ -745,7 +747,7 @@ bool IrcBot::init(const str& config_file)
 		}
 		else if(msg.command == JOIN)
 		{
-			BUG_MSG_CP(msg, JOIN);
+			BUG_MSG(msg, JOIN);
 			// track known nicks
 			const str who = msg.get_nickname();
 			str_vec params = msg.get_params();
@@ -758,11 +760,11 @@ bool IrcBot::init(const str& config_file)
 		}
 		else if(msg.command == PART)
 		{
-			BUG_MSG_CP(msg, PART);
+			BUG_MSG(msg, PART);
 		}
 		else if(msg.command == KICK)
 		{
-			BUG_MSG_CP(msg, KICK);
+			BUG_MSG(msg, KICK);
 		}
 		else if(msg.command == NICK)
 		{

@@ -261,6 +261,7 @@ private:
 public:
 	// message    =  [ ":" prefix SPACE ] command [ params ] crlf
 	str line; // original message line
+	std::time_t when; // arrival time
 
 	str prefix;
 	str command;
@@ -391,6 +392,7 @@ public:
 		// [":" prefix SPACE] command [params] crlf
 
 		this->line = line;
+		this->when = std::time(0); // now
 		siss iss(soo::trim(this->line)); // solve cr crlf endings
 		if(iss.peek() == ':') // optional prefix
 			iss.ignore() >> prefix;
@@ -425,10 +427,11 @@ typedef message_set::const_iterator message_set_citer;
 // TODO: Sort this mess out
 //void bug_message_cp(const std::string& K, const std::string& V, const message_cp& msg);
 void bug_message(const std::string& K, const std::string& V, const message& msg);
-
-#define BUG_MSG_CP(m,M) do{ bug_message(#M, M, m); }while(false)
+#ifdef DEBUG
 #define BUG_MSG(m,M) do{ bug_message(#M, M, m); }while(false)
-
+#else
+#define BUG_MSG(m,M)
+#endif
 }} // skivvy::ircbot
 
 #endif // _SKIVVY_MESSAGE_H__

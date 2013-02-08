@@ -55,11 +55,15 @@ using namespace skivvy::types;
 std::ostream& botbug(std::ostream* os = 0);
 str notbug();
 
-str thread_name();
-str obj_name(void* id);
+extern bool bug_do_color;
 
-#define THREAD skivvy::utils::thread_name()
-#define OBJECT skivvy::utils::obj_name(this)
+struct __scope__bomb__
+{
+	static size_t indent;
+	const char* name;
+	__scope__bomb__(const char* name);
+	~__scope__bomb__();
+};
 
 #ifndef DEBUG
 #define bug(m)
@@ -69,14 +73,6 @@ str obj_name(void* id);
 #define BUG_COMMAND(m)
 #else
 #define bug(m) do{skivvy::utils::botbug() << m << std::endl;}while(false)
-
-struct __scope__bomb__
-{
-	static size_t indent;
-	const char* name;
-	__scope__bomb__(const char* name);
-	~__scope__bomb__();
-};
 
 #define QUOTE(s) #s
 #define bug_msg(m) do{printmsg(botbug(), (m));}while(false)

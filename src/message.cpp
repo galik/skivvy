@@ -150,11 +150,11 @@ std::ostream& printmsg(std::ostream& os, const message& m)
 
 void bug_message(const std::string& K, const std::string& V, const message& msg)
 {
-	bug("===============================");
-	bug(K << ": " << V);
-	bug("-------------------------------");
+	bug("//================================");
+	bug("// " << K << ": " << V);
+	bug("//--------------------------------");
 	bug_msg(msg);
-	bug("-------------------------------");
+	bug("//--------------------------------");
 }
 
 const str message::nospcrlfcl(CSTRING("\0 \r\n:")); // any octet except NUL, CR, LF, " " and ":"

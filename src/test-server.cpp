@@ -27,6 +27,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 '-----------------------------------------------------------------*/
 
 #include <string>
+#include <queue>
 #include <vector>
 #include <fstream>
 #include <sstream>
@@ -41,10 +42,12 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <skivvy/server.h>
 #include <skivvy/socketstream.h>
 #include <skivvy/message.h>
+#include <skivvy/irc-constants.h>
 
 //using namespace sookee;
 
 using namespace skivvy;
+using namespace skivvy::irc;
 using namespace skivvy::types;
 using namespace skivvy::utils;
 //using namespace skivvy::ircbot;
@@ -133,105 +136,235 @@ void irc_service(int cs)
 	log("IRC service closed.");
 }
 
+typedef std::unique_lock<std::mutex> unique_lock;
+typedef std::vector<message> message_vec;
+typedef std::list<message> message_lst;
+typedef std::queue<message> message_que;
+typedef std::function<bool(const message&)> request_func;
+
+class irc_server
+{
+private:
+	std::istream& is;
+	std::ostream& os;
+
+	std::mutex traffic_mtx;
+	message_que traffic;
+	std::condition_variable traffic_cnd;
+
+	// TODO: Can ALL these be associated with their requests?
+	std::mutex responses_mtx;
+	message_lst responses;
+	std::condition_variable responses_cnd;
+
+	// TODO: These can not be associated with their requests
+	// therefore send to traffic for logging?
+//	std::mutex errors_mtx;
+//	message_lst errors;
+//	std::condition_variable errors_cnd;
+
+	bool done = false;
+	void async_queue()
+	{
+		str line;
+		message msg;
+		while(!done && sgl(is, line))
+		{
+			bug_var(line);
+			if(!parsemsg(line, msg))
+				continue;
+//			if(msg.command >= "001" && msg.command <= "099")
+//			{
+//				// 5.1 Command responses
+//				//
+//				//    Numerics in the range from 001 to 099 are used for client-server
+//				//    connections only and should never travel between servers.
+//				std::unique_lock<std::mutex> lock(traffic_mtx);
+//				while(!done && traffic.size() > 100)
+//					traffic_cnd.wait(lock);
+//				traffic.push(msg);
+//				traffic_cnd.notify_one();
+//			}
+			if(msg.command >= "200" && msg.command <= "399")
+			{
+				// 5.1 Command responses
+				//
+				//    Replies generated in the response to commands are found in the
+				//    range from 200 to 399.
+				std::unique_lock<std::mutex> lock(responses_mtx);
+				while(!done && responses.size() > 100)
+					responses_cnd.wait(lock);
+				responses.push_back(msg);
+				responses_cnd.notify_one();
+			}
+			else
+			{
+				// 5.1 Command responses
+				//
+				//    Numerics in the range from 001 to 099 are used for client-server
+				//    connections only and should never travel between servers.
+				std::unique_lock<std::mutex> lock(traffic_mtx);
+				while(!done && traffic.size() > 100)
+					traffic_cnd.wait(lock);
+				traffic.push(msg);
+				traffic_cnd.notify_one();
+			}
+
+//			else if(msg.command >= "400" && msg.command <= "599")
+//			{
+				// Error replies are found in the range from 400 to 599.
+//				std::unique_lock<std::mutex> lock(errors_mtx);
+//				while(!done && errors.size() > 100)
+//					errors_cnd.wait(lock);
+//				errors.push_back(msg);
+//				errors_cnd.notify_one(); // gives up lock ??
+//			}
+		}
+	}
+
+public:
+	irc_server(std::istream& is, std::ostream& os)
+	: is(is), os(os)
+	{
+	}
+
+	virtual ~irc_server() {}
+
+	bool async_get_traffic(message& msg, siz timeout = 60)
+	{
+		bug_func();
+		if(done)
+			return false;
+
+		st_time_point end_point = st_clk::now() + std::chrono::seconds(timeout);
+
+		unique_lock lock(traffic_mtx);
+		while(!done && traffic.empty())
+			traffic_cnd.wait_until(lock, end_point);
+
+		bug("async_get_traffic: awake");
+		if(st_clk::now() > end_point)
+		{
+			bug("async_get_traffic: timeout");
+			traffic_cnd.notify_one();
+			return false;
+		}
+
+		bug("async_get_traffic: processing");
+		msg = traffic.front();
+		traffic.pop();
+		traffic_cnd.notify_one();
+		return true;
+	}
+
+	bool async_send(const str& m)
+	{
+		bug_func();
+		os << m << "\r\n" << std::flush;
+		return os;
+	}
+
+	const str_set whois_responses =
+	{
+		RPL_WHOISUSER, RPL_WHOISCHANNELS, RPL_WHOISSERVER, RPL_ENDOFWHOIS
+	};
+
+	bool async_request(const str& req, request_func is_mine, request_func is_last, message_vec& res, siz timeout = 60)
+	{
+		if(!async_send(req))
+			return false;
+
+		st_time_point end_point = st_clk::now() + std::chrono::seconds(timeout);
+
+		res.clear();
+		bool complete = false;
+		while(!done && !complete)
+		{
+			unique_lock lock(responses_mtx);
+			while(!done && responses.empty())
+				responses_cnd.wait_until(lock, end_point);
+
+			if(st_clk::now() > end_point)
+			{
+				responses_cnd.notify_one();
+				break;
+			}
+
+			for(message_lst::iterator i = responses.begin(); i != responses.end();)
+			{
+				if(is_mine(*i))
+				{
+					res.push_back(*i);
+					if(is_last(*i))
+						complete = true;
+					i = responses.erase(i);
+				}
+				else
+					++i;
+			}
+			responses_cnd.notify_one();
+		}
+
+		return complete;
+	}
+
+	bool async_whois(const str& caller_nick, const str& nick, message_vec& res, siz timeout = 60)
+	{
+		request_func is_mine = [&](const message& msg)
+		{
+			if(std::find(whois_responses.cbegin(), whois_responses.cend(), msg.command) == whois_responses.cend())
+				return false;
+			const str_vec params = msg.get_params();
+			if(params.size() < 2)
+				return false; // bad response
+			if(params[0] != caller_nick || params[1] != nick)
+				return false;
+			return true;
+		};
+		request_func is_last = [&](const message& msg)
+		{
+			return msg.command == RPL_ENDOFWHOIS;
+		};
+		return async_request("WHOIS " + nick, is_mine, is_last, res, timeout);
+	}
+};
+
+class remote_irc_server
+: public irc_server
+{
+	net::socketstream ss;
+public:
+	remote_irc_server(): irc_server(ss, ss) {}
+
+	bool connect(const str& host, const siz port)
+	{
+		return ss.open(host, port);
+	}
+};
+
 int main(int argc, char* argv[])
 {
-//	std::cout << int('\n');
+	remote_irc_server irc;
+
+	if(!irc.connect("localhost", 6667))
+		return 1;
+
+	bool done = false;
+
+	done |= !irc.async_send("PASS none");
+	done |= !irc.async_send("NICK Squig");
+	done |= !irc.async_send("USER Squig 0 * :Squig");
+
+	if(done)
+	{
+		// error
+		return 1;
+	}
 
 	message msg;
-
-	//std::istringstream iss(":WiZ!jto@tolsun.oulu.fi NICK Kilroy");
-	std::ifstream ifs("test/messages.txt");
-	if(!ifs)
+	while(!done && irc.async_get_traffic(msg, 60))
 	{
-		log("Could not open input file.");
-		return 1;
+		printmsg(std::cout, msg);
 	}
 
-
-	std::ofstream ofs("test/messages-out.txt");
-	if(!ofs)
-	{
-		log("Could not open output file.");
-		return 1;
-	}
-
-	str_siz_map done;
-
-	siz pos = 0;
-	str line;
-	while(sgl(ifs, line))
-	{
-		++pos;
-		message msg;
-		if(!parsemsg(line, msg))
-		{
-			log("ERROR: Parsing failed: " << pos << ": " << line);
-			continue;
-		}
-
-		if(++done[msg.command] > 3)
-			continue;
-		log(pos << ": " << line);
-
-		ofs << "===============================================\n";
-		printmsg(ofs, msg);
-//		ofs << "-----------------------------------------------\n";
-	}
-
-	return 0;
-
-	bool server = false;
-	size_t port = 39006;
-
-	for(int a = 1; a < argc; ++a)
-	{
-		std::string arg = argv[a];
-
-		if(arg == "-h" || arg == "--help")
-		{
-			std::cout << "Usage: test-server [<port>] [server]\n";
-			return 0;
-		}
-
-		if(arg == "server")
-			server = true;
-
-		size_t p;
-		if(std::istringstream(arg) >> p)
-			port = p;
-	}
-
-	if(server)
-	{
-		log("Running server on port: " << port);
-		try
-		{
-			net::server s;
-			s.set_handler(&echo_service);
-			s.listen(port);
-		}
-		catch(std::exception& e)
-		{
-			std::cout << e.what() << '\n';
-			return 2;
-		}
-		return 0;
-	}
-
-	log("Client connecting on port: " << port);
-
-	net::socketstream ss;
-	ss.open("localhost", port);
-
-	//std::string line;
-	while(ss and std::getline(std::cin, line))
-	{
-		ss << line << std::endl;
-		if(std::getline(ss, line))
-		{
-			std::cout << line << '\n';
-		}
-	}
-
-	return 0;
 }

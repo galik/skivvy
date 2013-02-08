@@ -10,5 +10,11 @@ PRIVMSG #skivvy :Hi!
 JOIN #skivvy 
 PRIVMSG #skivvy :IrcBot v0.2-20130207-125113-0034-0758C01-dev
 PRIVMSG #skivvy :Hi!
+MODE #openarenahelp  +b *!*SooKee@*
+KICK #openarenahelp SooKee :Bye bye.
+MODE #openarenahelp  +b *!*SooKee@*
+KICK #openarenahelp SooKee :Bye bye.
+MODE #openarenahelp  +b *!*SooKee@*
+KICK #openarenahelp SooKee :Bye bye.
 PRIVMSG AIM` :List of commands:
 QUIT :Going off line...

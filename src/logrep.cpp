@@ -44,6 +44,12 @@ using namespace skivvy::ansi;
 using namespace skivvy::types;
 using namespace skivvy::string;
 
+//str thread_name();
+//str obj_name(void* id);
+
+#define THREAD skivvy::utils::thread_name()
+#define OBJECT skivvy::utils::obj_name(this)
+
 void wait_on(std::function<bool()> test, time_t timeout, time_t rate)
 {
 	time_t now = std::time(0);
@@ -116,32 +122,67 @@ const int_vec col =
 	, FG_CYAN
 };
 
+bool bug_do_color = true;
+
 str get_col(const str& name, int seed = 0)
 {
 	static str_map m;
 
+	if(!bug_do_color)
+		return "";
+
 	if(m.find(name) == m.end())
-		m[name] = ansi_esc({col[std::accumulate(name.begin(), name.end(), seed) % col.size()]});// ;
+		m[name] = ansi_esc({col[std::accumulate(name.begin(), name.end(), seed) % col.size()]});
 
 	return m[name];
 }
 
-#ifdef DEBUG
+//#ifdef DEBUG
 
 size_t __scope__bomb__::indent = 0;
 
+static const str_map replacements =
+{
+	{"skivvy::net::basic_socketstream<Char>", "net::socketstream"}
+	, {"skivvy::ircbot::", ""}
+};
+
+static str fixname(const char* name)
+{
+	str fixed = name;
+
+	if(fixed.find(']') > fixed.find('['))
+	{
+		str line;
+		siss iss(name);
+		sgl(iss, line, '[');
+		fixed = line;
+		sgl(iss, line, ']');
+		sgl(iss, line);
+		fixed += line;
+	}
+
+	for(const std::pair<const str, str>& p: replacements)
+		replace(fixed, p.first, p.second);
+
+	return fixed;
+}
+
 __scope__bomb__::__scope__bomb__(const char* name): name(name)
 {
+//	bug(name);
 	++indent;
-	bug(get_col(name) << str(indent, '-') + "> " << name << ' ' << get_col(THREAD, 1) << THREAD << get_col(OBJECT, 2) << OBJECT << ansi_esc({NORM}));
+	bug("");
+	bug(get_col(name) << str(indent, '-') + "> " << fixname(name) << ' ' << get_col(THREAD, 1) << THREAD << ' '  << get_col(OBJECT, 2) << OBJECT << ansi_esc({NORM}));
 }
 __scope__bomb__::~__scope__bomb__()
 {
-	bug(get_col(name) << "<" << str(indent, '-') << name << ' ' << get_col(THREAD, 1) << THREAD << get_col(OBJECT, 2) << OBJECT << ansi_esc({NORM}));
+	bug(get_col(name) << "<" << str(indent, '-') << " " << fixname(name) << ' ' << get_col(THREAD, 1) << THREAD << ' '  << get_col(OBJECT, 2) << OBJECT << ansi_esc({NORM}));
+	bug("");
 	--indent;
 }
 
-#endif
+//#endif
 
 int rand_int(int low, int high)
 {
