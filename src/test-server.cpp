@@ -402,12 +402,16 @@ int main()
 			irc.set_response_mode();
 
 			irc.async_send("JOIN #skivvy");
-			// bool async_whois(const str& caller_nick, const str& nick, message_vec& res, siz timeout)
+
 			message_vec res;
 			if(!irc.async_whois("Squig", "SooKee", res))
 			{
-				log("ERROR: calling whois()");
-				continue;
+				if(res.empty())
+				{
+					log("ERROR: calling whois()");
+					continue;
+				}
+				log("WARNING: Partial response from whois()");
 			}
 			for(const message& msg: res)
 				bug("WHOIS RESPONSE: " << msg.line);
