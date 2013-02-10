@@ -1,6 +1,6 @@
 #pragma once
-#ifndef _SOOKEE_LOGREP_H_
-#define _SOOKEE_LOGREP_H_
+#ifndef _SKIVVY_LOGREP_H_
+#define _SKIVVY_LOGREP_H_
 /*
  * logrep.h
  *
@@ -152,6 +152,6 @@ int rand_int(int low, int high);
  */
 void wait_on(std::function<bool()> test, time_t timeout = 0, time_t rate = 1);
 
-}} // sookee::utils
+}} // skivvy::utils
 
-#endif // _SOOKEE_LOGREP_H_
+#endif // _SKIVVY_LOGREP_H_

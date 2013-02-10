@@ -28,6 +28,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 '-----------------------------------------------------------------*/
 
+//#include <sookee/bug.h>
 #include <skivvy/ircbot.h>
 #include <skivvy/logrep.h>
 
@@ -42,40 +43,16 @@ using namespace skivvy::utils;
 
 #include <memory>
 
-void handler(int sig)
-{
-	void *array[100];
-	size_t size;
+namespace sookee { namespace bug {
 
-	// get void*'s for all entries on the stack
-	size = backtrace(array, 100);
+void stack_handler(int sig);
 
-	// print out all the frames to stderr
-	fprintf(stderr, "Error: signal %d:\n", sig);
-	//backtrace_symbols_fd(array, size, 2);
-	char** trace = backtrace_symbols(array, size);
-
-	int status;
-	str obj, func;
-	for(siz i = 0; i < size; ++i)
-	{
-		sgl(sgl(siss(trace[i]), obj, '('), func, '+');
-
-		cstring_uptr func_name(abi::__cxa_demangle(func.c_str(), 0, 0, &status));
-		std::cerr << "function: " << func_name.get() << '\n';
-//		std::cerr << "info    : " << trace[i] << '\n';
-//		std::cerr << '\n';
-	}
-	free(trace);
-
-	exit(1);
-}
-
+}}
 
 int main(int argc, char* argv[])
 {
 	bug_func();
-	signal(SIGSEGV, handler);   // install our handler
+	signal(SIGSEGV, sookee::bug::stack_handler);   // install our handler
 
 	IrcBot bot;
 	try

@@ -148,14 +148,18 @@ private:
 	std::istream& is;
 	std::ostream& os;
 
+	std::mutex mtx;
+	std::future<void> fut;
+	std::condition_variable cv;
+
 	std::mutex traffic_mtx;
 	message_que traffic;
-	std::condition_variable traffic_cnd;
+	std::condition_variable traffic_cv;
 
 	// TODO: Can ALL these be associated with their requests?
 	std::mutex responses_mtx;
 	message_lst responses;
-	std::condition_variable responses_cnd;
+	std::condition_variable responses_cv;
 
 	// TODO: These can not be associated with their requests
 	// therefore send to traffic for logging?
@@ -166,13 +170,19 @@ private:
 	bool done = false;
 	void async_queue()
 	{
+		bug_func();
 		str line;
 		message msg;
 		while(!done && sgl(is, line))
 		{
 			bug_var(line);
+			std::this_thread::yield();
 			if(!parsemsg(line, msg))
+			{
+				responses_cv.notify_all();
+				traffic_cv.notify_all();
 				continue;
+			}
 //			if(msg.command >= "001" && msg.command <= "099")
 //			{
 //				// 5.1 Command responses
@@ -185,17 +195,18 @@ private:
 //				traffic.push(msg);
 //				traffic_cnd.notify_one();
 //			}
-			if(msg.command >= "200" && msg.command <= "399")
+			if(response_mode && msg.command >= "200" && msg.command <= "399")
 			{
 				// 5.1 Command responses
 				//
 				//    Replies generated in the response to commands are found in the
 				//    range from 200 to 399.
 				std::unique_lock<std::mutex> lock(responses_mtx);
-				while(!done && responses.size() > 100)
-					responses_cnd.wait(lock);
-				responses.push_back(msg);
-				responses_cnd.notify_one();
+				if(!done)
+				{
+					responses.push_back(msg);
+					responses_cv.notify_all();
+				}
 			}
 			else
 			{
@@ -204,10 +215,11 @@ private:
 				//    Numerics in the range from 001 to 099 are used for client-server
 				//    connections only and should never travel between servers.
 				std::unique_lock<std::mutex> lock(traffic_mtx);
-				while(!done && traffic.size() > 100)
-					traffic_cnd.wait(lock);
-				traffic.push(msg);
-				traffic_cnd.notify_one();
+				if(!done)
+				{
+					traffic.push(msg);
+					traffic_cv.notify_all();
+				}
 			}
 
 //			else if(msg.command >= "400" && msg.command <= "599")
@@ -222,13 +234,28 @@ private:
 		}
 	}
 
+protected:
+	bool logged_in = false;
+	bool response_mode = false;
+
 public:
 	irc_server(std::istream& is, std::ostream& os)
 	: is(is), os(os)
+//	, fut(std::async(std::launch::async, [this]{ async_queue(); }))
 	{
 	}
 
 	virtual ~irc_server() {}
+
+	void start()
+	{
+		fut = std::async(std::launch::async, [this]{ async_queue(); });
+	}
+
+	void set_response_mode(bool state = true)
+	{
+		response_mode = state;
+	}
 
 	bool async_get_traffic(message& msg, siz timeout = 60)
 	{
@@ -240,20 +267,21 @@ public:
 
 		unique_lock lock(traffic_mtx);
 		while(!done && traffic.empty())
-			traffic_cnd.wait_until(lock, end_point);
+			traffic_cv.wait_until(lock, end_point);
 
-		bug("async_get_traffic: awake");
-		if(st_clk::now() > end_point)
+		if(done || st_clk::now() > end_point)
 		{
-			bug("async_get_traffic: timeout");
-			traffic_cnd.notify_one();
+			traffic_cv.notify_one();
 			return false;
 		}
 
-		bug("async_get_traffic: processing");
 		msg = traffic.front();
 		traffic.pop();
-		traffic_cnd.notify_one();
+		traffic_cv.notify_one();
+
+		if(msg.command == "001")
+			logged_in = true;
+
 		return true;
 	}
 
@@ -282,12 +310,12 @@ public:
 		{
 			unique_lock lock(responses_mtx);
 			while(!done && responses.empty())
-				responses_cnd.wait_until(lock, end_point);
+				responses_cv.wait_until(lock, end_point);
 
-			if(st_clk::now() > end_point)
+			if(done || st_clk::now() > end_point)
 			{
-				responses_cnd.notify_one();
-				break;
+				responses_cv.notify_one();
+				return false;
 			}
 
 			for(message_lst::iterator i = responses.begin(); i != responses.end();)
@@ -302,7 +330,7 @@ public:
 				else
 					++i;
 			}
-			responses_cnd.notify_one();
+			responses_cv.notify_one();
 		}
 
 		return complete;
@@ -338,16 +366,20 @@ public:
 
 	bool connect(const str& host, const siz port)
 	{
-		return ss.open(host, port);
+		if(!ss.open(host, port))
+			return false;
+		return true;
 	}
 };
 
-int main(int argc, char* argv[])
+int main()
 {
 	remote_irc_server irc;
 
-	if(!irc.connect("localhost", 6667))
+	if(!irc.connect("irc.quakenet.org", 6667))
 		return 1;
+
+	irc.start();
 
 	bool done = false;
 
@@ -364,7 +396,25 @@ int main(int argc, char* argv[])
 	message msg;
 	while(!done && irc.async_get_traffic(msg, 60))
 	{
-		printmsg(std::cout, msg);
-	}
+//		printmsg(std::cout, msg);
+		if(msg.command == RPL_ENDOFMOTD)
+		{
+			irc.set_response_mode();
 
+			irc.async_send("JOIN #skivvy");
+			// bool async_whois(const str& caller_nick, const str& nick, message_vec& res, siz timeout)
+			message_vec res;
+			if(!irc.async_whois("Squig", "SooKee", res))
+			{
+				log("ERROR: calling whois()");
+				continue;
+			}
+			for(const message& msg: res)
+				bug("WHOIS RESPONSE: " << msg.line);
+		}
+		else if(msg.command == "PING")
+		{
+			irc.async_send("PONG " + msg.get_trailing());
+		}
+	}
 }
