@@ -646,7 +646,7 @@ public:
 
 	user_info info;
 	channel_set chans;
-	nicks_map nicks; // last known nicks
+	nicks_map nicks; // last known nicks // chan -> nick_list
 
 	friend std::istream& operator>>(std::istream& is, IrcBot& bot);
 	friend std::istream& operator>>(std::istream&& is, IrcBot& bot) { return is >> bot; }
@@ -769,6 +769,7 @@ public:
 	bool fc_reply_help(const message& msg, const str& text, const str& prefix = "");
 	bool fc_reply_pm(const message& msg, const str& text);
 	bool fc_reply_pm_help(const message& msg, const str& text, const str& prefix = "");
+	bool fc_reply_note(const message& msg, const str& text);
 
 	bool cmd_error(const message& msg, const str& text, bool rv = false);
 	bool cmd_error_pm(const message& msg, const str& text, bool rv = false);

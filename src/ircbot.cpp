@@ -309,10 +309,13 @@ IrcServer* IrcBot::get_irc_server() { return irc; }
 // Utility
 
 // flood control
+bool IrcBot::fc_reply_note(const message& msg, const str& text)
+{
+	return fc.send(msg.get_to(), [&,msg,text]()->bool{ return irc->notice(msg.get_to(), text); });
+}
+
 bool IrcBot::fc_reply(const message& msg, const str& text)
 {
-	bug_func();
-	bug_var(text);
 	return fc.send(msg.get_to(), [&,msg,text]()->bool{ return irc->reply(msg, text); });
 }
 

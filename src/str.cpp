@@ -30,6 +30,8 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 #include <skivvy/str.h>
 
+#include <skivvy/logrep.h>
+
 #include <cctype>
 #include <sstream>
 #include <algorithm>
@@ -38,6 +40,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 namespace skivvy { namespace string {
 
 using namespace skivvy::types;
+using namespace skivvy::utils;
 
 /**
  * Remove surrounding whitespace from a std::string.
@@ -142,6 +145,45 @@ str_vec split_params(const str& s, char d)
 //	v.erase(remove_if(v, [](const str& s) { return s.empty(); }), v.end());
 	erase_if(v, [](const str& s) { return s.empty(); });
 	return v;
+}
+
+str wild_replace(const str wild, const str& replacement)
+{
+//	str fixed;
+//	bool esc = false;
+//	for(const char c: wild)
+//	{
+//		if(esc && !(esc = false))
+//			fixed += c;
+//		else if(c == '\\')
+//			esc = true;
+//		else if(c == '*')
+//			fixed += replacement;
+//		else
+//			fixed += c;
+//	}
+//	return fixed;
+	return wild_replace(wild, str_vec{replacement});
+}
+
+str wild_replace(const str wild, const str_vec& replacements)
+{
+	if(replacements.empty())
+		return wild;
+	str fixed;
+	bool esc = false;
+	for(const char c: wild)
+	{
+		if(esc && !(esc = false))
+			fixed += c;
+		else if(c == '\\')
+			esc = true;
+		else if(c == '*')
+			fixed += replacements[rand_int(0, replacements.size() - 1)];
+		else
+			fixed += c;
+	}
+	return fixed;
 }
 
 }} // sookee::string

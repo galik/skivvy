@@ -68,7 +68,8 @@ skivvy_include_HEADERS = \
 	$(srcdir)/include/skivvy/store.h \
 	$(srcdir)/include/skivvy/str.h \
 	$(srcdir)/include/skivvy/Timers.h \
-	$(srcdir)/include/skivvy/types.h
+	$(srcdir)/include/skivvy/types.h \
+	$(srcdir)/include/skivvy/utils.h
 	
 BOTLIBS = -L.libs -lskivvy -ldl -lpcrecpp -L/usr/lib/sookee -lsookee
 # -Wl,-E is required for programs that load plugin's
@@ -94,7 +95,8 @@ libskivvy_la_SOURCES = \
 	store.cpp \
 	str.cpp \
 	Timers.cpp \
-	types.cpp
+	types.cpp \
+	utils.cpp
 	
 libskivvy_la_LIBADD = -lreadline
 libskivvy_la_LDFLAGS = -version-info 0:0:0

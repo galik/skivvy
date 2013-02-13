@@ -37,6 +37,8 @@ namespace skivvy { namespace irc {
 
 using namespace skivvy::types;
 
+const std::string IRC_REVERSE = "\u0016";
+const std::string IRC_ITALICS = "\u0016";
 const std::string IRC_BOLD = ""; // 0x02
 const std::string IRC_COLOR = ""; // 0x03
 const std::string IRC_NORMAL = ""; // 0x0F

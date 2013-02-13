@@ -7,32 +7,36 @@ A - Addition
 F - FIXED
 X - Won't fix
 
+= 1.0 ==
+
+M Finish ChanOps plugin {1.0}
+ -> F !register <pass>
+ -> F !login <pass>
+ -> X !ungreet // now greets only once persistantly
+ -> !kick
+ -> !ban
+ -> F !seen <nick>
+ -> F !tell <nick> <message> // was !note
+ -> X !stats <nick> // not an important feature
+B ensure skivvy.conf.example is complete {1.0}
 M Move over to libsookee {1.0}
 B check all namespaces/ include guards etc... {1.0}
 B install /etc/ld.conf.d/sookee.conf ? {1.0}
-A Add !inhelp - help displayed into the channel {1.5}
 A Add !man - extended help with examples {1.0}
+M Rewrite core control loop {1.0}
+
+= 1.x ==
+
 A Remote plugin connector aka rawplug. {1.5}
 R !todo - todo list command {1.5}
 R !bug - bug reporting/feature request command {1.5}
-B Grabber needs to be channel aware. {1.0}
+A Add !inhelp - help displayed into the channel {1.5}
 M Make !oastat accept multiple palayers and multiple types (pw ck)
 A Write docs {0.5}
 M Sort out rpc (varidic templates/function?) {1.?}
  -> won't fix?
  -> Use remote-plugin feature instead??
-M Rewrite core control loop {1.0}
-B ensure skivvy.conf.example is complete {1.0}
 A Finish ChoiceListener !1 !2 !3 {1.5}
-M Finish ChanOps plugin {1.0}
- -> F !register <pass>
- -> F !login <pass>
- -> !ungreet
- -> !kick
- -> !ban
- -> !seen <nick>
- -> !note <nick> <message>
- -> !stats <nick>
 B !dict parser is rubbish {1.1}
 R !grab BioxidE_ b12 A|I|M 4-15 conversations between specified people and lines. {1.5} 
 M Finish trivia quiz plugin ircbot-trivial.cpp {1.5}
@@ -45,6 +49,7 @@ A GUI {1.5}
 
 = Completed =
 
+F Grabber needs to be channel aware. {1.0}
 X Command plugin to take over command line processing {1.0}
 F !oaserver <servername> - rewrite this {1.1}
 F normalise property names to 'pluginname.key: value' {1.0}

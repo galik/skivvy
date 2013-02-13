@@ -148,6 +148,15 @@ public:
 	 */
 	virtual bool say(const str& to, const str& text) = 0;
 
+	/**
+	 * Send a notice to either a channel or a specific user.
+	 *
+	 * @to the channel or the user to direct this message to.
+	 * @text The text of the message.
+	 * @return false on failure.
+	 */
+	virtual bool notice(const str& to, const str& text) = 0;
+
 	virtual bool kick(const str_vec& chans, const str_vec&users, const str& comment) = 0;
 
 	// non standard??
@@ -236,6 +245,7 @@ public:
 	bool ping(const str& info);
 	bool pong(const str& info);
 	bool say(const str& to, const str& text);
+	bool notice(const str& to, const str& text);
 	bool kick(const str_vec& chans, const str_vec&users, const str& comment);
 	bool auth(const str& user, const str& pass);
 	bool me(const str& to, const str& text);

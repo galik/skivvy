@@ -80,6 +80,23 @@ siz extract_delimited_text(const str& in, const str& d1, const str& d2, str& out
 str_vec split(const str& s, char d = ' ');
 str_vec split_params(const str& s, char d);
 
+/**
+ * Replace wildcards ('*') in a string with another string, if they are not escapped ("\*").
+ * @param wild The string containing wildcards to be replaced.
+ * @param replacement The string to replace the wildcards.
+ * @return The original string with all the unescapped wildcards replaced.
+ */
+str wild_replace(const str wild, const str& replacement);
+
+/**
+ * Replace wildcards ('*') in a string with another string (selected randomly from a vector)
+ * , if they are not escapped ("\*").
+ * @param wild The string containing wildcards to be replaced.
+ * @param replacements The vector of strings to randomly replace each wildcard.
+ * @return The original string with all the unescapped wildcards replaced.
+ */
+str wild_replace(const str wild, const str_vec& replacements);
+
 }} // skivvy::string
 
 #endif /* _SKIVVY_STR_H_ */

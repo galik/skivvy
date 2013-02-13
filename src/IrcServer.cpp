@@ -90,6 +90,11 @@ bool BaseIrcServer::say(const str& to, const str& text)
 	return send(PRIVMSG + " " + to + " :" + text);
 }
 
+bool BaseIrcServer::notice(const str& to, const str& text)
+{
+	return send(NOTICE + " " + to + " :" + text);
+}
+
 bool BaseIrcServer::whois(const str& n)
 {
 	return send(WHOIS + " " + n);
