@@ -49,6 +49,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <skivvy/stl.h>
 #include <skivvy/str.h>
 #include <skivvy/logrep.h>
+#include <skivvy/utils.h>
 #include <skivvy/irc-constants.h>
 #include <skivvy/message.h>
 
@@ -806,6 +807,14 @@ bool IrcBot::init(const str& config_file)
 					{
 						fc_reply(msg, "Incorrect password.");
 					}
+				}
+				else if(cmd == "!uptime")
+				{
+					soss oss;
+					print_duration(st_clk::now() - st_clk::from_time_t(uptime), oss);
+					str time = oss.str();
+					trim(time);
+					fc_reply(msg, "I have been active for " + time);
 				}
 				else if(cmd == "!join")
 				{

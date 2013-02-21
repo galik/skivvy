@@ -39,6 +39,24 @@ using namespace skivvy::types;
 // "1-4", "7", "9-11 ", " 15 - 16" ... -> siz_vec{1,2,3,4,7,9,10,11,15,16}
 bool parse_rangelist(const str& rangelist, siz_vec& items);
 
+template<typename Rep, typename Period>
+void print_duration(std::chrono::duration<Rep, Period> t, std::ostream& os)
+{
+	typedef std::chrono::duration<int, std::ratio<60 * 60 * 24>> days;
+
+	auto d = std::chrono::duration_cast < days > (t);
+	auto h = std::chrono::duration_cast < std::chrono::hours > (t - d);
+	auto m = std::chrono::duration_cast < std::chrono::minutes > (t - d - h);
+	auto s = std::chrono::duration_cast < std::chrono::seconds > (t - d - h - m);
+	if(t >= days(1))
+		os << d.count() << "d ";
+	if(t >= std::chrono::hours(1))
+		os << h.count() << "h ";
+	if(t >= std::chrono::minutes(1))
+		os << m.count() << "m ";
+	os << s.count() << "s";
+}
+
 }} // skivvy::utils
 
 #endif // _SKIVVY_UTILS_H_

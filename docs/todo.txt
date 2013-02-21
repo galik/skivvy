@@ -9,15 +9,14 @@ X - Won't fix
 
 = 1.0 ==
 
-M Make logins persistant {1.0}
 B ensure skivvy.conf.example is complete {1.0}
 M Move over to libsookee {1.0}
 B check all namespaces/ include guards etc... {1.0}
 B install /etc/ld.conf.d/sookee.conf ? {1.0}
-A Add !man - extended help with examples {1.0}
 
 = 1.x ==
 
+A Add !man - extended help with examples {1.5}
 M Rewrite core control loop {1.5}
 A Remote plugin connector aka rawplug. {1.5}
 R !todo - todo list command {1.5}
@@ -41,6 +40,7 @@ A GUI {1.5}
 
 = Completed =
 
+M Make logins persistant {1.0}
 M Finish ChanOps plugin {1.0}
  -> F !register <pass>
  -> F !login <pass>

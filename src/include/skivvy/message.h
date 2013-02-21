@@ -290,7 +290,7 @@ public:
 		if(!isalpha(nick[0]) && soo::find(bnf_special, nick[0]) == bnf_special.cend())
 			return false;
 		for(char c: nick)
-			if(!isalnum(c) && soo::find(bnf_special, c) == bnf_special.cend())
+			if(!isalnum(c) && soo::find(bnf_special, c) == bnf_special.cend() && c != '-')
 				return false;
 		return true;
 	}
