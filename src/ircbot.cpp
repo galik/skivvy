@@ -64,7 +64,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 namespace skivvy { namespace ircbot {
 
-PLUGIN_INFO("skivvy", "IrcBot", "0.2");
+PLUGIN_INFO("skivvy", "IrcBot", "0.3");
 
 using namespace skivvy;
 using namespace skivvy::irc;
@@ -380,9 +380,9 @@ void IrcBot::official_join(const str& channel)
 
 	str_vec welcomes = get_vec(PROP_WELCOME);
 
-	bug("TESTING WELCOME VECTOR");
-	for(const str& w: welcomes)
-		bug_var(w);
+//	bug("TESTING WELCOME VECTOR");
+//	for(const str& w: welcomes)
+//		bug_var(w);
 
 	if(!welcomes.empty())
 		irc->say(channel, welcomes[rand_int(0, welcomes.size() - 1)]);
