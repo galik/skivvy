@@ -9,6 +9,8 @@ X - Won't fix
 
 = 1.0 ==
 
+M Change rawplug API to mirror new message API
+M Make sure all config.example files are complete {1.0}
 B ensure skivvy.conf.example is complete {1.0}
 M Move over to libsookee {1.0}
 B check all namespaces/ include guards etc... {1.0}

@@ -42,26 +42,8 @@ namespace skivvy { namespace string {
 using namespace skivvy::types;
 using namespace skivvy::utils;
 
-/**
- * Remove surrounding whitespace from a std::string.
- * @param s The string to be modified.
- * @param t The set of characters to delete from each end
- * of the string.
- * @return The same string passed in as a parameter reference.
- */
-//str& trim(str& s, const char* t)
-//{
-//	s.erase(0, s.find_first_not_of(t));
-//	s.erase(s.find_last_not_of(t) + 1);
-//	return s;
-//}
-
 str& replace(str& s, const str& from, const str& to)
 {
-//	siz pos = 0;
-//	while((pos = s.find(from, pos + to.size())) != str::npos)
-//		s.replace(pos, from.size(), to);
-//	return s;
 	siz pos = 0;
 	if((pos = s.find(from)) != str::npos)
 		s.replace(pos, from.size(), to);
