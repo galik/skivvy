@@ -264,8 +264,8 @@ public:
 	BackupStore(const str& file): file(file)
 	{
 		reload();
-		if(store[VERSION_KEY].empty())
-			store[VERSION_KEY].push_back("0.0");
+//		if(store[VERSION_KEY].empty())
+//			store[VERSION_KEY].push_back("0.0");
 	}
 
 	void reload()
@@ -278,6 +278,8 @@ public:
 	{
 		str_set res;
 		lock_guard lock(mtx);
+		if(store.empty())
+			load();
 		for(const str_vec_pair& p: store)
 			if(pcre_match(reg, p.first))
 				res.insert(p.first);
@@ -288,6 +290,8 @@ public:
 	{
 		str_set res;
 		lock_guard lock(mtx);
+		if(store.empty())
+			load();
 		for(const str_vec_pair& p: store)
 			if(wild_match(wld, p.first))
 				res.insert(p.first);
@@ -298,6 +302,8 @@ public:
 	{
 		str_set res;
 		lock_guard lock(mtx);
+		if(store.empty())
+			load();
 		for(const str_vec_pair& p: store)
 			res.insert(p.first);
 		return res;
@@ -305,6 +311,8 @@ public:
 
 	bool has(const str& k)
 	{
+		if(store.empty())
+			load();
 		return store.find(k) != store.end();
 	}
 
@@ -342,6 +350,8 @@ public:
 	void clear(const str& k)
 	{
 		lock_guard lock(mtx);
+		if(store.empty())
+			load();
 		store[k].clear();
 		save();
 	}
@@ -352,6 +362,8 @@ public:
 	void add(const str& k, const str& v)
 	{
 		lock_guard lock(mtx);
+		if(store.empty())
+			load();
 		store[k].push_back(v);
 		save();
 	}
@@ -362,6 +374,8 @@ public:
 	void set_at(const str& k, siz n, const str& v)
 	{
 		lock_guard lock(mtx);
+		if(store.empty())
+			load();
 		if(store[k].size() < n + 1)
 			store[k].resize(n + 1);
 		store[k][n] = v;

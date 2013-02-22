@@ -380,10 +380,6 @@ void IrcBot::official_join(const str& channel)
 
 	str_vec welcomes = get_vec(PROP_WELCOME);
 
-//	bug("TESTING WELCOME VECTOR");
-//	for(const str& w: welcomes)
-//		bug_var(w);
-
 	if(!welcomes.empty())
 		irc->say(channel, welcomes[rand_int(0, welcomes.size() - 1)]);
 }
@@ -393,7 +389,7 @@ void IrcBot::official_join(const str& channel)
 // =====================================
 
 #ifndef DEFAULT_PLUGIN_DIR
-#define DEFAULT_PLUGIN_DIR "/usr/local/share/skivvy/plugins"
+#define DEFAULT_PLUGIN_DIR "/usr/lib/skivvy"
 #endif
 
 void IrcBot::load_plugins()
