@@ -57,6 +57,9 @@ void print_duration(std::chrono::duration<Rep, Period> t, std::ostream& os)
 	os << s.count() << "s";
 }
 
+str prompt_color(const str& seed);
+#define REPLY_PROMPT skivvy::utils::prompt_color(__func__)
+
 }} // skivvy::utils
 
 #endif // _SKIVVY_UTILS_H_

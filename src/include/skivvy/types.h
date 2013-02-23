@@ -1,6 +1,6 @@
 #pragma once
-#ifndef _SOOKEE_TYPES_H_
-#define _SOOKEE_TYPES_H_
+#ifndef _SOOKEE_TYPES_H__
+#define _SOOKEE_TYPES_H__
 /*
  * tyoes.h
  *
@@ -180,4 +180,5 @@ typedef std::unique_ptr<char, malloc_deleter> cstring_uptr;
 
 }} // sookee::types
 
-#endif /* _SOOKEE_TYPES_H_ */
+#endif /* using namespace skivvy::types;
+ */

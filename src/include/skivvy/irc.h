@@ -98,4 +98,5 @@ str oa_to_IRC(const char* msg);
 str oa_to_IRC(const str& msg);
 
 }} // skivvy::irc
+
 #endif /* _SKIVVY_IRC_H_ */

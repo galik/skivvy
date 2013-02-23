@@ -44,6 +44,7 @@ const std::string IRC_COLOR = ""; // 0x03
 const std::string IRC_NORMAL = ""; // 0x0F
 const std::string IRC_UNDERLINE = ""; // 0x1F
 
+const std::string IRC_White = "00";
 const std::string IRC_Black = "01";
 const std::string IRC_Navy_Blue = "02";
 const std::string IRC_Green = "03";
@@ -59,7 +60,7 @@ const std::string IRC_Royal_Blue = "12";
 const std::string IRC_Hot_Pink = "13";
 const std::string IRC_Dark_Gray = "14";
 const std::string IRC_Light_Gray = "15";
-const std::string IRC_White = "16";
+//const std::string IRC_White = "16";
 
 /*
 00 0xFFFFFF white
