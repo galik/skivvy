@@ -78,7 +78,7 @@ bool parse_rangelist(const str& rangelist, siz_vec& items)
 	return true;
 }
 
-str_map bg =
+static const str_map bg =
 {
 	{IRC_White, IRC_Black}
 	, {IRC_Black, IRC_Light_Gray}
@@ -108,9 +108,17 @@ str prompt_color(const str& seed)
 		idx += siz(c);
 
 	idx = (idx % 16);
-	str col = (idx<10?"0":"") + std::to_string(idx);
+//	str col = (idx<10?"0":"") + std::to_string(idx);
+	str col = std::to_string(idx);
+	if(col.size() < 2)
+		col = "0" + col;
 	soss oss;
-	oss << IRC_BOLD << IRC_COLOR << col << "," << bg[col]
+
+	str back = IRC_Black;
+	if(bg.count(col))
+		back = bg.at(col);
+
+	oss << IRC_BOLD << IRC_COLOR << col << "," << back
 		<< name << ":" << IRC_NORMAL << " ";
 	return oss.str();
 }
