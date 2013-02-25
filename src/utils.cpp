@@ -111,7 +111,7 @@ str prompt_color(const str& seed)
 	str col = (idx<10?"0":"") + std::to_string(idx);
 	soss oss;
 	oss << IRC_BOLD << IRC_COLOR << col << "," << bg[col]
-		<< name << IRC_NORMAL << IRC_COLOR << IRC_Black << ": " << IRC_NORMAL;
+		<< name << ":" << IRC_NORMAL << " ";
 	return oss.str();
 }
 
