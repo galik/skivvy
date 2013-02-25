@@ -180,5 +180,4 @@ typedef std::unique_ptr<char, malloc_deleter> cstring_uptr;
 
 }} // sookee::types
 
-#endif /* using namespace skivvy::types;
- */
+#endif /* _SOOKEE_TYPES_H__ */
