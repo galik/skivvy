@@ -31,10 +31,12 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 #include <skivvy/types.h>
 #include <skivvy/logrep.h>
+#include <skivvy/irc.h>
 
 namespace skivvy { namespace utils {
 
 using namespace skivvy::types;
+using namespace skivvy::irc;
 
 bool parse_rangelist(const str& rangelist, siz_vec& items)
 {
