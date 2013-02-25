@@ -25,11 +25,6 @@ skivvy_includedir = $(prefix)/include/skivvy
 skivvy_librarydir = $(prefix)/lib/skivvy
 skivvy_manualsdir = $(datadir)/skivvy
 
-# Required for GCC on some systems it seems 
-#	-D _GLIBCXX_USE_NANOSLEEP
-#	-D __GXX_EXPERIMENTAL_CXX0X__
-#	-D _GLIBCXX_USE_SCHED_YIELD
-
 DEF_FLAGS = \
 	-D _GLIBCXX_USE_NANOSLEEP \
 	-D _GLIBCXX_USE_SCHED_YIELD \
