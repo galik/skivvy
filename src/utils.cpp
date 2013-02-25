@@ -31,12 +31,11 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 #include <skivvy/types.h>
 #include <skivvy/logrep.h>
-#include <skivvy/irc.h>
 
 namespace skivvy { namespace utils {
 
 using namespace skivvy::types;
-using namespace skivvy::irc;
+//using namespace skivvy::irc;
 
 bool parse_rangelist(const str& rangelist, siz_vec& items)
 {
@@ -76,43 +75,6 @@ bool parse_rangelist(const str& rangelist, siz_vec& items)
 			items.push_back(i);
 	}
 	return true;
-}
-
-str_map bg =
-{
-	{IRC_White, IRC_Black}
-	, {IRC_Black, IRC_Light_Gray}
-	, {IRC_Navy_Blue, IRC_Light_Gray}
-	, {IRC_Green, IRC_Light_Gray}
-	, {IRC_Red, IRC_Light_Gray}
-	, {IRC_Brown, IRC_Light_Gray}
-	, {IRC_Purple, IRC_Light_Gray}
-	, {IRC_Olive, IRC_Light_Gray}
-	, {IRC_Yellow, IRC_Black}
-	, {IRC_Lime_Green, IRC_Black}
-	, {IRC_Teal, IRC_Black}
-	, {IRC_Aqua_Light, IRC_Black}
-	, {IRC_Royal_Blue, IRC_Black}
-	, {IRC_Hot_Pink, IRC_Black}
-	, {IRC_Dark_Gray, IRC_Light_Gray}
-	, {IRC_Light_Gray, IRC_Black}
-};
-
-str prompt_color(const str& seed)
-{
-	str name = seed;
-	if(!seed.find("do_") && seed.size() > 3)
-		name = seed.substr(3);
-	siz idx = 0;
-	for(const char c: name)
-		idx += siz(c);
-
-	idx = (idx % 16);
-	str col = (idx<10?"0":"") + std::to_string(idx);
-	soss oss;
-	oss << IRC_BOLD << IRC_COLOR << col << "," << bg[col]
-		<< name << ":" << IRC_NORMAL << " ";
-	return oss.str();
 }
 
 }} // skivvy::cal
