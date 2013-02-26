@@ -28,17 +28,8 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 '-----------------------------------------------------------------*/
 
-#include <skivvy/logrep.h>
-#include <skivvy/str.h>
-
-#include <sstream>
-#include <thread>
-#include <mutex>
+#include <skivvy/props.h>
 
 namespace skivvy { namespace props {
-
-using namespace skivvy::types;
-using namespace skivvy::string;
-
 
 }} // sookee::utils

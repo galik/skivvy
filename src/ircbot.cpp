@@ -32,6 +32,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 #include <sookee/bug.h>
 #include <sookee/log.h>
+#include <sookee/str.h>
 
 #include <string>
 #include <fstream>
@@ -50,7 +51,6 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 #include <skivvy/ios.h>
 #include <skivvy/stl.h>
-#include <skivvy/str.h>
 #include <skivvy/logrep.h>
 #include <skivvy/utils.h>
 #include <skivvy/irc-constants.h>
@@ -73,7 +73,10 @@ using namespace skivvy;
 using namespace skivvy::irc;
 using namespace skivvy::types;
 using namespace skivvy::utils;
-using namespace skivvy::string;
+
+using namespace sookee::bug;
+using namespace sookee::log;
+using namespace sookee::string;
 
 static const str SERVER_HOST = "server.host";
 static const str SERVER_HOST_DEFAULT = "localhost";
@@ -785,7 +788,7 @@ bool IrcBot::init(const str& config_file)
 		{
 			if(!msg.get_trailing().empty() && msg.get_trailing()[0] == '!')
 			{
-				str cmd = lowercase(msg.get_user_cmd());
+				str cmd = lower_copy(msg.get_user_cmd());
 				log("Processing command: " << cmd);
 				if(cmd == "!die")
 				{
@@ -817,7 +820,7 @@ bool IrcBot::init(const str& config_file)
 				}
 				else if(cmd == "!join")
 				{
-					str_vec param = split_params(msg.get_user_params(), ' ');
+					str_vec param = split(msg.get_user_params(), ' ', true);
 
 					if(param.size() == 2)
 					{
@@ -841,7 +844,7 @@ bool IrcBot::init(const str& config_file)
 				}
 				else if(cmd == "!part")
 				{
-					str_vec param = split_params(msg.get_user_params(), ' ');
+					str_vec param = split(msg.get_user_params(), ' ', true);
 
 					if(param.size() == 2)
 					{
@@ -997,7 +1000,7 @@ bool IrcBot::init(const str& config_file)
 			else if(!msg.get_trailing().empty() && msg.get_to() == nick)
 			{
 				// PM to bot accepts commands without !
-				str cmd = lowercase(msg.get_user_cmd());
+				str cmd = lower_copy(msg.get_user_cmd());
 				if(commands.find(cmd) != commands.end())
 					execute(cmd, msg);
 			}
@@ -1128,7 +1131,7 @@ void IrcBot::exec(const std::string& cmd, std::ostream* os)
 		str cmd;
 		std::istringstream iss(line);
 		iss >> cmd >> std::ws;
-		cmd = lowercase(cmd);
+		lower(cmd);
 		if(cmd == "/say")
 		{
 			str chan;

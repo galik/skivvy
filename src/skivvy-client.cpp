@@ -4,7 +4,8 @@
 #include <cerrno>
 #include <cstring>
 
-#include <skivvy/str.h>
+#include <sookee/str.h>
+
 #include <skivvy/types.h>
 #include <skivvy/socketstream.h>
 
@@ -13,7 +14,7 @@
 
 using namespace skivvy;
 using namespace skivvy::types;
-using namespace skivvy::string;
+using namespace sookee::string;
 
 bool send(const str& cmd, str& res)
 {

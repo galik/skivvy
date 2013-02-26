@@ -33,18 +33,18 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <ctime>
 #include <iomanip>
 
-#include <skivvy/str.h>
-//#include <skivvy/logrep.h>
+#include <sookee/str.h>
 #include <sookee/bug.h>
 #include <sookee/log.h>
 
 namespace skivvy { namespace net {
 
-using namespace skivvy::types;
-//using namespace skivvy::utils;
-using namespace skivvy::string;
 using namespace sookee::bug;
 using namespace sookee::log;
+using namespace sookee::string;
+
+using namespace skivvy::types;
+
 
 cookie::cookie()
 : secure(false)
@@ -120,7 +120,6 @@ str urlencode(const str& url)
 // TODO: implement domain checking
 std::string get_cookie_header(const cookie_jar& cookies, const str& /*domain*/)
 {
-//	bug_func();
 	std::ostringstream oss;
 	if(!cookies.empty())
 	{
@@ -137,7 +136,6 @@ std::string get_cookie_header(const cookie_jar& cookies, const str& /*domain*/)
 
 std::istream& read_http_headers(std::istream&is, header_map& headers)
 {
-//	bug_func();
 	str line;
 
 	if(!std::getline(is, line))
@@ -160,10 +158,7 @@ std::istream& read_http_headers(std::istream&is, header_map& headers)
 		iss.clear();
 		iss.str(line);
 		if(iss >> key && std::getline(iss, val))
-		{
-//			bug("header: " << key << " " << val);
-			headers.insert(std::make_pair(lowercase(trim(key, " \t\r\n:")), trim(val)));
-		}
+			headers.insert(std::make_pair(lower(trim(key, " \t\r\n:")), trim(val)));
 	}
 	return is;
 }
@@ -171,14 +166,12 @@ std::istream& read_http_headers(std::istream&is, header_map& headers)
 
 std::istream& read_chunked_encoding(std::istream& is, str& data)
 {
-//	bug_func();
 	data.clear();
 	size_t len = 0;
 	str line;
 	std::ostringstream oss;
 	while(is >> std::hex >> len && len)
 	{
-//		bug("len: " << len);
 		std::getline(is, line); // move to data start
 		oss.clear();
 		oss.str("");
@@ -190,10 +183,8 @@ std::istream& read_chunked_encoding(std::istream& is, str& data)
 
 std::istream& read_http_response_data(std::istream&is, const header_map& headers, str& data)
 {
-//	bug_func();
 	for(const net::header& h: headers)
 	{
-//		bug("header: " << h.first << ": " << h.second);
 		if(h.first == "transfer-encoding" && h.second == "chunked")
 			return read_chunked_encoding(is, data);
 		else if(h.first == "content-length")
@@ -216,7 +207,6 @@ std::istream& read_http_response_data(std::istream&is, const header_map& headers
 
 std::istream& read_http_cookies(std::istream& is, const header_map& headers, cookie_jar& cookies)
 {
-	//bug_func();
 	for(const header& h: headers)
 	{
 		if(h.first == "set-cookie")
@@ -259,8 +249,7 @@ static const str_map ents =
 
 str fix_entities(std::string s)
 {
-//	bug_func();
-	str::size_type p;
+	siz p;
 	for(const str_pair& e: ents)
 		while((p = s.find(e.first)) != str::npos)
 			s.replace(p, e.first.size(), e.second);
@@ -269,8 +258,8 @@ str fix_entities(std::string s)
 
 str urldecode(std::string s)
 {
-//	bug_func();
 	static str_map urlism;
+
 	if(urlism.empty())
 	{
 		for(size_t i = 0; i < 256; ++i)
@@ -278,21 +267,16 @@ str urldecode(std::string s)
 			std::ostringstream oss;
 			oss.fill('0');
 			oss << "%" << std::setw(2) << std::hex << i;
-			//std::cout << "adding: " << oss.str() << '\n';
 
-			urlism[lowercase(oss.str())] = str(1, char(i));
-			urlism[uppercase(oss.str())] = str(1, char(i));
+			urlism[lower_copy(oss.str())] = str(1, char(i));
+			urlism[upper_copy(oss.str())] = str(1, char(i));
 		}
 	}
-	str::size_type p;
+
+	siz p;
 	for(const str_pair& e: urlism)
-	{
 		while((p = s.find(e.first)) != str::npos)
-		{
-			//std::cout << "found: " << e.first << '\n';
 			s.replace(p, e.first.size(), e.second);
-		}
-	}
 	return s;
 }
 

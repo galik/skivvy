@@ -169,7 +169,7 @@ bool server::bind(long port, const std::string& iface)
 
 void server::listen(long port, const std::string& iface)
 {
-	if(!bind(port)) throw_server_exception(strerror(errno));
+	if(!bind(port, iface)) throw_server_exception(strerror(errno));
 	if(::listen(ss, 10) == -1) throw_server_exception(strerror(errno));
 
 	while(!done)

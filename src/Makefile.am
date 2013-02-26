@@ -61,7 +61,6 @@ skivvy_include_HEADERS = \
 	$(srcdir)/include/skivvy/socketstream.h \
 	$(srcdir)/include/skivvy/stl.h \
 	$(srcdir)/include/skivvy/store.h \
-	$(srcdir)/include/skivvy/str.h \
 	$(srcdir)/include/skivvy/Timers.h \
 	$(srcdir)/include/skivvy/types.h \
 	$(srcdir)/include/skivvy/utils.h
@@ -88,7 +87,6 @@ libskivvy_la_SOURCES = \
 	rpc.cpp \
 	server.cpp \
 	store.cpp \
-	str.cpp \
 	Timers.cpp \
 	types.cpp \
 	utils.cpp

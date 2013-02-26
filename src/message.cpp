@@ -31,7 +31,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <skivvy/message.h>
 
 #include <skivvy/types.h>
-#include <skivvy/str.h>
+#include <sookee/str.h>
 #include <skivvy/store.h>
 #include <skivvy/logrep.h>
 
@@ -41,7 +41,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 namespace skivvy { namespace ircbot {
 
 using namespace skivvy::types;
-using namespace skivvy::string;
+using namespace sookee::string;
 using namespace skivvy::utils;
 
 std::istream& operator>>(std::istream& is, message& m)

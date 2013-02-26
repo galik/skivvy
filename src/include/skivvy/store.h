@@ -46,13 +46,13 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <fnmatch.h>
 
 #include <skivvy/stl.h>
-#include <skivvy/str.h>
+#include <sookee/str.h>
 
 
 namespace skivvy { namespace utils {
 
 using namespace skivvy::types;
-using namespace skivvy::string;
+using namespace sookee::string;
 using namespace sookee::bug;
 using namespace sookee::log;
 

@@ -134,4 +134,29 @@ int rand_int(int low, int high)
 	return d(g);
 }
 
+str wild_replace(const str wild, const str& replacement)
+{
+	return wild_replace(wild, str_vec{replacement});
+}
+
+str wild_replace(const str wild, const str_vec& replacements)
+{
+	if(replacements.empty())
+		return wild;
+	str fixed;
+	bool esc = false;
+	for(const char c: wild)
+	{
+		if(esc && !(esc = false))
+			fixed += c;
+		else if(c == '\\')
+			esc = true;
+		else if(c == '*')
+			fixed += replacements[rand_int(0, replacements.size() - 1)];
+		else
+			fixed += c;
+	}
+	return fixed;
+}
+
 }} // skivvy::cal

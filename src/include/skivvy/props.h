@@ -30,9 +30,10 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 '-----------------------------------------------------------------*/
 
+#include <sookee/str.h>
+
 #include <skivvy/types.h>
 #include <skivvy/logrep.h>
-#include <skivvy/str.h>
 
 #include <thread>
 #include <mutex>
@@ -41,7 +42,7 @@ namespace skivvy { namespace props {
 
 using namespace skivvy::types;
 using namespace skivvy::utils;
-using namespace skivvy::string;
+using namespace sookee::string;
 
 
 typedef std::map<const str, str> property_map;
