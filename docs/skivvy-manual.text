@@ -8,8 +8,8 @@ manual.text
 | COMPILING:
 ------------------------------------------------------------
 
-Skivvy requires C++11 functionality. He is currently built
-using GCC 4.7 trunk but GCC 4.6 may work.
+Skivvy requires C++11 functionality. It is currently built
+using GCC 4.7.2
 
 ------------------------------------------------------------
 | INSTALLING:
@@ -25,8 +25,8 @@ for the file $HOME/.skivvy/skivvy.conf
 The vital settings are:
 
 # The IRC network host to connect to
-server_host: irc.quakenet.org
-server_port: 6667
+server.host: irc.quakenet.org
+server.port: 6667
 
 # Various nicks (in case already in use)
 nick: Skivvy
