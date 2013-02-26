@@ -31,7 +31,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 '-----------------------------------------------------------------*/
 
-#include <skivvy/str.h>
+#include <sookee/str.h>
 #include <skivvy/types.h>
 #include <skivvy/logrep.h>
 #include <skivvy/socketstream.h>
@@ -40,7 +40,7 @@ namespace skivvy { namespace email {
 
 using namespace skivvy;
 using namespace skivvy::types;
-using namespace skivvy::string;
+using namespace sookee::string;
 
 class SMTP
 {
