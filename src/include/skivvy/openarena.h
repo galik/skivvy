@@ -33,15 +33,17 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 #include <array>
 #include <string>
+
+#include <sookee/str.h>
+
 #include <skivvy/types.h>
 #include <skivvy/irc.h>
-#include <skivvy/str.h>
 
 namespace skivvy { namespace oa {
 
 using namespace skivvy::irc;
 using namespace skivvy::types;
-using namespace skivvy::string;
+using namespace sookee::string;
 
 inline
 str oa_handle_to_irc(str oa)
