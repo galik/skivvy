@@ -43,6 +43,9 @@ is granted under the same conditions.
 
 '----------------------------------------------------------------*/
 
+#include <sookee/log.h>
+#include <sookee/bug.h>
+
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
@@ -54,11 +57,13 @@ is granted under the same conditions.
 #include <cstring> // strerror()
 #include <cerrno>
 
-#include <skivvy/logrep.h>
+//#include <skivvy/logrep.h>
 
 namespace skivvy { namespace net {
 
-using namespace skivvy::utils;
+//using namespace skivvy::utils;
+using namespace sookee::bug;
+using namespace sookee::log;
 
 template<typename Char>
 class basic_socketbuf

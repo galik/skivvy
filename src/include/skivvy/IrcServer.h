@@ -32,7 +32,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 '-----------------------------------------------------------------*/
 
-#include <sookee/socketstream.h>
+//#include <sookee/socketstream.h>
 
 #include <skivvy/socketstream.h>
 #include <skivvy/message.h>

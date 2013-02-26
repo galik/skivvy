@@ -29,14 +29,17 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 #include <skivvy/utils.h>
 
+#include <sookee/log.h>
+
 #include <skivvy/types.h>
-#include <skivvy/logrep.h>
+//#include <skivvy/logrep.h>
 #include <skivvy/irc.h>
 
 namespace skivvy { namespace utils {
 
 using namespace skivvy::types;
 using namespace skivvy::irc;
+using namespace sookee::log;
 
 bool parse_rangelist(const str& rangelist, siz_vec& items)
 {
@@ -121,6 +124,14 @@ str prompt_color(const str& seed)
 	oss << IRC_BOLD << IRC_COLOR << col << "," << back
 		<< name << ":" << IRC_NORMAL << " ";
 	return oss.str();
+}
+
+
+int rand_int(int low, int high)
+{
+	static std::minstd_rand g(std::time(0));
+	std::uniform_int_distribution<> d(low, high);
+	return d(g);
 }
 
 }} // skivvy::cal

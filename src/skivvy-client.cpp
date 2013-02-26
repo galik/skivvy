@@ -5,14 +5,14 @@
 #include <cstring>
 
 #include <skivvy/str.h>
-#include <skivvy/logrep.h>
+#include <skivvy/types.h>
 #include <skivvy/socketstream.h>
 
 #include <readline/readline.h>
 #include <readline/history.h>
 
 using namespace skivvy;
-using namespace skivvy::utils;
+using namespace skivvy::types;
 using namespace skivvy::string;
 
 bool send(const str& cmd, str& res)

@@ -29,13 +29,13 @@ http://www.gnu.org/licenses/gpl-2.0.html
 '-----------------------------------------------------------------*/
 
 #include <skivvy/types.h>
-#include <skivvy/logrep.h>
+#include <sookee/log.h>
 
 #include <sstream>
 
 namespace skivvy { namespace types {
 
-using namespace skivvy::utils;
+using namespace sookee::log;
 
 std::istream& delay::parse(std::istream& is)
 {

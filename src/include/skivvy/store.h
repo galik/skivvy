@@ -32,7 +32,10 @@ http://www.gnu.org/licenses/gpl-2.0.html
 '-----------------------------------------------------------------*/
 
 #include <skivvy/types.h>
-#include <skivvy/logrep.h>
+//#include <skivvy/logrep.h>
+
+#include <sookee/bug.h>
+#include <sookee/log.h>
 
 #include <istream>
 #include <ostream>
@@ -50,7 +53,8 @@ namespace skivvy { namespace utils {
 
 using namespace skivvy::types;
 using namespace skivvy::string;
-using namespace skivvy::utils;
+using namespace sookee::bug;
+using namespace sookee::log;
 
 class Store
 {

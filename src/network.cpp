@@ -34,13 +34,17 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <iomanip>
 
 #include <skivvy/str.h>
-#include <skivvy/logrep.h>
+//#include <skivvy/logrep.h>
+#include <sookee/bug.h>
+#include <sookee/log.h>
 
 namespace skivvy { namespace net {
 
 using namespace skivvy::types;
-using namespace skivvy::utils;
+//using namespace skivvy::utils;
 using namespace skivvy::string;
+using namespace sookee::bug;
+using namespace sookee::log;
 
 cookie::cookie()
 : secure(false)

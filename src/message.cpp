@@ -33,6 +33,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <skivvy/types.h>
 #include <skivvy/str.h>
 #include <skivvy/store.h>
+#include <skivvy/logrep.h>
 
 #define CSTRING(s) s,sizeof(s)
 #define STRC(c) str(1, c)
@@ -121,7 +122,8 @@ str message::get_chan() const
 
 	for(siz i = 0; i < chan_params.size(); ++i)
 		if(chan_params[i].count(command) && params.size() > i)
-			if(!params[i].empty() && soo::find(chan_start, params[i][0]) != chan_start.cend())
+			if(!params[i].empty() && std::count(chan_start.cbegin(), chan_start.cend(), params[i][0]))
+//			if(!params[i].empty() && soo::find(chan_start, params[i][0]) != chan_start.cend())
 				return params[i];
 	return "";
 }

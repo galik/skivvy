@@ -60,6 +60,29 @@ void print_duration(std::chrono::duration<Rep, Period> t, std::ostream& os)
 str prompt_color(const str& seed);
 #define REPLY_PROMPT skivvy::utils::prompt_color(__func__)
 
+int rand_int(int low, int high);
+
+#ifndef DEV
+#define DEV "-unset"
+#endif
+
+#ifndef STAMP
+#define STAMP "00000000"
+#endif
+
+#ifndef COMMITS
+#define COMMITS "0000"
+#endif
+
+#ifndef REVISION
+#define REVISION "0000000"
+#endif
+
+#define PLUGIN_INFO(I, N, V) \
+	static const char* ID = I; \
+	static const char* NAME = N; \
+	static const char* VERSION = V DEV
+
 }} // skivvy::utils
 
 #endif // _SKIVVY_UTILS_H_

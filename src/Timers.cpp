@@ -30,8 +30,11 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 #include <skivvy/Timers.h>
 
+#include <sookee/bug.h>
+#include <sookee/log.h>
+
 #include <skivvy/types.h>
-#include <skivvy/logrep.h>
+#include <skivvy/utils.h>
 
 #include <random>
 #include <functional>
@@ -40,6 +43,8 @@ namespace skivvy { namespace ircbot {
 
 using namespace skivvy::types;
 using namespace skivvy::utils;
+using namespace sookee::bug;
+using namespace sookee::log;
 
 RandomTimer::RandomTimer(std::function<void(const void*)> cb)
 : mindelay(1)

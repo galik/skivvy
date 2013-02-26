@@ -35,7 +35,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <sstream>
 #include <iostream>
 #include <ctime>
-#include <cmath>
+//#include <cmath>
 #include <algorithm>
 #include <memory>
 #include <cstdlib>

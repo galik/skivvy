@@ -25,7 +25,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 '-----------------------------------------------------------------*/
 
-#include <skivvy/logrep.h>
+#include <skivvy/types.h>
 
 #include <map>
 #include <string>

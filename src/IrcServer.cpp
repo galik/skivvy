@@ -28,6 +28,9 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 '-----------------------------------------------------------------*/
 
+#include <sookee/bug.h>
+#include <sookee/log.h>
+
 #include <skivvy/IrcServer.h>
 #include <skivvy/irc-constants.h>
 #include <skivvy/str.h>
@@ -37,8 +40,10 @@ namespace skivvy { namespace ircbot {
 using namespace skivvy;
 using namespace skivvy::irc;
 using namespace skivvy::types;
-using namespace skivvy::utils;
+//using namespace skivvy::utils;
 using namespace skivvy::string;
+using namespace sookee::bug;
+using namespace sookee::log;
 
 // BASE
 
@@ -227,7 +232,7 @@ bool TestIrcServer::receive(str& line)
 	static siz no = 0;
 	++no;
 //	bug_var(no);
-	skivvy::utils::botbug() << no << ": ";
+	sookee::bug::out() << no << ": ";
 	std::getline(ifs, line);
 	return ifs;
 }

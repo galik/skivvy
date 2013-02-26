@@ -30,6 +30,9 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 #include <skivvy/ircbot.h>
 
+#include <sookee/bug.h>
+#include <sookee/log.h>
+
 #include <string>
 #include <fstream>
 #include <sstream>
@@ -517,7 +520,7 @@ bool IrcBot::init(const str& config_file)
 
 	config_loaded = std::time(0);
 
-	bug_do_color = get("bug.do.color", true);
+//	bug_do_color = get("bug.do.color", true);
 
 	// =====================================
 	// CREATE CRITICAL RESOURCES
@@ -558,8 +561,8 @@ bool IrcBot::init(const str& config_file)
 		logfile.open(getf("log.file"));
 		if(logfile)
 		{
-			botlog(&logfile);
-			botbug(&logfile);
+			sookee::log::out(&logfile);
+			sookee::bug::out(&logfile);
 		}
 	}
 

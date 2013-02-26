@@ -30,7 +30,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 #include <skivvy/str.h>
 
-#include <skivvy/logrep.h>
+#include <skivvy/utils.h>
 
 #include <cctype>
 #include <sstream>

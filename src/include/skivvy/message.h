@@ -32,9 +32,9 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 '-----------------------------------------------------------------*/
 
-#include <sookee/socketstream.h>
+//#include <sookee/socketstream.h>
 
-#include <sookee/stl.h>
+//#include <sookee/stl.h>
 #include <sookee/str.h>
 
 #include <skivvy/types.h>
@@ -214,12 +214,14 @@ private:
 		// middle: nospcrlfcl *(":" / nospcrlfcl)
 		// middle: ("\0"|"\n"|"\r"|" "|":")^ ("\0"|"\n"|"\r"|" ")^*
 
-		if(is && soo::find(nospcrlfcl, is.peek()) != nospcrlfcl.cend())
+		if(is && std::count(nospcrlfcl.cbegin(), nospcrlfcl.cend(), is.peek()))
+//		if(is && soo::find(nospcrlfcl, is.peek()) != nospcrlfcl.cend())
 			is.setstate(std::ios::failbit);
 		else
 		{
 			middle = is.get();
-			while(is && is.peek() != EOF && soo::find(nospcrlf, is.peek()) == nospcrlf.end())
+			while(is && is.peek() != EOF && !std::count(nospcrlf.cbegin(), nospcrlf.cend(), is.peek()))
+//			while(is && is.peek() != EOF && soo::find(nospcrlf, is.peek()) == nospcrlf.end())
 				middle += is.get();
 		}
 		return is;
@@ -287,10 +289,12 @@ public:
 	{
 		if(nick.empty())
 			return false;
-		if(!isalpha(nick[0]) && soo::find(bnf_special, nick[0]) == bnf_special.cend())
+		if(!isalpha(nick[0]) && !std::count(bnf_special.cbegin(), bnf_special.cend(), nick[0]))
+//		if(!isalpha(nick[0]) && soo::find(bnf_special, nick[0]) == bnf_special.cend())
 			return false;
 		for(char c: nick)
-			if(!isalnum(c) && soo::find(bnf_special, c) == bnf_special.cend() && c != '-')
+			if(!isalnum(c) && !std::count(bnf_special.cbegin(), bnf_special.cend(), c) && c != '-')
+//			if(!isalnum(c) && soo::find(bnf_special, c) == bnf_special.cend() && c != '-')
 				return false;
 		return true;
 	}
@@ -321,7 +325,8 @@ public:
 	bool is_user(const str& user) const
 	{
 		for(char c: user)
-			if(soo::find(nospcrlfat, c) != nospcrlfat.cend())
+			if(std::count(nospcrlfat.cbegin(), nospcrlfat.cend(), c))
+//			if(soo::find(nospcrlfat, c) != nospcrlfat.cend())
 				return false;
 		return true;
 	}

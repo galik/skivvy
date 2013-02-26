@@ -32,8 +32,11 @@ http://www.gnu.org/licenses/gpl-2.0.html
 //#include <skivvy/ios.h>
 #include <skivvy/stl.h>
 //#include <skivvy/str.h>
-#include <skivvy/logrep.h>
+//#include <skivvy/logrep.h>
 //#include <skivvy/irc-constants.h>
+
+#include <sookee/bug.h>
+#include <sookee/log.h>
 
 #include <random>
 #include <functional>
@@ -42,8 +45,9 @@ namespace skivvy { namespace ircbot {
 
 using namespace skivvy;
 using namespace skivvy::types;
-using namespace skivvy::utils;
-//using namespace skivvy::string;
+//using namespace skivvy::utils;
+using namespace sookee::bug;
+using namespace sookee::log;
 
 FloodController::FloodController()
 : idx(0)

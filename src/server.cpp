@@ -23,6 +23,8 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 #include <skivvy/server.h>
 
+#include <sookee/bug.h>
+
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -46,11 +48,12 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <list>
 #include <tuple>
 
-#include <skivvy/logrep.h>
+#include <skivvy/types.h>
 
 namespace skivvy { namespace net {
 
-using namespace skivvy::utils;
+using namespace skivvy::types;
+using namespace sookee::bug;
 
 #define throw_server_exception(msg) throw server_exception(msg, __FILE__, __LINE__)
 

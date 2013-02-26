@@ -34,11 +34,12 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <iostream>
 #include <functional>
 
+#include <sookee/bug.h>
+#include <sookee/log.h>
 #include <sookee/stl.h>
 #include <sookee/str.h>
 
 #include <skivvy/types.h>
-#include <skivvy/logrep.h>
 #include <skivvy/server.h>
 #include <skivvy/socketstream.h>
 #include <skivvy/message.h>
@@ -49,8 +50,9 @@ http://www.gnu.org/licenses/gpl-2.0.html
 using namespace skivvy;
 using namespace skivvy::irc;
 using namespace skivvy::types;
-using namespace skivvy::utils;
-//using namespace skivvy::ircbot;
+using namespace sookee::bug;
+using namespace sookee::log;
+
 #define bug_in(i) do{bug(i.peek());}while(false)
 #define CSTRING(s) s,sizeof(s)
 #define STRC(c) str(1, c)

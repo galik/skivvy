@@ -28,12 +28,12 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 '-----------------------------------------------------------------*/
 
-//#include <sookee/bug.h>
+#include <sookee/bug.h>
 #include <skivvy/ircbot.h>
-#include <skivvy/logrep.h>
 
 using namespace skivvy::ircbot;
 using namespace skivvy::utils;
+using namespace soo;
 
 #include <cstdio>
 #include <execinfo.h>
@@ -43,28 +43,19 @@ using namespace skivvy::utils;
 
 #include <memory>
 
-namespace sookee { namespace bug {
-
-void stack_handler(int sig);
-
-}}
-
 int main(int argc, char* argv[])
 {
 	bug_func();
-	signal(SIGSEGV, sookee::bug::stack_handler);   // install our handler
+
+	ADD_STACK_HANDLER();
 
 	IrcBot bot;
-//	try
-//	{
-		log(bot.get_name() + " v" + bot.get_version());
-		bot.init(argc > 1 ? argv[1] : "");
-		bot.exit();
-//	}
-//	catch(std::exception& e)
-//	{
-//		log("EXCEPTION: " << e.what());
-//	}
+
+	log(bot.get_name() + " v" + bot.get_version());
+
+	bot.init(argc > 1 ? argv[1] : "");
+	bot.exit();
+
 	if(bot.restart)
 		return 6;
 	return 0;

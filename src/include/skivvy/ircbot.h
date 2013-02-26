@@ -35,7 +35,9 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <sookee/socketstream.h>
 
 #include <skivvy/FloodController.h>
-#include <skivvy/logrep.h>
+//#include <skivvy/logrep.h>
+#include <sookee/bug.h>
+#include <sookee/log.h>
 #include <skivvy/message.h>
 #include <skivvy/IrcServer.h>
 #include <skivvy/rpc.h>
