@@ -157,7 +157,7 @@ public:
 	 */
 	virtual bool notice(const str& to, const str& text) = 0;
 
-	virtual bool kick(const str_vec& chans, const str_vec&users, const str& comment) = 0;
+	virtual bool kick(const str_set& chans, const str_set& users, const str& comment) = 0;
 
 	// non standard??
 	virtual bool auth(const str& user, const str& pass) = 0;
@@ -184,7 +184,7 @@ public:
 	 */
 	virtual bool quit(const str& reason) = 0;
 
-	virtual bool whois(const str& nick) = 0;
+	virtual bool whois(const str_set& masks) = 0;
 
 	/**
 	 * Change mode settings for nick.
@@ -246,12 +246,12 @@ public:
 	bool pong(const str& info);
 	bool say(const str& to, const str& text);
 	bool notice(const str& to, const str& text);
-	bool kick(const str_vec& chans, const str_vec&users, const str& comment);
+	bool kick(const str_set& chans, const str_set& users, const str& comment);
 	bool auth(const str& user, const str& pass);
 	bool me(const str& to, const str& text);
 	bool query(const str& nick);
 	bool quit(const str& reason);
-	bool whois(const str& nick);
+	bool whois(const str_set& masks);
 	bool mode(const str& chan, const str& mode, const str& nick);
 	bool mode(const str& nick, const str& mode);
 	bool reply(const message& msg, const str& text);

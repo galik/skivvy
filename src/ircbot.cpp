@@ -1250,7 +1250,7 @@ void IrcBot::exec(const std::string& cmd, std::ostream* os)
 		{
 			str nick;
 			iss >> nick;
-			irc->whois(nick);
+			irc->whois({nick});
 		}
 		else if(cmd == "/me")
 		{

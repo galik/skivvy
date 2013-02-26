@@ -100,9 +100,9 @@ bool BaseIrcServer::notice(const str& to, const str& text)
 	return send(NOTICE + " " + to + " :" + text);
 }
 
-bool BaseIrcServer::whois(const str& n)
+bool BaseIrcServer::whois(const str_set& masks)
 {
-	return send(WHOIS + " " + n);
+	return send(WHOIS + " " + soo::join(masks, ","));
 }
 
 bool BaseIrcServer::quit(const str& reason)
@@ -114,17 +114,12 @@ bool BaseIrcServer::quit(const str& reason)
 
 // Parameters: <channel> *( "," <channel> ) <user> *( "," <user> ) [<comment>]
 // KICK KICK #skivvy Skivvy :
-bool BaseIrcServer::kick(const str_vec& chans, const str_vec&users, const str& comment)
+bool BaseIrcServer::kick(const str_set& chans, const str_set& users, const str& comment)
 {
 	str cmd = KICK;
 
-	str sep = " ";
-	for(const str& s: chans)
-		{ cmd += sep + s; sep = ","; }
-
-	sep = " ";
-	for(const str& s: users)
-		{ cmd += sep + s; sep = ","; }
+	cmd += " " + soo::join(chans, ",");
+	cmd += " " + soo::join(users, ",");
 
 	return send(cmd + " :" + comment);
 }
