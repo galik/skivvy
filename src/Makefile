@@ -7,6 +7,11 @@ bin_dir = $(prefix)/bin
 # requirements
 REQ_CXX11_TEST := $(shell echo "int main(){}" | $(CXX) -o /dev/null -x c++ -std=c++11 - 2> /dev/null; echo $$?)
 REQ_CXX11_FAIL := "ERROR: Requires g++ v4.7 or above to comiile."
+REQ_CXX11 = if(($(REQ_CXX11_TEST))); then echo $(REQ_CXX11_FAIL); exit 1; fi
+
+REQ_PCRE_TEST := $(shell printf %-3s $(shell pcre-config --version|tr -d '.')|tr ' ' '0')
+REQ_PCRE_FAIL := "ERROR: Requires PCRE v8.21 or above."
+REQ_PCRE = if(($(REQ_PCRE_TEST) < 780)); then echo $(REQ_PCRE_FAIL); exit 1; fi
 
 DEBUGFLAGS = \
 	-D _GLIBCXX_DEBUG \
@@ -27,11 +32,19 @@ GENERALFLAGS = \
 	-Wall \
 	-Werror
 
-CXXFLAGS = \
-	$(GENERALFLAGS) \
-	$(DEBUGFLAGS) \
-	-Iinclude \
-	-fPIC
+ifeq ($(build_debug),1)
+	CXXFLAGS = \
+		$(GENERALFLAGS) \
+		$(DEBUGFLAGS) \
+		-Iinclude \
+		-fPIC
+else
+	CXXFLAGS = \
+		$(GENERALFLAGS) \
+		$(RELEASEFLAGS) \
+		-Iinclude \
+		-fPIC
+endif
 	
 libskivvy_so_LDFLAGS = \
 	-shared \
@@ -81,7 +94,8 @@ skivvy_HEADERS := $(patsubst %.cpp,%.h, $(skivvy_SOURCES))
 all: reqs libskivvy.so.0.0.0 skivvy
 
 reqs:
-	@if(($(REQ_CXX11_TEST))); then echo $(REQ_CXX11_FAIL); exit 1; fi
+	@$(REQ_CXX11)
+	@$(REQ_PCRE)
 
 libskivvy.so.0.0.0: $(libskivvy_so_OBJECTS)
 	$(CXX) $(libskivvy_so_LDFLAGS) -o $@ $(libskivvy_so_OBJECTS)
@@ -108,7 +122,7 @@ uninstall:
 	rm -fr $(include_dir)
 	rm $(bin_dir)/skivvy
 
-clean:
+clean: reqs
 	rm -fr *.o *.so.?.?.? 
 	
 .PHONY: reqs install uninstall

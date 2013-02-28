@@ -1,2 +1,3 @@
 prefix = $(HOME)/dev/cpp/install
 LDFLAGS = -L$(prefix)/lib/sookee
+build_debug = 1
