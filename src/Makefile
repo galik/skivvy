@@ -32,6 +32,9 @@ CXXFLAGS = \
 	
 libskivvy_so_LDFLAGS = \
 	-shared \
+	-ldl \
+	-lpcrecpp \
+	-pthread \
 	-Wl,-E \
 	-Wl,-soname,libskivvy.so.0 \
 	-rdynamic \
@@ -63,8 +66,9 @@ skivvy_LDFLAGS = \
 	-I../../libsookee/install/include \
 	-ldl \
 	-lpcrecpp \
+	-pthread \
 	-L$(HOME)/dev/cpp/libsookee/install/lib/sookee -lsookee \
-	-L$(HOME)/dev/cpp/skivvy/install/lib/skivvy -lskivvy
+	-L$(HOME)/dev/cpp/skivvy/src -lskivvy
 
 skivvy_SOURCES := skivvy.cpp
 skivvy_OBJECTS := $(patsubst %.cpp,%.o, $(skivvy_SOURCES))
@@ -77,6 +81,7 @@ reqs:
 
 libskivvy.so.0.0.0: $(libskivvy_so_OBJECTS)
 	$(CXX) $(libskivvy_so_LDFLAGS) -o $@ $(libskivvy_so_OBJECTS)
+	ln -f -s $@ libskivvy.so
 	
 skivvy: $(skivvy_OBJECTS)
 	$(CXX) $(skivvy_LDFLAGS) -o $@ $(skivvy_OBJECTS)
