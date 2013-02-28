@@ -1,5 +1,8 @@
+include Makefile.local
 
-prefix = $(HOME)/dev/cpp/skivvy/install
+lib_dir = $(prefix)/lib/skivvy
+include_dir = $(prefix)/include
+bin_dir = $(prefix)/bin
 
 # requirements
 REQ_CXX11_TEST := $(shell echo "int main(){}" | $(CXX) -o /dev/null -x c++ -std=c++11 - 2> /dev/null; echo $$?)
@@ -38,7 +41,7 @@ libskivvy_so_LDFLAGS = \
 	-Wl,-E \
 	-Wl,-soname,libskivvy.so.0 \
 	-rdynamic \
-	-Wl,-rpath,$(prefix)/lib/skivvy
+	-Wl,-rpath,$(lib_dir)
 
 libskivvy_so_SOURCES := \
 	cal.cpp \
@@ -67,8 +70,9 @@ skivvy_LDFLAGS = \
 	-ldl \
 	-lpcrecpp \
 	-pthread \
-	-L$(HOME)/dev/cpp/libsookee/install/lib/sookee -lsookee \
-	-L$(HOME)/dev/cpp/skivvy/src -lskivvy
+	$(LDFLAGS) \
+	-lsookee \
+	-L. -lskivvy
 
 skivvy_SOURCES := skivvy.cpp
 skivvy_OBJECTS := $(patsubst %.cpp,%.o, $(skivvy_SOURCES))
@@ -90,22 +94,21 @@ skivvy: $(skivvy_OBJECTS)
 	$(CXX) -c -o $@ $<
 
 install: all
-	mkdir -p $(prefix)/lib/skivvy
-	cp libskivvy.so.0.0.0 $(prefix)/lib/skivvy
-	/sbin/ldconfig -n $(prefix)/lib/skivvy
-	ln -f -s $(prefix)/lib/skivvy/libskivvy.so.0 $(prefix)/lib/skivvy/libskivvy.so
-	mkdir -p $(prefix)/include/skivvy
-	cp -r include/skivvy $(prefix)/include
-	mkdir -p $(prefix)/bin
-	cp skivvy $(prefix)/bin
+	mkdir -p $(lib_dir)
+	cp libskivvy.so.0.0.0 $(lib_dir)
+	/sbin/ldconfig -n $(lib_dir)
+	ln -f -s $(lib_dir)/libskivvy.so.0 $(lib_dir)/libskivvy.so
+	mkdir -p $(include_dir)/skivvy
+	cp -r include/skivvy $(include_dir)
+	mkdir -p $(bin_dir)
+	cp skivvy $(bin_dir)
 	
 uninstall:
-	rm -fr $(prefix)/lib/skivvy
-	rm -fr $(prefix)/include/skivvy
-	rm $(prefix)/bin/skivvy
+	rm -fr $(lib_dir)
+	rm -fr $(include_dir)
+	rm $(bin_dir)/skivvy
 
 clean:
 	rm -fr *.o *.so.?.?.? 
 	
 .PHONY: reqs install uninstall
-

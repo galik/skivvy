@@ -1,0 +1,2 @@
+prefix = $(HOME)/dev/cpp/install
+LDFLAGS = -L$(prefix)/lib/sookee
