@@ -135,6 +135,12 @@ void BasicIrcBotPlugin::execute(const str& cmd, const message& msg)
 
 str BasicIrcBotPlugin::help(const str& cmd) const
 {
+	bug_func();
+	if(!actions.count(cmd))
+	{
+		log("ERROR: unknown command: " << cmd);
+		return "unknown command";
+	}
 	if(actions.at(cmd).flags & action::INVISIBLE)
 		return "none";
 	return actions.at(cmd).help;
@@ -326,6 +332,13 @@ bool IrcBot::fc_reply(const message& msg, const str& text)
 	return fc.send(msg.get_to(), [&,msg,text]()->bool{ return irc->reply(msg, text); });
 }
 
+//bool IrcBot::fc_reply(const str& to, const str& text)
+//{
+//	message msg;
+//	msg.params = " " + to + " :"; // fudge message for reply to correct channel|person
+//	return fc_reply(msg, text);
+//}
+
 bool IrcBot::fc_reply_help(const message& msg, const str& text, const str& prefix)
 {
 	const str_vec v = split(text, '\n');
@@ -344,8 +357,11 @@ bool IrcBot::fc_reply_pm_help(const message& msg, const str& text, const str& pr
 {
 	const str_vec v = split(text, '\n');
 	for(const str& s: v)
-		if(!fc.send(msg.get_to(), [&,msg,prefix,s]()->bool{ return irc->reply_pm(msg, prefix + s); }))
+	{
+		str to = msg.get_to();
+		if(!fc.send(to, [&,msg,prefix,s]()->bool{ return irc->reply_pm(msg, prefix + s); }))
 			return false;
+	}
 	return true;
 }
 
@@ -1079,10 +1095,11 @@ void IrcBot::execute(const str& cmd, const message& msg)
 
 str IrcBot::help(const str& cmd) const
 {
-	if(commands.find(cmd) != commands.end())
+	bug_func();
+	if(commands.count(cmd))// != commands.end())
 		return commands.at(cmd)->help(cmd);
 
-	if(commands.find('!' + cmd) != commands.end())
+	if(commands.count('!' + cmd))// != commands.end())
 		return commands.at('!' + cmd)->help('!' + cmd);
 
 	return "No help available for " + cmd + ".";

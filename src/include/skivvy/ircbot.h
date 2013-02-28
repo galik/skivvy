@@ -768,6 +768,7 @@ public:
 	str configfile; // current config file
 
 	bool fc_reply(const message& msg, const str& text);
+//	bool fc_reply(const str& to, const str& text);
 	bool fc_reply_help(const message& msg, const str& text, const str& prefix = "");
 	bool fc_reply_pm(const message& msg, const str& text);
 	bool fc_reply_pm_help(const message& msg, const str& text, const str& prefix = "");

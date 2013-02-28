@@ -65,7 +65,7 @@ skivvy_include_HEADERS = \
 	$(srcdir)/include/skivvy/types.h \
 	$(srcdir)/include/skivvy/utils.h
 	
-BOTLIBS = -L.libs -lskivvy -ldl -lpcrecpp -L/usr/lib/sookee -lsookee
+BOTLIBS = -ldl -L.libs -lskivvy -lpcrecpp -L/usr/lib/sookee -lsookee
 # -Wl,-E is required for programs that load plugin's
 BOTFLAGS = -Wl,-E
 
@@ -115,7 +115,7 @@ noinst_PROGRAMS = \
 bin_PROGRAMS = skivvy skivvy-client test-server
 
 skivvy_SOURCES = skivvy.cpp
-skivvy_LDADD = -lskivvy -ldl -lpcrecpp -lreadline -L/usr/lib/sookee -lsookee
+skivvy_LDADD = -ldl -lskivvy -lpcrecpp -lreadline -L/usr/lib/sookee -lsookee
 skivvy_LDFLAGS = -Wl,-E
 
 skivvy_client_SOURCES = skivvy-client.cpp
@@ -127,6 +127,7 @@ skivlet_LDFLAGS =
 
 test_server_SOURCES = test-server.cpp
 test_server_LDADD = $(BOTLIBS)
+test_server_LDFLAGS = -pthread
 
 skivvy_manuals_DATA = $(top_srcdir)/docs/skivvy-manual.text
 

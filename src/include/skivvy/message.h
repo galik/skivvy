@@ -424,7 +424,6 @@ public:
 	friend std::ostream& printmsg(std::ostream& os, const message& m);
 };
 
-// NUL, CR, LF, " " and ":"
 typedef std::set<message> message_set;
 typedef message_set::iterator message_set_iter;
 typedef message_set::const_iterator message_set_citer;

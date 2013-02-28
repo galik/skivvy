@@ -9,6 +9,10 @@ X - Won't fix
 
 = 1.0 ==
 
+M Make various web-scrapers use cascading regex for ease of maintenance {1.?}
+B chanops !seen should be case insensitive (also follow known aliases tracked by NICK events?)
+B rconmsg does not sunbscribe to PMs - only channels {1.0}
+ -> When subscription is created, inserts bot's name rather than subscriber
 M Change rawplug API to mirror new message API
 M Make sure all config.example files are complete {1.0}
 B ensure skivvy.conf.example is complete {1.0}
@@ -18,6 +22,7 @@ B install /etc/ld.conf.d/sookee.conf ? {1.0}
 
 = 1.x ==
 
+M chanops make database of nick,user,host persistent??? {1.5}
 A Add !man - extended help with examples {1.5}
 M Rewrite core control loop {1.5}
 A Remote plugin connector aka rawplug. {1.5}
@@ -38,7 +43,6 @@ A GUI {1.5}
  -> IrcBot accept interface IrcBotGuiInfo
  -> for config file settings and types
  -> ? other ?
-
 
 = Completed =
 
