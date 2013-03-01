@@ -9,8 +9,6 @@ X - Won't fix
 
 = 1.0 ==
 
-M Make various web-scrapers use cascading regex for ease of maintenance {1.?}
-B chanops !seen should be case insensitive
 B rconmsg does not sunbscribe to PMs - only channels {1.0}
  -> When subscription is created, inserts bot's name rather than subscriber
 M Change rawplug API to mirror new message API
@@ -46,6 +44,8 @@ A GUI {1.5}
 
 = Completed =
 
+B chanops !seen should be case insensitive
+M Make various web-scrapers use cascading regex for ease of maintenance {1.0}
 M Make logins persistant {1.0}
 M Finish ChanOps plugin {1.0}
  -> F !register <pass>

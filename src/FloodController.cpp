@@ -116,7 +116,7 @@ void FloodController::clear(const str& channel)
 
 void FloodController::start()
 {
-	log("Starting up dispatcher.");
+	log("Starting up dispatcher:");
 	if(!dispatching)
 	{
 		dispatching = true;
@@ -126,7 +126,7 @@ void FloodController::start()
 
 void FloodController::stop()
 {
-	log("Closing down dispatcher.");
+	log("Closing down dispatcher:");
 	if(!dispatching)
 		return;
 	dispatching = false;

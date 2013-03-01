@@ -148,7 +148,7 @@ str BasicIrcBotPlugin::help(const str& cmd) const
 
 IrcBotPluginSPtr IrcBotPluginLoader::operator()(const str& file, IrcBot& bot)
 {
-	bug_func();
+//	bug_func();
 	IrcBotPluginSPtr plugin;
 	void* dl = 0;
 	IrcBotPluginSPtr(*skivvy_ircbot_factory)(IrcBot&) = 0;
@@ -162,7 +162,7 @@ IrcBotPluginSPtr IrcBotPluginLoader::operator()(const str& file, IrcBot& bot)
 		return plugin;
 	}
 
-	bug("Getting factory function");
+//	bug("Getting factory function");
 
 	if(!(*(void**)&skivvy_ircbot_factory = dlsym(dl, "skivvy_ircbot_factory")))
 	{
@@ -170,12 +170,12 @@ IrcBotPluginSPtr IrcBotPluginLoader::operator()(const str& file, IrcBot& bot)
 		return plugin;
 	}
 
-	bug("Invoking factory function");
+//	bug("Invoking factory function");
 
 	if(!(plugin = skivvy_ircbot_factory(bot)))
 		return plugin;
 
-	bug("Adding newly created plugin");
+//	bug("Adding newly created plugin");
 
 	plugin->dl = dl;
 	bot.del_plugin(plugin->get_id());
@@ -593,23 +593,19 @@ bool IrcBot::init(const str& config_file)
 		return false;
 	}
 
-//	host = get(SERVER_HOST, SERVER_HOST_DEFAULT);
-//	port = get(SERVER_PORT, SERVER_PORT_DEFAULT);
-
 	if(info.nicks.empty())
 	{
 		log("ERROR: No nick set.");
 		return false;
 	}
 
-	log(get_name() << " v" << get_version());
-
 	fc.start();
 
-	// Initialise plugins
+	log("Initializing plugins [" << plugins.size() << "]:");
 	plugin_vec_iter p = plugins.begin();
 	while(p != plugins.end())
 	{
+		bug_var(&(*p));
 		if(!(*p))
 		{
 			log("Null plugin found during initialisation.");
@@ -636,14 +632,12 @@ bool IrcBot::init(const str& config_file)
 	if(get<bool>("irc.test.mode") == true)
 		connected = true;
 	else
-		// start pinger
 		png = std::async(std::launch::async, [&]{ pinger(); });
 
 	while(!done && !connected)
 		std::this_thread::sleep_for(std::chrono::seconds(1));
 
 	if(get<bool>("irc.test.mode") == false)
-		// start console
 		con = std::async(std::launch::async, [&]{ console(); });
 
 	str line;
@@ -764,7 +758,8 @@ bool IrcBot::init(const str& config_file)
 			{
 				official_join(chan);
 				irc->say(chan, "I was invited by " + msg.get_nickname());
-				store->add("invite", chan);
+				if(!store->get_set("invite").count(chan))
+					store->add("invite", chan);
 			}
 		}
 		else if(msg.command == JOIN)
