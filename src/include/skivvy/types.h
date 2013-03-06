@@ -1,6 +1,6 @@
 #pragma once
-#ifndef _SOOKEE_TYPES_H__
-#define _SOOKEE_TYPES_H__
+#ifndef _SKIVVY_TYPES_H__
+#define _SKIVVY_TYPES_H__
 /*
  * tyoes.h
  *
@@ -89,6 +89,7 @@ typedef std::map<const str, str_vec> str_vec_map;
 typedef std::pair<const str, str_vec> str_vec_pair;
 
 typedef std::lock_guard<std::mutex> lock_guard;
+typedef std::unique_lock<std::mutex> unique_lock;
 //typedef std::chrono::steady_clock steady_clock;
 //typedef steady_clock::period period;
 //typedef steady_clock::time_point time_point;
@@ -180,4 +181,4 @@ typedef std::unique_ptr<char, malloc_deleter> cstring_uptr;
 
 }} // sookee::types
 
-#endif /* _SOOKEE_TYPES_H__ */
+#endif /* _SKIVVY_TYPES_H__ */

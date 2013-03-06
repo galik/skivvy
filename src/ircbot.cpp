@@ -694,6 +694,11 @@ bool IrcBot::init(const str& config_file)
 		{
 			irc->pong(msg.get_trailing());
 		}
+		else if(msg.command == PONG)
+		{
+			lock_guard lock(pinger_info_mtx);
+			pinger_info = msg.get_trailing();
+		}
 		else if(msg.command == RPL_WELCOME)
 		{
 			//BUG_MSG(msg, RPL_WELCOME);
@@ -710,7 +715,6 @@ bool IrcBot::init(const str& config_file)
 		else if(msg.command == RPL_NAMREPLY)
 		{
 			//BUG_MSG(msg, RPL_NAMREPLY);
-//			std::istringstream iss(msg.params_cp);
 			str channel, nick;
 			str_vec params = msg.get_params();
 			if(params.size() > 2)
@@ -754,6 +758,14 @@ bool IrcBot::init(const str& config_file)
 			if(params.size() > 1)
 				chan = params[1];
 
+			str_vec parts = get_vec("part");
+
+			for(const str& part: parts)
+				bug_var(part);
+
+			if(std::find(parts.begin(), parts.end(), chan) != parts.end())
+				continue;
+
 			if(who == nick)
 			{
 				official_join(chan);
@@ -764,12 +776,20 @@ bool IrcBot::init(const str& config_file)
 		}
 		else if(msg.command == JOIN)
 		{
-			BUG_MSG(msg, JOIN);
+			//BUG_MSG(msg, JOIN);
 			// track known nicks
 			const str who = msg.get_nickname();
 			str_vec params = msg.get_params();
 			if(!params.empty())
 			{
+				// Am I joining a part channel?
+				str_vec parts = get_vec("part");
+				if(who == nick && std::find(parts.begin(), parts.end(), params[0]) != parts.end())
+				{
+					irc->part(params[0], "Not authorized for this channel.");
+					continue;
+				}
+
 				str_set& known = nicks[params[0]];
 				if(who != nick && known.find(who) == known.end())
 					known.insert(who);
@@ -777,23 +797,17 @@ bool IrcBot::init(const str& config_file)
 		}
 		else if(msg.command == PART)
 		{
-			BUG_MSG(msg, PART);
+			//BUG_MSG(msg, PART);
 		}
 		else if(msg.command == KICK)
 		{
-			BUG_MSG(msg, KICK);
+			//BUG_MSG(msg, KICK);
 		}
 		else if(msg.command == NICK)
 		{
-			// If the bot changed its own nick
+			// Is the bot changed its own nick?
 			if(msg.get_nickname() == nick)
 				nick = msg.get_trailing();
-		}
-		else if(msg.command == PONG)
-		{
-			pinger_info_mtx.lock();
-			pinger_info = msg.get_trailing();
-			pinger_info_mtx.unlock();
 		}
 		else if(msg.command == PRIVMSG)
 		{
@@ -810,7 +824,6 @@ bool IrcBot::init(const str& config_file)
 						for(const str& c: chans)
 						{
 							if(!goodbyes.empty())
-//								irc->part(c, goodbyes[rand_int(0, goodbyes.size() - 1)]);
 								irc->say(c, goodbyes[rand_int(0, goodbyes.size() - 1)]);
 							irc->part(c);
 						}
@@ -994,8 +1007,8 @@ bool IrcBot::init(const str& config_file)
 					}
 					if(have("help.append"))
 						fc_reply_pm(msg, "Additional Info:");
-					for(const str& h: get_vec("help.append"))
-						fc_reply_pm(msg, "\t" + h);
+					for(str h: get_vec("help.append"))
+						fc_reply_pm(msg, "\t" + replace(h, "$me", nick));
 				}
 				else
 				{
@@ -1436,6 +1449,7 @@ void IrcBot::console()
 void IrcBot::pinger()
 {
 	bug_func();
+	log("Pinger started:");
 	while(!done && irc)
 	{
 		const siz retries = get<int>(PROP_SERVER_RETRIES, 10);

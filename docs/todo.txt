@@ -9,6 +9,8 @@ X - Won't fix
 
 = 1.0 ==
 
+M Change IrcBotMonitor to deliver send_event and recv_event
+ -> to capture the bot's owm output if required. {1.0}
 B rconmsg does not sunbscribe to PMs - only channels {1.0}
  -> When subscription is created, inserts bot's name rather than subscriber
 M Change rawplug API to mirror new message API

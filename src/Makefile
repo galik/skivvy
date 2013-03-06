@@ -10,7 +10,7 @@ REQ_CXX11_FAIL := "ERROR: Requires g++ v4.7 or above to comiile."
 REQ_CXX11 = if(($(REQ_CXX11_TEST))); then echo $(REQ_CXX11_FAIL); exit 1; fi
 
 REQ_PCRE_TEST := $(shell printf %-3s $(shell pcre-config --version|tr -d '.')|tr ' ' '0')
-REQ_PCRE_FAIL := "ERROR: Requires PCRE v8.21 or above."
+REQ_PCRE_FAIL := "ERROR: Requires PCRE v7.8 or above."
 REQ_PCRE = if(($(REQ_PCRE_TEST) < 780)); then echo $(REQ_PCRE_FAIL); exit 1; fi
 
 DEBUGFLAGS = \

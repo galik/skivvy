@@ -33,7 +33,8 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 using namespace skivvy::ircbot;
 using namespace skivvy::utils;
-using namespace soo;
+using namespace sookee::bug;
+using namespace sookee::log;
 
 #include <cstdio>
 #include <execinfo.h>
