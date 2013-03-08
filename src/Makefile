@@ -62,6 +62,7 @@ libskivvy_so_SOURCES := \
 	ios.cpp \
 	irc.cpp \
 	ircbot.cpp \
+	IrcBotMonitor.cpp \
 	IrcServer.cpp \
 	logrep.cpp \
 	message.cpp \

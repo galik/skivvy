@@ -40,6 +40,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <sookee/log.h>
 #include <skivvy/message.h>
 #include <skivvy/IrcServer.h>
+#include <skivvy/IrcBotMonitor.h>
 #include <skivvy/rpc.h>
 #include <skivvy/socketstream.h>
 #include <skivvy/store.h>
@@ -123,32 +124,6 @@ struct user_info
 class RemoteIrcServer;
 class IrcBot;
 class message;
-
-/**
- * IrcBotMonitor is an interface class for plugins
- * to implement if they want to receive all channel
- * messages, not just the ones triggered by their
- * commands.
- *
- * Plugins interested in receiving these events should
- * implement this interface and register themselves with
- * the IrcBot using IrcBot::add_monitor(IrcBotMonitor& mon).
- *
- * This should ideally be done in the bots implementation
- * of void BasicIrcBotPlugin::initialize().
- */
-class IrcBotMonitor
-{
-public:
-	virtual ~IrcBotMonitor() {}
-
-	/**
-	 * This function will be called by the IrcBot on
-	 * each message it receives from the RemoteIrcServer.
-	 *
-	 */
-	virtual void event(const message& msg) = 0;
-};
 
 /**
  * BotChoiceListener is an interface class for plugins

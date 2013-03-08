@@ -49,6 +49,7 @@ skivvy_include_HEADERS = \
 	$(srcdir)/include/skivvy/FloodController.h \
 	$(srcdir)/include/skivvy/ios.h \
 	$(srcdir)/include/skivvy/ircbot.h \
+	$(srcdir)/include/skivvy/IrcBotMonitor.h \
 	$(srcdir)/include/skivvy/irc-constants.h \
 	$(srcdir)/include/skivvy/irc.h \
 	$(srcdir)/include/skivvy/IrcServer.h \
@@ -79,6 +80,7 @@ libskivvy_la_SOURCES = \
 	FloodController.cpp \
 	ios.cpp \
 	ircbot.cpp \
+	IrcBotMonitor.cpp \
 	irc.cpp \
 	IrcServer.cpp \
 	logrep.cpp \
