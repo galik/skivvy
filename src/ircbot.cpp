@@ -266,6 +266,15 @@ std::istream& operator>>(std::istream& is, IrcBot& bot)
 		trim(key);
 		trim(val);
 
+		static str_map envs =
+		{
+			{"$HOME", std::getenv("HOME")}
+			, {"$(HOME)", std::getenv("HOME")}
+		};
+
+		for(const str_map::value_type& env: envs)
+			replace(val, env.first, env.second);
+
 		if(key == "nick") bot.info.nicks.push_back(val);
 		else if(key == "user") bot.info.user = val;
 		else if(key == "mode") bot.info.mode = val;
@@ -489,6 +498,7 @@ void IrcBot::load_plugins()
 void IrcBot::dispatch_msgevent(const message& msg)
 {
 	time_t now = std::time(0);
+
 	lock_guard lock(msgevent_mtx);
 
 	msgevent_map::iterator mei;
@@ -516,11 +526,6 @@ bool IrcBot::init(const str& config_file)
 	bug_func();
 	std::srand(std::time(0));
 
-	if(have(FLOOD_TIME_BETWEEN_POLLS))
-		fc.set_time_between_checks(get(FLOOD_TIME_BETWEEN_POLLS, FLOOD_TIME_BETWEEN_POLLS_DEFAULT));
-	if(have(FLOOD_TIME_BETWEEN_EVENTS))
-		fc.set_time_between_checks(get(FLOOD_TIME_BETWEEN_EVENTS, FLOOD_TIME_BETWEEN_EVENTS_DEFAULT));
-
 	// =====================================
 	// CONFIGURE BOT
 	// =====================================
@@ -540,6 +545,11 @@ bool IrcBot::init(const str& config_file)
 	config_loaded = std::time(0);
 
 //	bug_do_color = get("bug.do.color", true);
+
+	if(have(FLOOD_TIME_BETWEEN_POLLS))
+		fc.set_time_between_checks(get(FLOOD_TIME_BETWEEN_POLLS, FLOOD_TIME_BETWEEN_POLLS_DEFAULT));
+	if(have(FLOOD_TIME_BETWEEN_EVENTS))
+		fc.set_time_between_events(get(FLOOD_TIME_BETWEEN_EVENTS, FLOOD_TIME_BETWEEN_EVENTS_DEFAULT));
 
 	// =====================================
 	// CREATE CRITICAL RESOURCES
@@ -768,6 +778,7 @@ bool IrcBot::init(const str& config_file)
 
 			if(who == nick)
 			{
+				log("INVITE: " << "I was invited by " + msg.get_nickname() << " to " << chan);
 				official_join(chan);
 				irc->say(chan, "I was invited by " + msg.get_nickname());
 				if(!store->get_set("invite").count(chan))
@@ -1150,6 +1161,7 @@ void IrcBot::exec(const std::string& cmd, std::ostream* os)
 	bug_var(cmd);
 	bug_var(os);
 	str line = cmd;
+	message msg; // fudge
 
 	if(line[0] == '/')
 	{
@@ -1164,9 +1176,13 @@ void IrcBot::exec(const std::string& cmd, std::ostream* os)
 			bug_var(chan);
 			if(!trim(chan).empty())// && chan[0] == '#')
 			{
-				sgl(iss, line);
-				bug_var(line);
-				irc->say(chan, line);
+				if(sgl(iss, line))
+				{
+					bug_var(line);
+					//irc->say(chan, line);
+					msg.params = " " + chan + " :"; // fudge message for reply to correct channel
+					fc_reply(msg, line);
+				}
 				if(os)
 					(*os) << "OK";
 			}
@@ -1499,9 +1515,10 @@ void IrcBot::pinger()
 			while(!done && --count)
 				std::this_thread::sleep_for(std::chrono::seconds(1));
 
-			pinger_info_mtx.lock();
-			connected = pinger_info == oss.str();
-			pinger_info_mtx.unlock();
+			{
+				lock_guard lock(pinger_info_mtx);
+				connected = pinger_info == oss.str();
+			}
 
 			if(!connected)
 			{

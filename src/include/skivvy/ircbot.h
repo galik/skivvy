@@ -45,6 +45,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <skivvy/socketstream.h>
 #include <skivvy/store.h>
 #include <skivvy/Timers.h>
+#include <skivvy/types.h>
 
 #include <map>
 #include <set>
@@ -66,8 +67,9 @@ namespace skivvy { namespace ircbot {
 
 using namespace skivvy::types;
 using namespace skivvy::utils;
+using namespace sookee::bug;
 
-const str DATA_DIR = "data_dir";
+const str DATA_DIR = "data.dir";
 
 // Event to be triggered upon an incoming message
 // For example when a task needs to be performed
@@ -600,6 +602,7 @@ public:
 
 	msgevent_lst::iterator add_msgevent(const str& msg, const msgevent& me)
 	{
+//		bug_lock_guard(lock, msgevent_mtx);
 		lock_guard lock(msgevent_mtx);
 		return msgevents[msg].insert(msgevents[msg].begin(), me);
 	}

@@ -61,7 +61,6 @@ class SMTP
 			return false;
 		}
 		trim(reply);
-		bug_var(reply);
 		if(reply.find(code))
 			return false;
 		return true;
@@ -93,7 +92,6 @@ public:
 		siz size = strftime(buffer, 80, "%a, %d %b %Y %T %z", timeinfo);
 
 		str time(buffer, size);
-//		trim(time);
 
 		ss.open(host, port);
 

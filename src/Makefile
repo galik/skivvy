@@ -25,6 +25,7 @@ RELEASEFLAGS = \
 	-g0
 
 GENERALFLAGS = \
+	$(libskivvy_CXXFLAGS) \
 	-D _GLIBCXX_USE_NANOSLEEP \
 	-D _GLIBCXX_USE_SCHED_YIELD \
 	-pthread \
@@ -80,7 +81,6 @@ libskivvy_so_HEADERS := $(patsubst %.cpp,%.h, $(libskivvy_so_SOURCES))
 
 skivvy_LDFLAGS = \
 	-Wl,-E \
-	-I../../libsookee/install/include \
 	-ldl \
 	-lpcrecpp \
 	-pthread \
@@ -88,11 +88,23 @@ skivvy_LDFLAGS = \
 	-lsookee \
 	-L. -lskivvy
 
+skivvy_CFLAGS = $CFLAGS
 skivvy_SOURCES := skivvy.cpp
 skivvy_OBJECTS := $(patsubst %.cpp,%.o, $(skivvy_SOURCES))
 skivvy_HEADERS := $(patsubst %.cpp,%.h, $(skivvy_SOURCES))
 
-all: reqs libskivvy.so.0.0.0 skivvy
+client_LDFLAGS = \
+	-pthread \
+	$(LDFLAGS) \
+	-lreadline \
+	-lsookee
+
+client_CFLAGS = $CFLAGS
+client_SOURCES := skivvy-client.cpp
+client_OBJECTS := $(patsubst %.cpp,%.o, $(client_SOURCES))
+client_HEADERS := $(patsubst %.cpp,%.h, $(client_SOURCES))
+
+all: reqs libskivvy.so.0.0.0 skivvy skivvy-client
 
 reqs:
 	@$(REQ_CXX11)
@@ -105,8 +117,11 @@ libskivvy.so.0.0.0: $(libskivvy_so_OBJECTS)
 skivvy: $(skivvy_OBJECTS)
 	$(CXX) $(skivvy_LDFLAGS) -o $@ $(skivvy_OBJECTS)
 
+skivvy-client: $(client_OBJECTS)
+	$(CXX) $(client_LDFLAGS) -o $@ $(client_OBJECTS)
+
 %.o: %.cpp %.h
-	$(CXX) -c -o $@ $<
+	$(CXX) $(CFLAGS) -c -o $@ $<
 
 install: all
 	mkdir -p $(lib_dir)

@@ -38,9 +38,12 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <future>
 #include <queue>
 
+#include <sookee/bug.h>
+
 namespace skivvy { namespace ircbot {
 
 using namespace skivvy::types;
+using namespace sookee::bug;
 
 /**
  */
@@ -55,8 +58,8 @@ private:
 	str_vec keys;
 	siz idx;
 
-	siz time_between_checks = 300; // miliseconds
-	siz time_between_events = 1600; // miliseconds
+	siz time_between_checks = 500; // miliseconds
+	siz time_between_events = 1800; // miliseconds
 
 	std::future<void> fut;
 	bool dispatching = false;
@@ -76,10 +79,12 @@ public:
 	void set_time_between_checks(siz milliseconds)
 	{
 		time_between_checks = milliseconds;
+		bug_var(time_between_checks);
 	}
 	void set_time_between_events(siz milliseconds)
 	{
 		time_between_events = milliseconds;
+		bug_var(time_between_events);
 	}
 };
 

@@ -165,7 +165,11 @@ public:
 		while(!done)
 		{
 			if(!std::getline(std::cin, line))
+			{
+				done = true;
+				log("Can not read input:");
 				continue;
+			}
 			iss.clear();
 			iss.str(line);
 			if(!(iss >> cmd >> std::ws))

@@ -62,6 +62,7 @@ void FloodController::dispatcher()
 	{
 		std::this_thread::sleep_for(std::chrono::milliseconds(time_between_checks));
 		{
+//			bug_lock_guard(lock, mtx);
 			lock_guard lock(mtx);
 			if(++idx >= keys.size())
 				idx = 0;

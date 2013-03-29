@@ -7,7 +7,8 @@
 #include <sookee/str.h>
 
 #include <skivvy/types.h>
-#include <skivvy/socketstream.h>
+//#include <skivvy/socketstream.h>
+#include <sookee/socketstream.h>
 
 #include <readline/readline.h>
 #include <readline/history.h>
@@ -18,7 +19,7 @@ using namespace sookee::string;
 
 bool send(const str& cmd, str& res)
 {
-	net::socketstream ss;
+	sookee::net::socketstream ss;
 	if(!ss.open("localhost", 7334))
 	{
 		std::cout << "error: " << std::strerror(errno);
