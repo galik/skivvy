@@ -138,7 +138,7 @@ const int oatoirctab[8] =
 	, 2 // "blue"
 	, 12 // "cyan"
 	, 6 // "magenta"
-	, 1 // "white"
+	, 0 // "white"
 };
 
 

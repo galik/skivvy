@@ -1176,7 +1176,11 @@ void IrcBot::exec(const std::string& cmd, std::ostream* os)
 			bug_var(chan);
 			if(!trim(chan).empty())// && chan[0] == '#')
 			{
-				if(sgl(iss, line))
+				if(!chans.count(chan))
+				{
+					// do nothing, not in that channel
+				}
+				else if(sgl(iss, line))
 				{
 					bug_var(line);
 					//irc->say(chan, line);
