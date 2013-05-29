@@ -215,7 +215,7 @@ public:
 	virtual bool init() = 0;
 
 	/**
-	 * Return the name of the plugin.
+	 * Return the unique id of the plugin.
 	 */
 	virtual str get_id() const = 0;
 

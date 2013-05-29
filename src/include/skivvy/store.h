@@ -229,9 +229,9 @@ private:
 
 	void load()
 	{
-		static str line, k, v;
-		static std::ifstream ifs;
-		static std::istringstream iss;
+		str line, k, v;
+		std::ifstream ifs;
+		std::istringstream iss;
 
 		ifs.open(file);
 
@@ -254,7 +254,7 @@ private:
 
 	void save()
 	{
-		static std::ofstream ofs;
+		std::ofstream ofs;
 
 		ofs.open(file);
 		if(ofs)
@@ -395,13 +395,13 @@ private:
 	const str file;
 	const siz max;
 
-	static sifs ifs;
-	static sofs ofs;
+	sifs ifs;
+	sofs ofs;
 
 	void load(const str& key)
 	{
-		static str line, k, v;
-		static siss iss;
+		str line, k, v;
+		siss iss;
 
 		if(store.size() > max)
 			store = str_vec_map();
@@ -427,7 +427,7 @@ private:
 
 	void save(const str& key)
 	{
-		static sss ss;
+		sss ss;
 
 		ifs.open(file);
 

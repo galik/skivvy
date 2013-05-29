@@ -447,7 +447,7 @@ void IrcBot::load_plugins()
 
 	for(const str& line: pv)
 	{
-		bug_var(line);
+//		bug_var(line);
 		str p, access;
 		sgl(sgl(siss(line), p, '['), access, ']');
 		trim(p);
@@ -458,7 +458,7 @@ void IrcBot::load_plugins()
 			str_vec files;
 			if(int e = ios::ls(plugin_dir, files))
 			{
-				log(strerror(e));
+				log("error: load_plugins(): ls: " << strerror(e));
 				continue;
 			}
 
@@ -543,8 +543,6 @@ bool IrcBot::init(const str& config_file)
 	}
 
 	config_loaded = std::time(0);
-
-//	bug_do_color = get("bug.do.color", true);
 
 	if(have(FLOOD_TIME_BETWEEN_POLLS))
 		fc.set_time_between_checks(get(FLOOD_TIME_BETWEEN_POLLS, FLOOD_TIME_BETWEEN_POLLS_DEFAULT));
@@ -679,8 +677,11 @@ bool IrcBot::init(const str& config_file)
 
 		msg.clear();
 		if(!parsemsg(line, msg))
+		{
+			log("Error parsing message: " << line);
 			continue;
-
+		}
+		
 		dispatch_msgevent(msg);
 
 		for(IrcBotMonitor* m: monitors)
@@ -712,15 +713,21 @@ bool IrcBot::init(const str& config_file)
 		else if(msg.command == RPL_WELCOME)
 		{
 			//BUG_MSG(msg, RPL_WELCOME);
+			registered = true;
+
 			this->nick = msg.get_to();
 
 			for(str prop: get_vec(PROP_ON_CONNECT))
 				exec(replace(prop, "$me", nick));
+
+			str_vec parts = get_vec("part");
+
 			for(const str& chan: get_vec(PROP_JOIN))
-				official_join(chan);
+				if(!std::count(parts.begin(), parts.end(), chan))
+					std::async(std::launch::async, [&]{ official_join(chan); });
 			for(const str& chan: store->get_set("invite"))
-				official_join(chan);
-			registered = true;
+				if(!std::count(parts.begin(), parts.end(), chan))
+					std::async(std::launch::async, [&]{ official_join(chan); });
 		}
 		else if(msg.command == RPL_NAMREPLY)
 		{
@@ -902,7 +909,7 @@ bool IrcBot::init(const str& config_file)
 					str pass;
 					if(!(ios::getstring(siss(msg.get_user_params()), pass)))
 					{
-						fc_reply(msg, "!restart <password>");
+						fc_reply(msg, "!reconfigure <password>");
 						continue;
 					}
 					bug_var(pass);
@@ -955,8 +962,6 @@ bool IrcBot::init(const str& config_file)
 						}
 
 						bug_var(key);
-
-//						if(!key.empty() && key.top() == "]")
 
 						str_vec vals;
 
@@ -1091,9 +1096,6 @@ bool IrcBot::allow_cmd_access(const str& cmd, const message& msg)
 
 void IrcBot::execute(const str& cmd, const message& msg)
 {
-//	bug_func();
-//	bug_var(cmd);
-//	bug_msg(msg);
 	if(commands.find(cmd) == commands.end())
 	{
 		log("IrcBot::execute(): Unknown command: " << cmd);
@@ -1157,9 +1159,6 @@ static void prompt(std::ostream& os, size_t delay)
 
 void IrcBot::exec(const std::string& cmd, std::ostream* os)
 {
-	bug_func();
-	bug_var(cmd);
-	bug_var(os);
 	str line = cmd;
 	message msg; // fudge
 
@@ -1192,6 +1191,10 @@ void IrcBot::exec(const std::string& cmd, std::ostream* os)
 			}
 			else if(os)
 				(*os) << "ERROR: /say #channel then some dialogue.\n";
+		}
+		else if(cmd == "/log") // do nothing
+		{
+			log("EXEC LOG: " << line);
 		}
 		else if(cmd == "/nop") // do nothing
 		{
@@ -1366,47 +1369,8 @@ void IrcBot::exec(const std::string& cmd, std::ostream* os)
 			(*os) << "ERROR: Commands begin with /.\n";
 }
 
-//str get_regerror(int errcode, regex_t *compiled)
-//{
-//	size_t length = regerror(errcode, compiled, NULL, 0);
-//	char *buffer = new char[length];
-//	(void) regerror(errcode, compiled, buffer, length);
-//	str e(buffer);
-//	delete[] buffer;
-//	return e;
-//}
-//
-//bool IrcBot::ereg_match(const str& r, const str& s)
-//{
-//	bug_func();
-//	bug_var(s);
-//	bug_var(r);
-//	regex_t regex;
-//
-//	if(regcomp(&regex, r.c_str(), REG_EXTENDED | REG_ICASE))
-//	{
-//		log("Could not compile regex: " << r);
-//		return false;
-//	}
-//
-//	int reti = regexec(&regex, s.c_str(), 0, NULL, 0);
-//	regfree(&regex);
-//	if(!reti)
-//		return true;
-//	else if(reti != REG_NOMATCH)
-//		log("regex: " << get_regerror(reti, &regex));
-//
-//	return false;
-////	return lowercase(s).find(lowercase(r)) != str::npos;
-//}
-
 bool IrcBot::preg_match(const str& r, const str& s, bool full)
 {
-//	bug_func();
-//	bug_var(s);
-//	bug_var(r);
-//	bug_var(full);
-
 	if(full)
 		return pcrecpp::RE(r).FullMatch(s);
 	return pcrecpp::RE(r).PartialMatch(s);

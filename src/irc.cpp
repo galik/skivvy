@@ -132,7 +132,7 @@ size_t closest_color(const color& c)
 const int oatoirctab[8] =
 {
 	1 // "black"
-	, 5 // "red"
+	, 4 // "red"
 	, 3 // "lime"
 	, 8 // "yellow"
 	, 2 // "blue"

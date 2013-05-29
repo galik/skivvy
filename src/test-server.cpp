@@ -175,7 +175,7 @@ private:
 		bug_func();
 		str line;
 		message msg;
-		while(!done && sgl(is, line))
+		while(!done && std::getline(is, line))
 		{
 			bug_var(line);
 			std::this_thread::yield();

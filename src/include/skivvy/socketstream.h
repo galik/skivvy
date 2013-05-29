@@ -179,15 +179,15 @@ public:
 
 	void close()
 	{
-//		bug_func();
-//		bug_var(buf.get_socket());
+		//bug_func();
+		bug_var(buf.get_socket());
 		if(buf.get_socket() != 0) ::close(buf.get_socket());
 		stream_type::clear();
 	}
 
 	bool open(const std::string& host, uint16_t port, int type = SOCK_STREAM, bool nb = false)
 	{
-//		bug_func();
+		//bug_func();
 		close();
 
 		int sd;
@@ -195,7 +195,7 @@ public:
 
 		if((sd = socket(PF_INET, type, 0)) == -1)
 		{
-			log(strerror(errno));
+			log("error: net::socketstream: socket(): " << strerror(errno));
 			stream_type::setstate(std::ios::failbit);
 			return false;
 		}
@@ -203,6 +203,7 @@ public:
 
 		if(!(he = gethostbyname(host.c_str())))
 		{
+			log("error: net::socketstream: gethostbyname(): " << host.c_str());
 			::close(sd);
 			stream_type::setstate(std::ios::failbit);
 			return false;
@@ -219,6 +220,7 @@ public:
 
 		if(connect(sd, reinterpret_cast<sockaddr*>(&sin), sizeof(sin)) < 0)
 		{
+			log("error: net::socketstream: connect(): " << sd);
 			::close(sd);
 			stream_type::setstate(std::ios::failbit);
 			return false;
