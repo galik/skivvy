@@ -95,7 +95,8 @@ typedef std::unique_lock<std::mutex> unique_lock;
 //typedef steady_clock::time_point time_point;
 
 // time
-typedef std::chrono::steady_clock st_clk;
+//typedef std::chrono::steady_clock st_clk;
+typedef std::chrono::system_clock st_clk;
 typedef st_clk::period st_period;
 typedef st_clk::time_point st_time_point;
 
@@ -113,17 +114,17 @@ typedef std::ofstream sofs;
 
 typedef std::stringstream sss;
 
-inline
-std::istream& sgl(std::istream& is, str& s, char d = '\n')
-{
-	return std::getline(is, s, d);
-}
+//inline
+//std::istream& sgl(std::istream& is, str& s, char d = '\n')
+//{
+//	return std::getline(is, s, d);
+//}
 
-inline
-std::istream& sgl(std::istream&& is, str& s, char d = '\n')
-{
-	return sgl(is, s, d);
-}
+//inline
+//std::istream& sgl(std::istream&& is, str& s, char d = '\n')
+//{
+//	return sgl(is, s, d);
+//}
 
 
 struct delay

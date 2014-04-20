@@ -37,9 +37,11 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <skivvy/socketstream.h>
 #include <skivvy/message.h>
 
+#include <sookee/types.h>
+
 namespace skivvy { namespace ircbot {
 
-using namespace skivvy::types;
+using namespace sookee::types;
 
 /**
  * Class to manage the dialogue with a remote IRC server.

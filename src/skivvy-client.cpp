@@ -6,14 +6,14 @@
 
 #include <sookee/str.h>
 
-#include <skivvy/types.h>
+#include <sookee/types.h>
 #include <skivvy/socketstream.h>
 
 #include <readline/readline.h>
 #include <readline/history.h>
 
 using namespace skivvy;
-using namespace skivvy::types;
+using namespace sookee::types;
 using namespace sookee::string;
 
 bool send(const str& cmd, str& res)

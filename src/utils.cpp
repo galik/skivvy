@@ -31,13 +31,13 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 #include <sookee/log.h>
 
-#include <skivvy/types.h>
+#include <sookee/types.h>
 //#include <skivvy/logrep.h>
 #include <skivvy/irc.h>
 
 namespace skivvy { namespace utils {
 
-using namespace skivvy::types;
+using namespace sookee::types;
 using namespace skivvy::irc;
 using namespace sookee::log;
 

@@ -37,12 +37,13 @@ http://www.gnu.org/licenses/gpl-2.0.html
 //#include <sookee/stl.h>
 #include <sookee/str.h>
 
-#include <skivvy/types.h>
+#include <sookee/types.h>
+#include <sookee/bug.h>
 
 
 namespace skivvy { namespace ircbot {
 
-using namespace skivvy::types;
+using namespace sookee::types;
 
 class message
 {
@@ -202,7 +203,7 @@ private:
 
 		char c;
 		trailing.clear();
-		while(is && nocrlf.find(c) == str::npos && is.get(c))
+		while(is && nocrlf.find(is.peek()) == str::npos && is.get(c))
 			trailing.append(1, c);
 		if(is.eof())
 			is.clear();
@@ -233,6 +234,10 @@ private:
 		// middle  : nospcrlfcl *( ":" / nospcrlfcl )
 		// trailing: *( ":" / " " / nospcrlfcl )
 
+		// eg: " :3893259259"
+
+		bug_var(is);
+
 		middles.clear();
 		trailing.clear();
 
@@ -241,8 +246,14 @@ private:
 
 		while(is && n < 14 && is.peek() == ' ' && is.get(c))
 		{
+			bug("--------- parse trailing ---------");
+			bug_var(c);
+			bug_var(n);
 			if(is.peek() == ':' && is.get(c))
+			{
+				bug("found trailing");
 				return gettrailing(is, trailing);
+			}
 
 			str middle;
 			if(getmiddle(is, middle) && ++n)
@@ -359,6 +370,8 @@ public:
 
 	bool get_params(str_vec& middles, str& trailing) const
 	{
+		bug("=> get_params()");
+		bug_var(params);
 		return getparams(siss(params), middles, trailing);
 	}
 
