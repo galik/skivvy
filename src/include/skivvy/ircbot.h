@@ -35,7 +35,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <sookee/socketstream.h>
 
 #include <skivvy/FloodController.h>
-//#include <skivvy/logrep.h>
+#include <sookee/types.h>
 #include <sookee/bug.h>
 #include <sookee/log.h>
 #include <skivvy/message.h>
@@ -63,7 +63,9 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 namespace skivvy { namespace ircbot {
 
-using namespace skivvy::types;
+using namespace sookee::types;
+using namespace sookee::log;
+using namespace sookee::bug;
 using namespace skivvy::utils;
 
 const str DATA_DIR = "data_dir";

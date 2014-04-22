@@ -59,6 +59,8 @@ std::ostream& operator<<(std::ostream& os, const message& m)
 	return os << '{' << escaped(m.line) << '}';
 }
 
+
+
 bool message::from_channel() const
 {
 	str_vec params = get_params();
@@ -164,5 +166,188 @@ const str message::nospcrlf(CSTRING("\0 \r\n")); // (":" / nospcrlfcl)
 const str message::nocrlf(CSTRING("\0\r\n")); // (":" / nospcrlfcl)
 const str message::nospcrlfat(CSTRING("\0 \r\n@")); // any octet except NUL, CR, LF, " " and "@"
 const str message::bnf_special(CSTRING("[]\\`_^{|}")); // "[", "]", "\", "`", "_", "^", "{", "|", "}"
+
+siss& message::gettrailing(siss& is, str& trailing) const
+{
+	// trailing: *(":" / " " / nospcrlfcl)
+	// trailing: ("\0"|"\n"|"\r")^*
+
+	char c;
+	trailing.clear();
+	while(is && nocrlf.find(is.peek()) == str::npos && is.get(c))
+		trailing.append(1, c);
+	if(is.eof())
+		is.clear();
+	return is;
+}
+
+siss& message::getmiddle(siss& is, str& middle) const
+{
+	// middle: nospcrlfcl *(":" / nospcrlfcl)
+	// middle: ("\0"|"\n"|"\r"|" "|":")^ ("\0"|"\n"|"\r"|" ")^*
+
+	if(is && std::count(nospcrlfcl.cbegin(), nospcrlfcl.cend(), is.peek()))
+		is.setstate(std::ios::failbit);
+	else
+	{
+		middle = is.get();
+		while(is && is.peek() != EOF && !std::count(nospcrlf.cbegin(), nospcrlf.cend(), is.peek()))
+			middle += is.get();
+	}
+	return is;
+}
+
+siss& message::getparams(siss& is, str_vec& middles, str& trailing) const
+{
+	// params  :   (SPACE middle){0,14} [SPACE ":" trailing]
+	//         : | (SPACE middle){14}   [SPACE [ ":" ] trailing]
+	// middle  : nospcrlfcl *( ":" / nospcrlfcl )
+	// trailing: *( ":" / " " / nospcrlfcl )
+
+	middles.clear();
+	trailing.clear();
+
+	char c;
+	siz n = 0;
+
+	while(is && n < 14 && is.peek() == ' ' && is.get(c))
+	{
+		if(is.peek() == ':' && is.get(c))
+			return gettrailing(is, trailing);
+
+		str middle;
+		if(getmiddle(is, middle) && ++n)
+			middles.push_back(middle);
+	}
+
+	if(n == 14 && is.peek() == ' ' && is.get(c))
+		if(is.peek() != ':' || is.get(c))
+			return gettrailing(is, trailing);
+	return is;
+}
+
+str message::get_servername() const
+{
+	// prefix: servername | (nickname [[ "!" user ] "@" host ])
+	if(prefix.find('!') != str::npos || prefix.find('@') != str::npos)
+		return "";
+	return prefix;
+}
+
+bool message::is_nick(const str& nick) const
+{
+	if(nick.empty())
+		return false;
+	if(!isalpha(nick[0]) && !std::count(bnf_special.cbegin(), bnf_special.cend(), nick[0]))
+		return false;
+	for(char c: nick)
+		if(!isalnum(c) && !std::count(bnf_special.cbegin(), bnf_special.cend(), c) && c != '-')
+			return false;
+	return true;
+}
+
+str message::allow_nick(const str& nick) const
+{
+	if(!is_nick(nick))
+		return "";
+	return nick;
+}
+
+str message::get_nickname() const
+{
+	// prefix: servername | (nickname [[ "!" user ] "@" host ])
+	// nickname   =  ( letter / special ) *8( letter / digit / special / "-" )
+	// letter     =  %x41-5A / %x61-7A       ; A-Z / a-z
+	// digit      =  %x30-39                 ; 0-9
+	// special    =  %x5B-60 / %x7B-7D
+	//                  ; "[", "]", "\", "`", "_", "^", "{", "|", "}"
+	str::size_type pos;
+	if((pos = prefix.find('!')) != str::npos)
+		return allow_nick(prefix.substr(0, pos));
+	if((pos = prefix.find('@')) != str::npos)
+		return allow_nick(prefix.substr(0, pos));
+	return allow_nick(prefix);
+}
+
+bool message::is_user(const str& user) const
+{
+	for(char c: user)
+		if(std::count(nospcrlfat.cbegin(), nospcrlfat.cend(), c))
+			return false;
+	return true;
+}
+
+str message::allow_user(const str& user) const
+{
+	if(is_user(user))
+		return user;
+	return "";
+}
+
+str message::get_user() const
+{
+	// prefix: servername | (nickname [[ "!" user ] "@" host ])
+	str::size_type beg = 0, end;
+	if((end = prefix.find('@')) != str::npos)
+		if((beg = prefix.find('!')) < end)
+			return allow_user(prefix.substr(beg + 1, end - (beg + 1)));
+	return "";
+}
+
+str message::get_host() const
+{
+	// prefix: servername | (nickname [[ "!" user ] "@" host ])
+	str::size_type pos;
+	if((pos = prefix.find('@')) != str::npos && pos < prefix.size() - 1)
+		return prefix.substr(pos + 1);
+	return "";
+}
+
+bool message::get_params(str_vec& middles, str& trailing) const
+{
+	return getparams(siss(params), middles, trailing);
+}
+
+str_vec message::get_params() const
+{
+	// treat all params equally (middles and trailing)
+	str trailing;
+	str_vec middles;
+	if(get_params(middles, trailing))
+		middles.push_back(trailing);
+	return middles;
+}
+
+str_vec message::get_middles() const
+{
+	str trailing;
+	str_vec middles;
+	get_params(middles, trailing);
+	return middles;
+}
+
+str message::get_trailing() const
+{
+	str trailing;
+	str_vec middles;
+	get_params(middles, trailing);
+	return trailing;
+}
+
+bool message::parse(const str& line)
+{
+	if(line.empty())
+		return false;
+	// MUST handle both
+	// [":" prefix SPACE] command [params] cr
+	// [":" prefix SPACE] command [params] crlf
+
+	this->line = line;
+	this->when = std::time(0); // now
+	siss iss(soo::rtrim(this->line)); // solve cr crlf endings
+	if(iss.peek() == ':') // optional prefix
+		iss.ignore() >> prefix;
+	return sgl(iss >> command, params);
+}
 
 }} // skivvy::ircbot

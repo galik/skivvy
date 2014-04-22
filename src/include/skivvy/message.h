@@ -194,77 +194,13 @@ private:
 	static const str nospcrlf; // (":" / nospcrlfcl)
 	static const str nocrlf; // (" " / ":" / nospcrlfcl)
 	static const str nospcrlfat; // any octet except NUL, CR, LF, " " and "@"
-	static const str bnf_special; // any octet except NUL, CR, LF, " " and "@"
+	static const str bnf_special; // ?
 
-	siss& gettrailing(siss& is, str& trailing) const
-	{
-		// trailing: *(":" / " " / nospcrlfcl)
-		// trailing: ("\0"|"\n"|"\r")^*
+	siss& gettrailing(siss& is, str& trailing) const;
 
-		char c;
-		trailing.clear();
-		while(is && nocrlf.find(is.peek()) == str::npos && is.get(c))
-			trailing.append(1, c);
-		if(is.eof())
-			is.clear();
-		return is;
-	}
+	siss& getmiddle(siss& is, str& middle) const;
 
-	siss& getmiddle(siss& is, str& middle) const
-	{
-		// middle: nospcrlfcl *(":" / nospcrlfcl)
-		// middle: ("\0"|"\n"|"\r"|" "|":")^ ("\0"|"\n"|"\r"|" ")^*
-
-		if(is && std::count(nospcrlfcl.cbegin(), nospcrlfcl.cend(), is.peek()))
-//		if(is && soo::find(nospcrlfcl, is.peek()) != nospcrlfcl.cend())
-			is.setstate(std::ios::failbit);
-		else
-		{
-			middle = is.get();
-			while(is && is.peek() != EOF && !std::count(nospcrlf.cbegin(), nospcrlf.cend(), is.peek()))
-//			while(is && is.peek() != EOF && soo::find(nospcrlf, is.peek()) == nospcrlf.end())
-				middle += is.get();
-		}
-		return is;
-	}
-	siss& getparams(siss& is, str_vec& middles, str& trailing) const
-	{
-		// params  :   (SPACE middle){0,14} [SPACE ":" trailing]
-		//         : | (SPACE middle){14}   [SPACE [ ":" ] trailing]
-		// middle  : nospcrlfcl *( ":" / nospcrlfcl )
-		// trailing: *( ":" / " " / nospcrlfcl )
-
-		// eg: " :3893259259"
-
-		bug_var(is);
-
-		middles.clear();
-		trailing.clear();
-
-		char c;
-		siz n = 0;
-
-		while(is && n < 14 && is.peek() == ' ' && is.get(c))
-		{
-			bug("--------- parse trailing ---------");
-			bug_var(c);
-			bug_var(n);
-			if(is.peek() == ':' && is.get(c))
-			{
-				bug("found trailing");
-				return gettrailing(is, trailing);
-			}
-
-			str middle;
-			if(getmiddle(is, middle) && ++n)
-				middles.push_back(middle);
-		}
-
-		if(n == 14 && is.peek() == ' ' && is.get(c))
-			if(is.peek() != ':' || is.get(c))
-				return gettrailing(is, trailing);
-		return is;
-	}
+	siss& getparams(siss& is, str_vec& middles, str& trailing) const;
 
 	siss& getparams(siss&& is, str_vec& middles, str& trailing) const
 	{
@@ -282,146 +218,42 @@ public:
 
 	void clear()
 	{
-//		message_cp::clear();
 		prefix.clear();
 		command.clear();
 		params.clear();
 	}
 
-	str get_servername() const
-	{
-		// prefix: servername | (nickname [[ "!" user ] "@" host ])
-		if(prefix.find('!') != str::npos || prefix.find('@') != str::npos)
-			return "";
-		return prefix;
-	}
+	str get_servername() const;
 
-	bool is_nick(const str& nick) const
-	{
-		if(nick.empty())
-			return false;
-		if(!isalpha(nick[0]) && !std::count(bnf_special.cbegin(), bnf_special.cend(), nick[0]))
-//		if(!isalpha(nick[0]) && soo::find(bnf_special, nick[0]) == bnf_special.cend())
-			return false;
-		for(char c: nick)
-			if(!isalnum(c) && !std::count(bnf_special.cbegin(), bnf_special.cend(), c) && c != '-')
-//			if(!isalnum(c) && soo::find(bnf_special, c) == bnf_special.cend() && c != '-')
-				return false;
-		return true;
-	}
+	bool is_nick(const str& nick) const;
 
-	str allow_nick(const str& nick) const
-	{
-		if(!is_nick(nick))
-			return "";
-		return nick;
-	}
+	str allow_nick(const str& nick) const;
 
-	str get_nickname() const
-	{
-		// prefix: servername | (nickname [[ "!" user ] "@" host ])
-		// nickname   =  ( letter / special ) *8( letter / digit / special / "-" )
-		// letter     =  %x41-5A / %x61-7A       ; A-Z / a-z
-		// digit      =  %x30-39                 ; 0-9
-		// special    =  %x5B-60 / %x7B-7D
-		//                  ; "[", "]", "\", "`", "_", "^", "{", "|", "}"
-		str::size_type pos;
-		if((pos = prefix.find('!')) != str::npos)
-			return allow_nick(prefix.substr(0, pos));
-		if((pos = prefix.find('@')) != str::npos)
-			return allow_nick(prefix.substr(0, pos));
-		return allow_nick(prefix);
-	}
+	str get_nickname() const;
 
-	bool is_user(const str& user) const
-	{
-		for(char c: user)
-			if(std::count(nospcrlfat.cbegin(), nospcrlfat.cend(), c))
-//			if(soo::find(nospcrlfat, c) != nospcrlfat.cend())
-				return false;
-		return true;
-	}
+	bool is_user(const str& user) const;
 
-	str allow_user(const str& user) const
-	{
-		if(is_user(user))
-			return user;
-		return "";
-	}
+	str allow_user(const str& user) const;
 
-	str get_user() const
-	{
-		// prefix: servername | (nickname [[ "!" user ] "@" host ])
-		str::size_type beg = 0, end;
-		if((end = prefix.find('@')) != str::npos)
-			if((beg = prefix.find('!')) < end)
-				return allow_user(prefix.substr(beg + 1, end - (beg + 1)));
-		return "";
-	}
+	str get_user() const;
 
-	str get_host() const
-	{
-		// prefix: servername | (nickname [[ "!" user ] "@" host ])
-		str::size_type pos;
-		if((pos = prefix.find('@')) != str::npos && pos < prefix.size() - 1)
-			return prefix.substr(pos + 1);
-		return "";
-	}
+	str get_host() const;
 
-	bool get_params(str_vec& middles, str& trailing) const
-	{
-		bug("=> get_params()");
-		bug_var(params);
-		return getparams(siss(params), middles, trailing);
-	}
+	bool get_params(str_vec& middles, str& trailing) const;
 
-	str_vec get_params() const
-	{
-		// treat all params equally (middles and trailing)
-		str trailing;
-		str_vec middles;
-		if(get_params(middles, trailing))
-			middles.push_back(trailing);
-		return middles;
-	}
+	str_vec get_params() const;
 
-	str_vec get_middles() const
-	{
-		str trailing;
-		str_vec middles;
-		get_params(middles, trailing);
-		return middles;
-	}
+	str_vec get_middles() const;
 
-	str get_trailing() const
-	{
-		str trailing;
-		str_vec middles;
-		get_params(middles, trailing);
-		return trailing;
-	}
+	str get_trailing() const;
 
-	bool parse(const str& line)
-	{
-		if(line.empty())
-			return false;
-		// MUST handle both
-		// [":" prefix SPACE] command [params] cr
-		// [":" prefix SPACE] command [params] crlf
-
-		this->line = line;
-		this->when = std::time(0); // now
-		siss iss(soo::trim(this->line)); // solve cr crlf endings
-		if(iss.peek() == ':') // optional prefix
-			iss.ignore() >> prefix;
-		return sgl(iss >> command, params);
-	}
+	bool parse(const str& line);
 
 	friend bool parsemsg(const str& line, message& msg)
 	{
-//		parsemsg_cp(siss(line), msg);
 		return msg.parse(line);
 	}
+
 
 	/**
 	 * deserialize

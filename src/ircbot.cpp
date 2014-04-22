@@ -671,9 +671,6 @@ bool IrcBot::init(const str& config_file)
 		if(!parsemsg(line, msg))
 			continue;
 
-		bug_var(msg.command);
-		bug_var(msg.line);
-
 		dispatch_msgevent(msg);
 
 		for(IrcBotMonitor* m: monitors)
@@ -695,8 +692,6 @@ bool IrcBot::init(const str& config_file)
 		}
 		else if(msg.command == PING)
 		{
-			bug_var(msg);
-			bug("Sending PONG: " << msg.get_trailing());
 			irc->pong(msg.get_trailing());
 		}
 		else if(msg.command == PONG)
@@ -1491,10 +1486,7 @@ void IrcBot::pinger()
 			irc->user(info.user, info.mode, info.real);
 
 			while(!done && connected && !registered)
-			{
-				bug("PINGER: waiting for registration");
 				std::this_thread::sleep_for(std::chrono::seconds(1));
-			}
 		}
 
 		while(!done && connected && registered)

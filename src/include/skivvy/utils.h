@@ -30,11 +30,11 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #ifndef _SKIVVY_UTILS_H_
 #define _SKIVVY_UTILS_H_
 
-#include <skivvy/types.h>
+#include <sookee/types.h>
 
 namespace skivvy { namespace utils {
 
-using namespace skivvy::types;
+using namespace sookee::types;
 
 // "1-4", "7", "9-11 ", " 15 - 16" ... -> siz_vec{1,2,3,4,7,9,10,11,15,16}
 bool parse_rangelist(const str& rangelist, siz_vec& items);
