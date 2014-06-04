@@ -224,7 +224,7 @@ std::istream& operator>>(std::istream& is, std::map<K, V>& m)
 	else
 	{
 		m.clear();
-		bug_var(line);
+		//bug_var(line);
 		siss iss(line);
 		std::pair<K, V> p;
 		while(iss >> p)

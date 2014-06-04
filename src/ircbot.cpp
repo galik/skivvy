@@ -320,12 +320,12 @@ IrcServer* IrcBot::get_irc_server() { return irc; }
 // flood control
 bool IrcBot::fc_reply_note(const message& msg, const str& text)
 {
-	return fc.send(msg.get_to(), [=]()->bool{ return irc->notice(msg.get_to(), text); });
+	return fc.send(msg.get_to(), [&,msg,text]()->bool{ return irc->notice(msg.get_to(), text); });
 }
 
 bool IrcBot::fc_reply(const message& msg, const str& text)
 {
-	return fc.send(msg.get_to(), [=]()->bool{ return irc->reply(msg, text); });
+	return fc.send(msg.get_to(), [&,msg,text]()->bool{ return irc->reply(msg, text); });
 }
 
 //bool IrcBot::fc_reply(const str& to, const str& text)
@@ -337,17 +337,9 @@ bool IrcBot::fc_reply(const message& msg, const str& text)
 
 bool IrcBot::fc_reply_help(const message& msg, const str& text, const str& prefix)
 {
-	bug_func();
-	bug_msg(msg);
-	bug_var(msg.get_to());
-	bug_var(text);
-	bug_var(prefix);
-
-
-	str s;
-	siss iss(text);
-	while(sgl(iss, s))
-		if(!fc.send(msg.get_to(), [=]()->bool{ bug_func(); return irc->reply(msg, prefix + s); }))
+	const str_vec v = split(text, '\n'); // FIXME: crasher?
+	for(const str& s: v)
+		if(!fc.send(msg.get_to(), [&,msg,prefix,s]()->bool{ return irc->reply(msg, prefix + s); }))
 			return false;
 
 	return true;
@@ -444,7 +436,7 @@ void IrcBot::load_plugins()
 
 	for(const str& line: pv)
 	{
-		bug_var(line);
+		//bug_var(line);
 		str p, access;
 		sgl(sgl(siss(line), p, '['), access, ']');
 		trim(p);
@@ -611,7 +603,7 @@ bool IrcBot::init(const str& config_file)
 	plugin_vec_iter p = plugins.begin();
 	while(p != plugins.end())
 	{
-		bug_var(&(*p));
+		//bug_var(&(*p));
 		if(!(*p))
 		{
 			log("Null plugin found during initialisation.");
@@ -1027,7 +1019,8 @@ bool IrcBot::init(const str& config_file)
 							log("BANNED: " << msg.get_nickname());
 							continue;
 						}
-					std::async(std::launch::async, [&]{ execute(cmd, msg); });
+					//std::async(std::launch::async, [=]{ execute(cmd, msg); });
+					execute(cmd, msg);
 				}
 			}
 			else if(!msg.get_trailing().empty() && msg.get_to() == nick)
@@ -1174,7 +1167,7 @@ void IrcBot::exec(const std::string& cmd, std::ostream* os)
 			if(!trim(chan).empty())// && chan[0] == '#')
 			{
 				sgl(iss, line);
-				bug_var(line);
+				//bug_var(line);
 				irc->say(chan, line);
 				if(os)
 					(*os) << "OK";

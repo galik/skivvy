@@ -133,7 +133,7 @@ void CompileIrcBotPlugin::cpp(const message& msg, bool cpp11)
 			std::ostringstream oss;
 			for(siz n = 0;std::getline(ifs, line) && n < 10;)
 			{
-				bug("line: " << line);
+				//bug("line: " << line);
 				siz pos;
 				if(!line.empty() && (pos = line.find("error: ")) != str::npos)
 				{

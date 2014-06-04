@@ -46,7 +46,7 @@ private:
 
 		while(!done && sgl(ss, line))
 		{
-			bug_var(line);
+			//bug_var(line);
 		}
 		log("Client session terminated: " << cs);
 	}

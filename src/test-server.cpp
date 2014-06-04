@@ -177,7 +177,7 @@ private:
 		message msg;
 		while(!done && sgl(is, line))
 		{
-			bug_var(line);
+			//bug_var(line);
 			std::this_thread::yield();
 			if(!parsemsg(line, msg))
 			{

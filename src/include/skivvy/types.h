@@ -35,84 +35,74 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <sstream>
 #include <iostream>
 #include <ctime>
-//#include <cmath>
-#include <algorithm>
-#include <memory>
-#include <cstdlib>
-
-#include <map>
-#include <set>
-#include <deque>
-#include <mutex>
-#include <stack>
-#include <vector>
-#include <random>
 #include <chrono>
-#include <istream>
-#include <utility>
+
+#include <sookee/types.h>
 
 namespace skivvy { namespace types {
 
-typedef std::size_t siz;
+using namespace sookee::types;
 
-typedef std::string str;
-typedef str::iterator str_iter;
-typedef str::const_iterator str_citer;
-
-typedef std::vector<int> int_vec;
-typedef std::vector<siz> siz_vec;
-
-typedef std::vector<str> str_vec;
-typedef str_vec::iterator str_vec_itr;
-typedef str_vec::const_iterator str_vec_citr;
-
-typedef std::set<str> str_set;
-typedef str_set::const_iterator str_set_citer;
-
-typedef std::map<str, time_t> str_time_map;
-typedef std::pair<const str, time_t> str_time_pair;
-
-
-typedef std::multiset<str> str_mset;
-typedef std::map<str, str> str_map;
-typedef std::multimap<str, str> str_mmap;
-typedef std::pair<const str, str> str_pair;
-typedef std::deque<str> str_deq;
-
-typedef std::map<str, siz> str_siz_map;
-typedef std::pair<const str, siz> str_siz_pair;
-
-typedef std::map<str, str_set> str_set_map;
-typedef std::pair<const str, str_set> str_set_pair;
-
-typedef std::map<const str, str_vec> str_vec_map;
-typedef std::pair<const str, str_vec> str_vec_pair;
-
-typedef std::lock_guard<std::mutex> lock_guard;
-typedef std::unique_lock<std::mutex> unique_lock;
-//typedef std::chrono::steady_clock steady_clock;
-//typedef steady_clock::period period;
-//typedef steady_clock::time_point time_point;
-
-// time
-//typedef std::chrono::steady_clock st_clk;
-typedef std::chrono::system_clock st_clk;
-typedef st_clk::period st_period;
-typedef st_clk::time_point st_time_point;
-
-typedef std::chrono::high_resolution_clock hr_clk;
-typedef hr_clk::period hr_period;
-typedef hr_clk::time_point hr_time_point;
-
-typedef std::stringstream sss;
-typedef std::istringstream siss;
-typedef std::ostringstream soss;
-
-typedef std::fstream sfs;
-typedef std::ifstream sifs;
-typedef std::ofstream sofs;
-
-typedef std::stringstream sss;
+//typedef std::size_t siz;
+//
+//typedef std::string str;
+//typedef str::iterator str_iter;
+//typedef str::const_iterator str_citer;
+//
+//typedef std::vector<int> int_vec;
+//typedef std::vector<siz> siz_vec;
+//
+//typedef std::vector<str> str_vec;
+//typedef str_vec::iterator str_vec_itr;
+//typedef str_vec::const_iterator str_vec_citr;
+//
+//typedef std::set<str> str_set;
+//typedef str_set::const_iterator str_set_citer;
+//
+//typedef std::map<str, time_t> str_time_map;
+//typedef std::pair<const str, time_t> str_time_pair;
+//
+//
+//typedef std::multiset<str> str_mset;
+//typedef std::map<str, str> str_map;
+//typedef std::multimap<str, str> str_mmap;
+//typedef std::pair<const str, str> str_pair;
+//typedef std::deque<str> str_deq;
+//
+//typedef std::map<str, siz> str_siz_map;
+//typedef std::pair<const str, siz> str_siz_pair;
+//
+//typedef std::map<str, str_set> str_set_map;
+//typedef std::pair<const str, str_set> str_set_pair;
+//
+//typedef std::map<const str, str_vec> str_vec_map;
+//typedef std::pair<const str, str_vec> str_vec_pair;
+//
+//typedef std::lock_guard<std::mutex> lock_guard;
+//typedef std::unique_lock<std::mutex> unique_lock;
+////typedef std::chrono::steady_clock steady_clock;
+////typedef steady_clock::period period;
+////typedef steady_clock::time_point time_point;
+//
+//// time
+////typedef std::chrono::steady_clock st_clk;
+//typedef std::chrono::system_clock st_clk;
+//typedef st_clk::period st_period;
+//typedef st_clk::time_point st_time_point;
+//
+//typedef std::chrono::high_resolution_clock hr_clk;
+//typedef hr_clk::period hr_period;
+//typedef hr_clk::time_point hr_time_point;
+//
+//typedef std::stringstream sss;
+//typedef std::istringstream siss;
+//typedef std::ostringstream soss;
+//
+//typedef std::fstream sfs;
+//typedef std::ifstream sifs;
+//typedef std::ofstream sofs;
+//
+//typedef std::stringstream sss;
 
 //inline
 //std::istream& sgl(std::istream& is, str& s, char d = '\n')

@@ -58,6 +58,7 @@ skivvy_include_HEADERS = \
 	$(srcdir)/include/skivvy/irc.h \
 	$(srcdir)/include/skivvy/IrcServer.h \
 	$(srcdir)/include/skivvy/logrep.h \
+	$(srcdir)/include/skivvy/mail.h \
 	$(srcdir)/include/skivvy/message.h \
 	$(srcdir)/include/skivvy/network.h \
 	$(srcdir)/include/skivvy/openarena.h \

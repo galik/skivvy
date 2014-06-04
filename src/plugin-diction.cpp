@@ -405,7 +405,7 @@ void DictionIrcBotPlugin::dict(const message& msg)
 		log(host + ":" + std::to_string(port) + " did not respond.");
 		return;
 	}
-	bug("line: " << line);
+	//bug("line: " << line);
 
 	std::string code;
 	std::istringstream iss(line);

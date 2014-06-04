@@ -64,9 +64,7 @@ void FloodController::dispatcher()
 		std::this_thread::sleep_for(std::chrono::milliseconds(time_between_checks));
 		{
 			lock_guard lock(mtx);
-//			bug("DISPATCH:    m: " << m.size());
-//			bug("DISPATCH:  idx: " << idx);
-//			bug("DISPATCH: keys: " << keys.size());
+
 			if(++idx >= keys.size())
 				idx = 0;
 
@@ -97,20 +95,18 @@ void FloodController::dispatcher()
 
 bool FloodController::send(const str& channel, std::function<bool()> func)
 {
-	bug_func();
-	bug_var(channel);
 	lock_guard lock(mtx);
+
 	m[channel].push(func);
+
 	if(stl::find(keys, channel) == keys.end())
 		keys.push_back(channel);
-	bug("   m: " << m.size());
-	bug("keys: " << keys.size());
+
 	return true;
 }
 
 void FloodController::clear()
 {
-	bug_func();
 	lock_guard lock(mtx);
 	m.clear();
 	keys.clear();
@@ -118,7 +114,6 @@ void FloodController::clear()
 
 void FloodController::clear(const str& channel)
 {
-	bug_func();
 	lock_guard lock(mtx);
 	str_vec_itr itr = stl::find(keys, channel);
 	if(itr != keys.end())
