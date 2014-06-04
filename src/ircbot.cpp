@@ -63,8 +63,8 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <dirent.h>
 //#include <regex.h>
 #include <pcrecpp.h>
-#include <readline/readline.h>
-#include <readline/history.h>
+//#include <readline/readline.h>
+//#include <readline/history.h>
 
 namespace skivvy { namespace ircbot {
 
