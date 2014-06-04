@@ -101,7 +101,7 @@ libskivvy_la_SOURCES = \
 	types.cpp \
 	utils.cpp
 	
-libskivvy_la_LIBADD = -lreadline -L.libs $(LIB_SOOKEE)
+libskivvy_la_LIBADD = -L.libs $(LIB_SOOKEE)
 libskivvy_la_LDFLAGS = -version-info 0:0:0
 
 # Development utils
@@ -126,7 +126,7 @@ libskivvy_la_LDFLAGS = -version-info 0:0:0
 bin_PROGRAMS = skivvy
 
 skivvy_SOURCES = skivvy.cpp
-skivvy_LDADD = -ldl -lskivvy -lpcrecpp -lreadline $(LIB_SOOKEE)
+skivvy_LDADD = -ldl -lskivvy -lpcrecpp $(LIB_SOOKEE)
 skivvy_LDFLAGS = -Wl,-E
 
 #skivvy_client_SOURCES = skivvy-client.cpp
