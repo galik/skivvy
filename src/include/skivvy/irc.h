@@ -33,11 +33,11 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 #include <array>
 #include <string>
-#include <skivvy/types.h>
+#include <sookee/types.h>
 
 namespace skivvy { namespace irc {
 
-using namespace skivvy::types;
+using namespace sookee::types;
 
 extern const str IRC_BOLD;
 extern const str IRC_COLOR;

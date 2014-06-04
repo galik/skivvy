@@ -28,6 +28,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 '-----------------------------------------------------------------*/
 
+#include <sookee/types.h>
 #include <sookee/bug.h>
 #include <sookee/log.h>
 #include <sookee/str.h>
@@ -39,8 +40,8 @@ namespace skivvy { namespace ircbot {
 
 using namespace skivvy;
 using namespace skivvy::irc;
-using namespace skivvy::types;
 
+using namespace sookee::types;
 using namespace sookee::string;
 using namespace sookee::bug;
 using namespace sookee::log;

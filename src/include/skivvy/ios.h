@@ -31,7 +31,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 '-----------------------------------------------------------------*/
 
-#include <skivvy/types.h>
+#include <sookee/types.h>
 
 #include <istream>
 #include <ostream>
@@ -40,7 +40,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 namespace skivvy { namespace ios {
 
-using namespace skivvy::types;
+using namespace sookee::types;
 
 std::istream& getstring(std::istream& is, str& s);
 inline

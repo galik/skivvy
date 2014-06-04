@@ -28,6 +28,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 '-----------------------------------------------------------------*/
 
+#include <sookee/types.h>
 #include <skivvy/irc.h>
 
 #include <cmath>
@@ -35,7 +36,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 namespace skivvy { namespace irc {
 
-using namespace skivvy::types;
+using namespace sookee::types;
 
 const std::string IRC_REVERSE = "\u0016";
 const std::string IRC_ITALICS = "\u0016";

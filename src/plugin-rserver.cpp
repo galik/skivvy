@@ -44,7 +44,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 #include <skivvy/str.h>
 #include <skivvy/logrep.h>
-#include <skivvy/types.h>
+#include <sookee/types.h>
 #include <skivvy/socketstream.h>
 
 namespace skivvy { namespace ircbot {
@@ -52,7 +52,7 @@ namespace skivvy { namespace ircbot {
 IRC_BOT_PLUGIN(RServerIrcBotPlugin);
 PLUGIN_INFO("rserver", "Remote Server", "0.1");
 
-using namespace skivvy::types;
+using namespace sookee::types;
 using namespace skivvy::utils;
 using namespace skivvy::string;
 

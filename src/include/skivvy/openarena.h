@@ -35,14 +35,13 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <string>
 
 #include <sookee/str.h>
-
-#include <skivvy/types.h>
+#include <sookee/types.h>
 #include <skivvy/irc.h>
 
 namespace skivvy { namespace oa {
 
 using namespace skivvy::irc;
-using namespace skivvy::types;
+using namespace sookee::types;
 using namespace sookee::string;
 
 inline

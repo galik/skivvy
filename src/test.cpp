@@ -6,7 +6,7 @@
 #include <skivvy/stl.h>
 #include <skivvy/str.h>
 //#include <skivvy/rcon.h>
-#include <skivvy/types.h>
+#include <sookee/types.h>
 #include <skivvy/ircbot.h>
 #include <skivvy/logrep.h>
 #include <skivvy/network.h>
@@ -15,7 +15,7 @@
 //#include <boost/regex.hpp>
 
 using namespace skivvy;
-using namespace skivvy::types;
+using namespace sookee::types;
 using namespace skivvy::utils;
 using namespace skivvy::string;
 using namespace skivvy::ircbot;

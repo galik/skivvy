@@ -36,6 +36,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <sstream>
 #include <iostream>
 
+#include <sookee/types.h>
 #include <skivvy/logrep.h>
 #include <skivvy/str.h>
 
@@ -44,7 +45,7 @@ namespace skivvy { namespace ircbot {
 IRC_BOT_PLUGIN(CompileIrcBotPlugin);
 PLUGIN_INFO("compile", "Compile Code", "0.1");
 
-using namespace skivvy::types;
+using namespace sookee::types;
 using namespace skivvy::utils;
 using namespace skivvy::string;
 

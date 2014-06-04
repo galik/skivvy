@@ -29,11 +29,12 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <fstream>
 #include <iostream>
 
+#include <sookee/types.h>
 #include <skivvy/logrep.h>
 #include <skivvy/network.h>
 
 using namespace skivvy;
-using namespace skivvy::types;
+using namespace sookee::types;
 
 str_vec files
 {

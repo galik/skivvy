@@ -36,7 +36,6 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 //#include <sookee/stl.h>
 #include <sookee/str.h>
-
 #include <sookee/types.h>
 #include <sookee/bug.h>
 
@@ -216,8 +215,12 @@ public:
 	str command;
 	str params;
 
+	message(): when(0) {}
+
 	void clear()
 	{
+		line.clear();
+		when = 0;
 		prefix.clear();
 		command.clear();
 		params.clear();

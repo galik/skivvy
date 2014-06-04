@@ -35,6 +35,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 //#include <skivvy/logrep.h>
 //#include <skivvy/irc-constants.h>
 
+#include <sookee/types.h>
 #include <sookee/bug.h>
 #include <sookee/log.h>
 
@@ -44,7 +45,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 namespace skivvy { namespace ircbot {
 
 using namespace skivvy;
-using namespace skivvy::types;
+using namespace sookee::types;
 //using namespace skivvy::utils;
 using namespace sookee::bug;
 using namespace sookee::log;
@@ -63,17 +64,24 @@ void FloodController::dispatcher()
 		std::this_thread::sleep_for(std::chrono::milliseconds(time_between_checks));
 		{
 			lock_guard lock(mtx);
+//			bug("DISPATCH:    m: " << m.size());
+//			bug("DISPATCH:  idx: " << idx);
+//			bug("DISPATCH: keys: " << keys.size());
 			if(++idx >= keys.size())
 				idx = 0;
+
 			const siz end = idx;
+
 			for(; idx < keys.size(); ++idx)
 				if(!m[keys[idx]].empty())
 					break;
+
 			if(idx == keys.size())
 			{
 				for(idx = 0; idx < end; ++idx)
 					if(!m[keys[idx]].empty())
 						break;
+
 				if(idx == end)
 					continue;
 			}
@@ -89,15 +97,20 @@ void FloodController::dispatcher()
 
 bool FloodController::send(const str& channel, std::function<bool()> func)
 {
+	bug_func();
+	bug_var(channel);
 	lock_guard lock(mtx);
 	m[channel].push(func);
 	if(stl::find(keys, channel) == keys.end())
 		keys.push_back(channel);
+	bug("   m: " << m.size());
+	bug("keys: " << keys.size());
 	return true;
 }
 
 void FloodController::clear()
 {
+	bug_func();
 	lock_guard lock(mtx);
 	m.clear();
 	keys.clear();
@@ -105,6 +118,7 @@ void FloodController::clear()
 
 void FloodController::clear(const str& channel)
 {
+	bug_func();
 	lock_guard lock(mtx);
 	str_vec_itr itr = stl::find(keys, channel);
 	if(itr != keys.end())

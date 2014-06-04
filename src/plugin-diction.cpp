@@ -34,6 +34,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <sstream>
 #include <iostream>
 
+#include <sookee/types.h>
 #include <skivvy/irc.h>
 #include <skivvy/logrep.h>
 #include <skivvy/network.h>
@@ -45,7 +46,7 @@ IRC_BOT_PLUGIN(DictionIrcBotPlugin);
 PLUGIN_INFO("diction", "Dictionary Lookup", "0.1");
 
 using namespace skivvy::irc;
-using namespace skivvy::types;
+using namespace sookee::types;
 using namespace skivvy::utils;
 using namespace skivvy::string;
 

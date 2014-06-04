@@ -33,6 +33,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <ctime>
 #include <iomanip>
 
+#include <sookee/types.h>
 #include <sookee/str.h>
 #include <sookee/bug.h>
 #include <sookee/log.h>
@@ -42,8 +43,7 @@ namespace skivvy { namespace net {
 using namespace sookee::bug;
 using namespace sookee::log;
 using namespace sookee::string;
-
-using namespace skivvy::types;
+using namespace sookee::types;
 
 
 cookie::cookie()
@@ -101,7 +101,7 @@ cookie::cookie(const str& data)
 
 bool cookie::is_expired()
 {
-	return !expires > time(0);
+	return !(expires > time(0));
 }
 
 str urlencode(const str& url)

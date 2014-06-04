@@ -74,6 +74,7 @@ using namespace sookee::types;
 class IrcServer
 {
 public:
+	virtual ~IrcServer() {}
 	virtual bool send(const str& cmd) = 0;
 	virtual bool send_unlogged(const str& cmd) = 0;
 

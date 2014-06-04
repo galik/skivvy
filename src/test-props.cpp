@@ -4,11 +4,11 @@
 #include <iostream>
 
 #include <skivvy/props.h>
-#include <skivvy/types.h>
+#include <sookee/types.h>
 #include <skivvy/logrep.h>
 
 using namespace skivvy;
-using namespace skivvy::types;
+using namespace sookee::types;
 using namespace skivvy::props;
 //using namespace skivvy::string;
 

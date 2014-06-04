@@ -25,7 +25,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 '-----------------------------------------------------------------*/
 
-#include <skivvy/types.h>
+#include <sookee/types.h>
 
 #include <map>
 #include <string>
@@ -33,7 +33,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 namespace skivvy { namespace net {
 
-using namespace skivvy::types;
+using namespace sookee::types;
 
 struct cookie
 {

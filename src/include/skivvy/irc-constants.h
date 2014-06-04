@@ -2,11 +2,11 @@
 #ifndef _SKIVVY_IRC_CONSTANTS_H_
 #define _SKIVVY_IRC_CONSTANTS_H_
 
-#include <skivvy/types.h>
+#include <sookee/types.h>
 
 namespace skivvy { namespace irc {
 
-using namespace skivvy::types;
+using namespace sookee::types;
 
 #define KEYWORD(w) const str w = #w
 

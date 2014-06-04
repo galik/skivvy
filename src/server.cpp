@@ -48,11 +48,11 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <list>
 #include <tuple>
 
-#include <skivvy/types.h>
+#include <sookee/types.h>
 
 namespace skivvy { namespace net {
 
-using namespace skivvy::types;
+using namespace sookee::types;
 using namespace sookee::bug;
 
 #define throw_server_exception(msg) throw server_exception(msg, __FILE__, __LINE__)

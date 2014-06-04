@@ -24,13 +24,13 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <skivvy/server.h>
 
 #include <skivvy/logrep.h>
-#include <skivvy/types.h>
+#include <sookee/types.h>
 #include <skivvy/socketstream.h>
 
 namespace skivvy { namespace net {
 
 using namespace skivvy::utils;
-using namespace skivvy::types;
+using namespace sookee::types;
 
 class test_irc_server
 : public server

@@ -31,18 +31,24 @@ GENERALFLAGS = \
 	-std=c++11 \
 	-Wall \
 	-Werror
+	
+	INCLUDES = \
+		-Iinclude \
+		-I$(prefix)/include
 
 ifeq ($(build_debug),1)
 	CXXFLAGS = \
 		$(GENERALFLAGS) \
 		$(DEBUGFLAGS) \
 		-Iinclude \
+		-I../../libsookee/src/include \
 		-fPIC
 else
 	CXXFLAGS = \
 		$(GENERALFLAGS) \
 		$(RELEASEFLAGS) \
 		-Iinclude \
+		-I$(prefix)/include \
 		-fPIC
 endif
 	
@@ -50,6 +56,7 @@ libskivvy_so_LDFLAGS = \
 	-shared \
 	-ldl \
 	-lpcrecpp \
+	-L/home/galik/dev/lib/sookee -lsookee \
 	-pthread \
 	-Wl,-E \
 	-Wl,-soname,libskivvy.so.0 \
@@ -79,12 +86,10 @@ libskivvy_so_HEADERS := $(patsubst %.cpp,%.h, $(libskivvy_so_SOURCES))
 
 skivvy_LDFLAGS = \
 	-Wl,-E \
-	-I../../libsookee/install/include \
 	-ldl \
 	-lpcrecpp \
 	-pthread \
 	$(LDFLAGS) \
-	-lsookee \
 	-L. -lskivvy
 
 skivvy_SOURCES := skivvy.cpp
@@ -98,14 +103,14 @@ reqs:
 	@$(REQ_PCRE)
 
 libskivvy.so.0.0.0: $(libskivvy_so_OBJECTS)
-	$(CXX) $(libskivvy_so_LDFLAGS) -o $@ $(libskivvy_so_OBJECTS)
+	$(CXX) $(INCLUDES) $(libskivvy_so_LDFLAGS) -o $@ $(libskivvy_so_OBJECTS)
 	ln -f -s $@ libskivvy.so
 	
 skivvy: $(skivvy_OBJECTS)
-	$(CXX) $(skivvy_LDFLAGS) -o $@ $(skivvy_OBJECTS)
+	$(CXX) $(INCLUDES) $(skivvy_LDFLAGS) -o $@ $(skivvy_OBJECTS)
 
 %.o: %.cpp %.h
-	$(CXX) -c -o $@ $<
+	$(CXX) $(INCLUDES) $(CPPFLAGS) -c -o $@ $<
 
 install: all
 	mkdir -p $(lib_dir)
@@ -118,8 +123,8 @@ install: all
 	cp skivvy $(bin_dir)
 	
 uninstall:
-	rm -fr $(lib_dir)
-	rm -fr $(include_dir)
+	rm -f $(lib_dir)/libskivvy*
+	rm -fr $(include_dir)/skivvy
 	rm $(bin_dir)/skivvy
 
 clean: reqs

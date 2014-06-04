@@ -32,14 +32,14 @@ http://www.gnu.org/licenses/gpl-2.0.html
 '-----------------------------------------------------------------*/
 
 #include <sookee/str.h>
-#include <skivvy/types.h>
+#include <sookee/types.h>
 #include <skivvy/logrep.h>
 #include <skivvy/socketstream.h>
 
 namespace skivvy { namespace email {
 
 using namespace skivvy;
-using namespace skivvy::types;
+using namespace sookee::types;
 using namespace sookee::string;
 
 class SMTP

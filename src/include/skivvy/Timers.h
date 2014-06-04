@@ -32,14 +32,14 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 '-----------------------------------------------------------------*/
 
-#include <skivvy/types.h>
+#include <sookee/types.h>
 #include <skivvy/message.h>
 
 #include <future>
 
 namespace skivvy { namespace ircbot {
 
-using namespace skivvy::types;
+using namespace sookee::types;
 
 // ==================================================
 // Bot Utils

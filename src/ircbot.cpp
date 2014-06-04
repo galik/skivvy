@@ -30,6 +30,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 #include <skivvy/ircbot.h>
 
+#include <sookee/types.h>
 #include <sookee/bug.h>
 #include <sookee/log.h>
 #include <sookee/str.h>
@@ -71,7 +72,7 @@ PLUGIN_INFO("skivvy", "IrcBot", "0.3");
 
 using namespace skivvy;
 using namespace skivvy::irc;
-using namespace skivvy::types;
+using namespace sookee::types;
 using namespace skivvy::utils;
 
 using namespace sookee::bug;
@@ -136,6 +137,7 @@ void BasicIrcBotPlugin::execute(const str& cmd, const message& msg)
 str BasicIrcBotPlugin::help(const str& cmd) const
 {
 	bug_func();
+	bug_var(cmd);
 	if(!actions.count(cmd))
 	{
 		log("ERROR: unknown command: " << cmd);
@@ -143,15 +145,15 @@ str BasicIrcBotPlugin::help(const str& cmd) const
 	}
 	if(actions.at(cmd).flags & action::INVISIBLE)
 		return "none";
+	bug_var(actions.at(cmd).help);
 	return actions.at(cmd).help;
 }
 
 IrcBotPluginSPtr IrcBotPluginLoader::operator()(const str& file, IrcBot& bot)
 {
-//	bug_func();
-	IrcBotPluginSPtr plugin;
 	void* dl = 0;
-	IrcBotPluginSPtr(*skivvy_ircbot_factory)(IrcBot&) = 0;
+	IrcBotPluginSPtr plugin;
+	IrcBotPluginPtr(*skivvy_ircbot_factory)(IrcBot&) = 0;
 
 	log("PLUGIN LOAD: " << file);
 
@@ -162,20 +164,14 @@ IrcBotPluginSPtr IrcBotPluginLoader::operator()(const str& file, IrcBot& bot)
 		return plugin;
 	}
 
-//	bug("Getting factory function");
-
 	if(!(*(void**)&skivvy_ircbot_factory = dlsym(dl, "skivvy_ircbot_factory")))
 	{
 		log(dlerror());
 		return plugin;
 	}
 
-//	bug("Invoking factory function");
-
-	if(!(plugin = skivvy_ircbot_factory(bot)))
+	if(!(plugin = IrcBotPluginSPtr(skivvy_ircbot_factory(bot))))
 		return plugin;
-
-//	bug("Adding newly created plugin");
 
 	plugin->dl = dl;
 	bot.del_plugin(plugin->get_id());
@@ -324,12 +320,12 @@ IrcServer* IrcBot::get_irc_server() { return irc; }
 // flood control
 bool IrcBot::fc_reply_note(const message& msg, const str& text)
 {
-	return fc.send(msg.get_to(), [&,msg,text]()->bool{ return irc->notice(msg.get_to(), text); });
+	return fc.send(msg.get_to(), [=]()->bool{ return irc->notice(msg.get_to(), text); });
 }
 
 bool IrcBot::fc_reply(const message& msg, const str& text)
 {
-	return fc.send(msg.get_to(), [&,msg,text]()->bool{ return irc->reply(msg, text); });
+	return fc.send(msg.get_to(), [=]()->bool{ return irc->reply(msg, text); });
 }
 
 //bool IrcBot::fc_reply(const str& to, const str& text)
@@ -341,10 +337,19 @@ bool IrcBot::fc_reply(const message& msg, const str& text)
 
 bool IrcBot::fc_reply_help(const message& msg, const str& text, const str& prefix)
 {
-	const str_vec v = split(text, '\n');
-	for(const str& s: v)
-		if(!fc.send(msg.get_to(), [&,msg,prefix,s]()->bool{ return irc->reply(msg, prefix + s); }))
+	bug_func();
+	bug_msg(msg);
+	bug_var(msg.get_to());
+	bug_var(text);
+	bug_var(prefix);
+
+
+	str s;
+	siss iss(text);
+	while(sgl(iss, s))
+		if(!fc.send(msg.get_to(), [=]()->bool{ bug_func(); return irc->reply(msg, prefix + s); }))
 			return false;
+
 	return true;
 }
 
@@ -355,7 +360,8 @@ bool IrcBot::fc_reply_pm(const message& msg, const str& text)//, size_t priority
 
 bool IrcBot::fc_reply_pm_help(const message& msg, const str& text, const str& prefix)
 {
-	const str_vec v = split(text, '\n');
+	str_vec v = split(text, '\n');
+	//split(text, v, '\n');
 	for(const str& s: v)
 	{
 		str to = msg.get_to();
@@ -845,6 +851,7 @@ bool IrcBot::init(const str& config_file)
 				else if(cmd == "!join")
 				{
 					str_vec param = split(msg.get_user_params(), ' ', true);
+					//split(msg.get_user_params(), param, ' ', true);
 
 					if(param.size() == 2)
 					{
@@ -869,6 +876,8 @@ bool IrcBot::init(const str& config_file)
 				else if(cmd == "!part")
 				{
 					str_vec param = split(msg.get_user_params(), ' ', true);
+
+					//split(msg.get_user_params(), param, ' ', true);
 
 					if(param.size() == 2)
 					{

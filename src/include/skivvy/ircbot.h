@@ -58,8 +58,8 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <dlfcn.h>
 #include <fnmatch.h>
 
-#define _final_
-#define _override_
+#define _final_ final
+#define _override_ override
 
 namespace skivvy { namespace ircbot {
 
@@ -288,6 +288,8 @@ public:
 	virtual void exit() = 0;
 };
 
+typedef IrcBotPlugin* IrcBotPluginPtr;
+typedef std::unique_ptr<IrcBotPlugin> IrcBotPluginUPtr;
 typedef std::shared_ptr<IrcBotPlugin> IrcBotPluginSPtr;
 
 /**
@@ -461,9 +463,9 @@ public:
 
 #define IRC_BOT_PLUGIN(name) \
 extern "C" \
-IrcBotPluginSPtr skivvy_ircbot_factory(IrcBot& bot) \
+IrcBotPluginPtr skivvy_ircbot_factory(IrcBot& bot) \
 { \
-	return IrcBotPluginSPtr(new name(bot)); \
+	return new name(bot); \
 } extern int _missing_semicolon_()
 
 /**
@@ -522,6 +524,7 @@ class IrcBot
 {
 	friend class IrcBotPlugin;
 public:
+	virtual ~IrcBot() {}
 
 	typedef std::map<str, str_vec> property_map;
 	typedef std::pair<const str, str_vec> property_pair;

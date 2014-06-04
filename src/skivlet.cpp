@@ -29,7 +29,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 '-----------------------------------------------------------------*/
 
 #include <skivvy/stl.h>
-#include <skivvy/types.h>
+#include <sookee/types.h>
 #include <skivvy/ircbot.h>
 #include <skivvy/logrep.h>
 #include <skivvy/socketstream.h>
@@ -39,7 +39,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <cstdlib>
 
 using namespace skivvy;
-using namespace skivvy::types;
+using namespace sookee::types;
 using namespace skivvy::utils;
 using namespace skivvy::ircbot;
 

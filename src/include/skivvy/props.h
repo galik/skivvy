@@ -31,8 +31,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 '-----------------------------------------------------------------*/
 
 #include <sookee/str.h>
-
-#include <skivvy/types.h>
+#include <sookee/types.h>
 #include <skivvy/logrep.h>
 
 #include <thread>
@@ -40,7 +39,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 namespace skivvy { namespace props {
 
-using namespace skivvy::types;
+using namespace sookee::types;
 using namespace skivvy::utils;
 using namespace sookee::string;
 

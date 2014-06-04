@@ -39,7 +39,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <sookee/stl.h>
 #include <sookee/str.h>
 
-#include <skivvy/types.h>
+#include <sookee/types.h>
 #include <skivvy/server.h>
 #include <skivvy/socketstream.h>
 #include <skivvy/message.h>
@@ -49,7 +49,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 using namespace skivvy;
 using namespace skivvy::irc;
-using namespace skivvy::types;
+using namespace sookee::types;
 using namespace sookee::bug;
 using namespace sookee::log;
 

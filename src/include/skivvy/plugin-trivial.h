@@ -31,7 +31,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 '-----------------------------------------------------------------*/
 
-#include <skivvy/types.h>
+#include <sookee/types.h>
 #include <skivvy/ircbot.h>
 #include <skivvy/logrep.h>
 
@@ -39,7 +39,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 namespace skivvy { namespace ircbot {
 
-using namespace skivvy::types;
+using namespace sookee::types;
 
 struct question
 {

@@ -31,8 +31,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 '-----------------------------------------------------------------*/
 
-#include <skivvy/types.h>
-//#include <skivvy/logrep.h>
+#include <sookee/types.h>
 
 #include <sookee/bug.h>
 #include <sookee/log.h>
@@ -51,15 +50,216 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 namespace skivvy { namespace utils {
 
-using namespace skivvy::types;
+using namespace sookee::types;
 using namespace sookee::string;
 using namespace sookee::bug;
 using namespace sookee::log;
 
+// Container serialization
+
+// prototypes
+
+template<typename K, typename V>
+std::ostream& operator<<(std::ostream& os, const std::pair<K, V>& p);
+
+// [{pair1}{pair2}]
+template<typename K, typename V>
+std::ostream& operator<<(std::ostream& os, const std::map<K, V>& m);
+
+// {{item1}{item2}}
+template<typename K, typename V>
+std::istream& operator>>(std::istream& is, std::pair<K, V>& p);
+
+// {pair1pair2}
+template<typename K, typename V>
+std::istream& operator>>(std::istream& is, std::map<K, V>& m);
+
+template<typename T>
+std::istream& operator>>(std::istream& is, std::set<T>& set);
+
+template<typename T>
+std::ostream& operator<<(std::ostream& os, const std::set<T>& set);
+
+template<typename T>
+std::istream& operator>>(std::istream& is, std::vector<T>& vec);
+
+template<typename T>
+std::ostream& operator<<(std::ostream& os, const std::vector<T>& vec);
+
+std::istream& getobject(std::istream& is, str& o);
+
+template<typename T>
+void escape(T&) {}
+void escape(str& s);
+
+template<typename T>
+void unescape(T&) {}
+void unescape(str& s);
+
+str escaped(const str& cs);
+str unescaped(const str& cs);
+
+// {{value_type1}{value_type2}}
+template<typename Container>
+std::ostream& write_container(std::ostream& os, const Container& container)
+{
+//	bug_func();
+	os << '{';
+	str s;
+	for(auto i: container)
+	{
+		sss ss;
+		ss << i;
+		sgl(ss, s);
+		//bug_var(s);
+		escape(s);
+		os << '{' << s << '}';
+	}
+	os << '}';
+	return os;
+}
+
+template<typename T>
+std::istream& extract(std::istream& is, T& t)
+{
+//	bug_func();
+	return is >> t;
+}
+
+template<typename T>
+std::istream& extract(std::istream&& is, T& t)
+{
+//	bug_func();
+	return extract(is, t);
+}
+
+std::istream& extract(std::istream& is, str& s);
+
+std::istream& extract(std::istream&& is, str& s);
+
+// {{value_type1}{value_type2}}
+template<typename Container>
+std::istream& read_container(std::istream& is, Container& container)
+{
+//	bug_func();
+	container.clear();
+	str skip, line;
+	if(!getobject(is, line))
+		is.clear(is.rdstate() | std::ios::failbit); // protocol error
+	else
+	{
+		// {value_type1}{value_type2}
+		siss iss(line);
+		while(getobject(iss, line))
+		{
+			typename Container::value_type t;
+			extract(siss(line), t);
+			std::insert_iterator<Container>(container, container.end()) = t;
+		}
+	}
+	return is;
+}
+
+
+// {key,val)
+template<typename K, typename V>
+std::ostream& operator<<(std::ostream& os, const std::pair<K, V>& p)
+{
+//	bug_func();
+	K key;
+	V val;
+	key = p.first;
+	val = p.second;
+	escape(key);
+	escape(val);
+	return os << "{{" << key << "}{" << val << "}}";
+}
+
+// [{pair1}{pair2}]
+template<typename K, typename V>
+std::ostream& operator<<(std::ostream& os, const std::map<K, V>& m)
+{
+//	bug_func();
+	os << "{";
+	for(const std::pair<K, V>& p: m)
+		os << p;
+	os << "}";
+	return os;
+}
+
+// {{item1}{item2}}
+template<typename K, typename V>
+std::istream& operator>>(std::istream& is, std::pair<K, V>& p)
+{
+//	bug_func();
+	str skip, line, key, val;
+	if(!getobject(is, line))
+		is.clear(is.rdstate() | std::ios::failbit); // protocol error
+	else
+	{
+		siss iss(line);
+		if(!getobject(getobject(iss, key), val))
+			is.clear(is.rdstate() | std::ios::failbit); // protocol error
+		else
+		{
+			iss.clear();
+			iss.str(key);
+			extract(iss, p.first);
+			iss.clear();
+			iss.str(val);
+			extract(iss, p.second);
+		}
+	}
+	return is;
+}
+
+// {pair1pair2}
+template<typename K, typename V>
+std::istream& operator>>(std::istream& is, std::map<K, V>& m)
+{
+//	bug_func();
+	str skip, line;
+	if(!getobject(is, line))
+		is.clear(is.rdstate() | std::ios::failbit); // protocol error
+	else
+	{
+		m.clear();
+		bug_var(line);
+		siss iss(line);
+		std::pair<K, V> p;
+		while(iss >> p)
+			m.insert(p);
+	}
+	return is;
+}
+
+template<typename T>
+std::istream& operator>>(std::istream& is, std::set<T>& set)
+{
+	return read_container(is, set);
+}
+
+template<typename T>
+std::ostream& operator<<(std::ostream& os, const std::set<T>& set)
+{
+	return write_container(os, set);
+}
+
+template<typename T>
+std::istream& operator>>(std::istream& is, std::vector<T>& vec)
+{
+	return read_container(is, vec);
+}
+
+template<typename T>
+std::ostream& operator<<(std::ostream& os, const std::vector<T>& vec)
+{
+	return write_container(os, vec);
+}
+
 class Store
 {
 protected:
-//	str_vec_map store;
 
 	bool pcre_match(const str& r, const str& s, bool full = false)
 	{
@@ -74,11 +274,8 @@ protected:
 	}
 
 public:
-//	const str_vec_map& get_map()
-//	{
-//		return store;
-//	}
-//
+	virtual ~Store() {}
+
 	str get(const str& k, const str& dflt = "")
 	{
 		return get_at(k, 0, dflt);
@@ -119,7 +316,7 @@ public:
 	template<typename T>
 	void set_at(const str& k, siz n, const T& v)
 	{
-		std::ostringstream oss;
+		soss oss;
 		oss <<  std::boolalpha << v;
 		set_at(k, n, oss.str());
 	}
@@ -718,178 +915,6 @@ public:
 		save(k, store);
 	}
 };
-
-// Container serialization
-
-std::istream& getobject(std::istream& is, str& o);
-
-template<typename T>
-void escape(T&) {}
-void escape(str& s);
-
-template<typename T>
-void unescape(T&) {}
-void unescape(str& s);
-
-str escaped(const str& cs);
-str unescaped(const str& cs);
-
-// {{value_type1}{value_type2}}
-template<typename Container>
-std::ostream& write_container(std::ostream& os, const Container& container)
-{
-//	bug_func();
-	os << '{';
-	str s;
-	for(auto i: container)
-	{
-		sss ss;
-		ss << i;
-		sgl(ss, s);
-		//bug_var(s);
-		escape(s);
-		os << '{' << s << '}';
-	}
-	os << '}';
-	return os;
-}
-
-template<typename T>
-std::istream& extract(std::istream& is, T& t)
-{
-//	bug_func();
-	return is >> t;
-}
-
-template<typename T>
-std::istream& extract(std::istream&& is, T& t)
-{
-//	bug_func();
-	return extract(is, t);
-}
-
-std::istream& extract(std::istream& is, str& s);
-
-std::istream& extract(std::istream&& is, str& s);
-
-// {{value_type1}{value_type2}}
-template<typename Container>
-std::istream& read_container(std::istream& is, Container& container)
-{
-//	bug_func();
-	container.clear();
-	str skip, line;
-	if(!getobject(is, line))
-		is.clear(is.rdstate() | std::ios::failbit); // protocol error
-	else
-	{
-		// {value_type1}{value_type2}
-		siss iss(line);
-		while(getobject(iss, line))
-		{
-			typename Container::value_type t;
-			extract(siss(line), t);
-			std::insert_iterator<Container>(container, container.end()) = t;
-		}
-	}
-	return is;
-}
-
-// {key,val)
-template<typename K, typename V>
-std::ostream& operator<<(std::ostream& os, const std::pair<K, V>& p)
-{
-//	bug_func();
-	K key;
-	V val;
-	key = p.first;
-	val = p.second;
-	escape(key);
-	escape(val);
-	return os << "{{" << key << "}{" << val << "}}";
-}
-
-// [{pair1}{pair2}]
-template<typename K, typename V>
-std::ostream& operator<<(std::ostream& os, const std::map<K, V>& m)
-{
-//	bug_func();
-	os << "{";
-	for(const std::pair<K, V>& p: m)
-		os << p;
-	os << "}";
-	return os;
-}
-
-// {{item1}{item2}}
-template<typename K, typename V>
-std::istream& operator>>(std::istream& is, std::pair<K, V>& p)
-{
-//	bug_func();
-	str skip, line, key, val;
-	if(!getobject(is, line))
-		is.clear(is.rdstate() | std::ios::failbit); // protocol error
-	else
-	{
-		siss iss(line);
-		if(!getobject(getobject(iss, key), val))
-			is.clear(is.rdstate() | std::ios::failbit); // protocol error
-		else
-		{
-			iss.clear();
-			iss.str(key);
-			extract(iss, p.first);
-			iss.clear();
-			iss.str(val);
-			extract(iss, p.second);
-		}
-	}
-	return is;
-}
-
-// {pair1pair2}
-template<typename K, typename V>
-std::istream& operator>>(std::istream& is, std::map<K, V>& m)
-{
-//	bug_func();
-	str skip, line;
-	if(!getobject(is, line))
-		is.clear(is.rdstate() | std::ios::failbit); // protocol error
-	else
-	{
-		m.clear();
-		bug_var(line);
-		siss iss(line);
-		std::pair<K, V> p;
-		while(iss >> p)
-			m.insert(p);
-	}
-	return is;
-}
-
-template<typename T>
-std::istream& operator>>(std::istream& is, std::set<T>& set)
-{
-	return read_container(is, set);
-}
-
-template<typename T>
-std::ostream& operator<<(std::ostream& os, const std::set<T>& set)
-{
-	return write_container(os, set);
-}
-
-template<typename T>
-std::istream& operator>>(std::istream& is, std::vector<T>& vec)
-{
-	return read_container(is, vec);
-}
-
-template<typename T>
-std::ostream& operator<<(std::ostream& os, const std::vector<T>& vec)
-{
-	return write_container(os, vec);
-}
 
 }} // skivvy::utils
 #endif // _SKIVVY_STORE_H_

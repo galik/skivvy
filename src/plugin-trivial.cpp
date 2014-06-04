@@ -38,6 +38,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <sstream>
 #include <iostream>
 
+#include <sookee/types.h>
 #include <skivvy/stl.h>
 #include <skivvy/str.h>
 #include <skivvy/logrep.h>
@@ -49,7 +50,7 @@ IRC_BOT_PLUGIN(TrivialIrcBotPlugin);
 PLUGIN_INFO("trivial", "Trivial Quiz Game", "0.1");
 
 using namespace skivvy;
-using namespace skivvy::types;
+using namespace sookee::types;
 using namespace skivvy::utils;
 using namespace skivvy::string;
 
