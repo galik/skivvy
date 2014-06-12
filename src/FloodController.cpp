@@ -115,7 +115,7 @@ void FloodController::clear()
 void FloodController::clear(const str& channel)
 {
 	lock_guard lock(mtx);
-	str_vec_itr itr = stl::find(keys, channel);
+	str_vec_iter itr = stl::find(keys, channel);
 	if(itr != keys.end())
 	{
 		m.erase(channel);

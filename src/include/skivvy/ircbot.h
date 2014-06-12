@@ -466,7 +466,7 @@ extern "C" \
 IrcBotPluginPtr skivvy_ircbot_factory(IrcBot& bot) \
 { \
 	return new name(bot); \
-} extern int _missing_semicolon_()
+} struct _missing_semicolon_{}
 
 /**
  * Deals with all the dynamic loading jiggery pokery.
@@ -771,6 +771,8 @@ public:
 
 public:
 	str configfile; // current config file
+
+	bool fc_say(const str& to, const str& text);
 
 	bool fc_reply(const message& msg, const str& text);
 //	bool fc_reply(const str& to, const str& text);

@@ -328,6 +328,11 @@ bool IrcBot::fc_reply(const message& msg, const str& text)
 	return fc.send(msg.get_to(), [&,msg,text]()->bool{ return irc->reply(msg, text); });
 }
 
+bool IrcBot::fc_say(const str& to, const str& text)
+{
+	return fc.send(to, [&,to,text]()->bool{ return irc->say(to, text); });
+}
+
 //bool IrcBot::fc_reply(const str& to, const str& text)
 //{
 //	message msg;
@@ -1161,6 +1166,7 @@ void IrcBot::exec(const std::string& cmd, std::ostream* os)
 		lower(cmd);
 		if(cmd == "/say")
 		{
+			// /say #channel <text>
 			str chan;
 			iss >> chan >> std::ws;
 			bug_var(chan);
@@ -1168,7 +1174,8 @@ void IrcBot::exec(const std::string& cmd, std::ostream* os)
 			{
 				sgl(iss, line);
 				//bug_var(line);
-				irc->say(chan, line);
+				//irc->say(chan, line);
+				fc_say(chan, line);
 				if(os)
 					(*os) << "OK";
 			}
