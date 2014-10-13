@@ -30,8 +30,8 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <skivvy/utils.h>
 
 #include <sookee/log.h>
-
 #include <sookee/types.h>
+#include <sookee/ios.h>
 //#include <skivvy/logrep.h>
 #include <skivvy/irc.h>
 
@@ -40,6 +40,7 @@ namespace skivvy { namespace utils {
 using namespace sookee::types;
 using namespace skivvy::irc;
 using namespace sookee::log;
+using namespace sookee::ios;
 
 bool parse_rangelist(const str& rangelist, siz_vec& items)
 {

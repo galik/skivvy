@@ -26,7 +26,7 @@ AC_CONFIG_SRCDIR([src/test.cpp])
 AC_CONFIG_HEADERS([config.h])
 
 AM_INIT_AUTOMAKE([1.10 foreign])
-#AM_SILENT_RULES([no])
+AM_SILENT_RULES
 
 AM_PROG_LIBTOOL
 #AC_CHECK_HEADER([readline/readline.h])
@@ -38,7 +38,7 @@ AC_PROG_CXX
 AC_PROG_INSTALL
 
 AC_LANG(C++)
-AC_MSG_CHECKING(if $CXX supports C++11)
+AX_CXX_COMPILE_STDCXX_11([noext],[mandatory])
 
 #CXXFLAGS="$CXXFLAGS -std=gnu++11"
 #AC_COMPILE_IFELSE(AC_LANG_PROGRAM([],[for(int i: {0})]),[cpp11=yes],[cpp11=no])

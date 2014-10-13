@@ -661,7 +661,7 @@ public:
 	/**
 	 * Match s according to regular expression r.
 	 */
-	bool preg_match(const str& r, const str& s, bool full = false); // peare regex
+	bool preg_match(const str& r, const str& s, bool full = false); // pcre regex
 	bool wild_match(const str& w, const str& s, int flags = 0);
 
 	bool is_connected() { return connected; }

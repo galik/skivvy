@@ -1,9 +1,6 @@
-#pragma once
 #ifndef _SKIVVY_STORE_H_
 #define _SKIVVY_STORE_H_
 /*
- * store.h
- *
  *  Created on: 04 Jan 2013
  *      Author: oaskivvy@gmail.com
  */
