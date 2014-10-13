@@ -28,10 +28,13 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 '-----------------------------------------------------------------*/
 
-#include <sookee/types.h>
+#include <sookee/types/basic.h>
 
 #include <sookee/bug.h>
 #include <sookee/log.h>
+#include <sookee/stl.h>
+#include <sookee/str.h>
+#include <sookee/ios.h>
 
 #include <istream>
 #include <ostream>
@@ -41,16 +44,13 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <pcrecpp.h>
 #include <fnmatch.h>
 
-#include <skivvy/stl.h>
-#include <sookee/str.h>
-
-
 namespace skivvy { namespace utils {
 
 using namespace sookee::types;
 using namespace sookee::string;
 using namespace sookee::bug;
 using namespace sookee::log;
+using namespace sookee::ios;
 
 // Container serialization
 
