@@ -763,8 +763,8 @@ bool IrcBot::init(const str& config_file)
 
 			str_vec parts = get_vec("part");
 
-			for(const str& part: parts)
-				bug_var(part);
+//			for(const str& part: parts)
+//				bug_var(part);
 
 			if(std::find(parts.begin(), parts.end(), chan) != parts.end())
 				continue;

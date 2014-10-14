@@ -1,6 +1,5 @@
-#pragma once
-#ifndef _SKIVVY_LOGREP_H_
-#define _SKIVVY_LOGREP_H_
+#ifndef SKIVVY_LOGREP_H_
+#define SKIVVY_LOGREP_H_
 /*
  * logrep.h
  *
@@ -53,4 +52,4 @@ bug("//---------------------------------------------------")
 
 }} // skivvy::utils
 
-#endif // _SKIVVY_LOGREP_H_
+#endif // SKIVVY_LOGREP_H_

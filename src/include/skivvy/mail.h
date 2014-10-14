@@ -9,7 +9,7 @@
 #define MAIL_H_
 
 /*-----------------------------------------------------------------.
-| Copyright (C) 2012 SooKee oaskivvy@gmail.com               |
+| Copyright (C) 2012 SooKee oaskivvy@gmail.com                     |
 '------------------------------------------------------------------'
 
 This program is free software; you can redistribute it and/or
@@ -32,7 +32,8 @@ http://www.gnu.org/licenses/gpl-2.0.html
 '-----------------------------------------------------------------*/
 
 #include <sookee/str.h>
-#include <sookee/types.h>
+#include <sookee/ios.h>
+#include <sookee/types/basic.h>
 #include <skivvy/logrep.h>
 #include <skivvy/socketstream.h>
 
@@ -41,6 +42,7 @@ namespace skivvy { namespace email {
 using namespace skivvy;
 using namespace sookee::types;
 using namespace sookee::string;
+using namespace sookee::ios;
 
 class SMTP
 {
