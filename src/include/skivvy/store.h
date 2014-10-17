@@ -346,6 +346,36 @@ public:
 	}
 
 	/**
+	 * Return values for key that match PCRE regex
+	 * @param k Key
+	 * @param r Regex to match against values
+	 * @return str_vec of matching values
+	 */
+	str_vec get_pcre_vec_with_key(const str& k, const str& r)
+	{
+		str_vec res;
+		for(const auto& v: get_vec(k))
+			if(pcre_match(r, v, true))
+				res.push_back(v);
+		return res;
+	}
+
+	/**
+	 * Return values for key that match wildcard
+	 * @param k Key
+	 * @param w Wildcard to match against values
+	 * @return str_vec of matching values
+	 */
+	str_vec get_wild_vec_with_key(const str& k, const str& w)
+	{
+		str_vec res;
+		for(const auto& v: get_vec(k))
+			if(wild_match(w, v, true))
+				res.push_back(v);
+		return res;
+	}
+
+	/**
 	 * Set each value from iteratore [first, last) against key k, clearing any current keys.
 	 */
 	template<typename InputIter>
@@ -418,7 +448,7 @@ class BackupStore
 private:
 	static const str VERSION_KEY;
 
-	std::mutex mtx;
+	mutable std::mutex mtx;
 	const str file;
 
 	void load()
@@ -472,7 +502,7 @@ public:
 		load();
 	}
 
-	str_set get_keys_if_pcre(const str& reg)
+	str_set get_keys_if_pcre(const str& reg) override
 	{
 		str_set res;
 		lock_guard lock(mtx);
@@ -484,7 +514,7 @@ public:
 		return res;
 	}
 
-	str_set get_keys_if_wild(const str& wld)
+	str_set get_keys_if_wild(const str& wld) override
 	{
 		str_set res;
 		lock_guard lock(mtx);
@@ -496,7 +526,7 @@ public:
 		return res;
 	}
 
-	str_set get_keys()
+	str_set get_keys() override
 	{
 		str_set res;
 		lock_guard lock(mtx);
@@ -507,14 +537,14 @@ public:
 		return res;
 	}
 
-	bool has(const str& k)
+	bool has(const str& k) override
 	{
 		if(store.empty())
 			load();
 		return store.find(k) != store.end();
 	}
 
-	str get_at(const str& k, siz n, const str& dflt = "")
+	str get_at(const str& k, siz n, const str& dflt = "") override
 	{
 		lock_guard lock(mtx);
 		if(store.empty())
@@ -524,7 +554,7 @@ public:
 		return store[k][n];
 	}
 
-	str_vec get_vec(const str& k)
+	str_vec get_vec(const str& k) override
 	{
 		lock_guard lock(mtx);
 		if(store.empty())
@@ -535,7 +565,7 @@ public:
 	/**
 	 * Clear entire store.
 	 */
-	void clear()
+	void clear() override
 	{
 		lock_guard lock(mtx);
 		store.clear();
@@ -545,7 +575,7 @@ public:
 	/**
 	 * Clear entire key.
 	 */
-	void clear(const str& k)
+	void clear(const str& k) override
 	{
 		lock_guard lock(mtx);
 		if(store.empty())
@@ -557,7 +587,7 @@ public:
 	/**
 	 * Add v to end of key vector.
 	 */
-	void add(const str& k, const str& v)
+	void add(const str& k, const str& v) override
 	{
 		lock_guard lock(mtx);
 		if(store.empty())
@@ -569,7 +599,7 @@ public:
 	/**
 	 * Set nth element of key vector.
 	 */
-	void set_at(const str& k, siz n, const str& v)
+	void set_at(const str& k, siz n, const str& v) override
 	{
 		lock_guard lock(mtx);
 		if(store.empty())
@@ -646,7 +676,7 @@ private:
 public:
 	CacheStore(const str& file, siz max = 0):file(file), max(max) {}
 
-	str_set get_keys_if_pcre(const str& reg)
+	str_set get_keys_if_pcre(const str& reg) override
 	{
 		str_set res;
 		lock_guard lock(mtx);
@@ -661,7 +691,7 @@ public:
 		return res;
 	}
 
-	str_set get_keys()
+	str_set get_keys() override
 	{
 		str_set res;
 		lock_guard lock(mtx);
@@ -676,7 +706,7 @@ public:
 		return res;
 	}
 
-	bool has(const str& k)
+	bool has(const str& k) override
 	{
 		bool res = false;
 		lock_guard lock(mtx);
@@ -689,7 +719,7 @@ public:
 		return res;
 	}
 
-	str get_at(const str& k, siz n, const str& dflt = "")
+	str get_at(const str& k, siz n, const str& dflt = "") override
 	{
 		lock_guard lock(mtx);
 		if(store.find(k) == store.end())
@@ -699,7 +729,7 @@ public:
 		return store[k][n];
 	}
 
-	str_vec get_vec(const str& k)
+	str_vec get_vec(const str& k) override
 	{
 		lock_guard lock(mtx);
 		if(store.find(k) == store.end())
@@ -710,7 +740,7 @@ public:
 	/**
 	 * Clear entire store.
 	 */
-	void clear()
+	void clear() override
 	{
 		lock_guard lock(mtx);
 		store.clear();
@@ -721,7 +751,7 @@ public:
 	/**
 	 * Clear entire key.
 	 */
-	void clear(const str& k)
+	void clear(const str& k) override
 	{
 		lock_guard lock(mtx);
 		store[k].clear();
@@ -731,7 +761,7 @@ public:
 	/**
 	 * Add v to end of key vector.
 	 */
-	void add(const str& k, const str& v)
+	void add(const str& k, const str& v) override
 	{
 		lock_guard lock(mtx);
 		store[k].push_back(v);
@@ -741,7 +771,7 @@ public:
 	/**
 	 * Set nth element of key vector.
 	 */
-	void set_at(const str& k, siz n, const str& v)
+	void set_at(const str& k, siz n, const str& v) override
 	{
 		lock_guard lock(mtx);
 		if(store[k].size() < n + 1)
@@ -812,7 +842,7 @@ private:
 public:
 	FileStore(const str& file):file(file) {}
 
-	str_set get_keys_if_pcre(const str& reg)
+	str_set get_keys_if_pcre(const str& reg) override
 	{
 		str_set res;
 		lock_guard lock(mtx);
@@ -826,7 +856,7 @@ public:
 		return res;
 	}
 
-	str_set get_keys()
+	str_set get_keys() override
 	{
 		str_set res;
 		lock_guard lock(mtx);
@@ -841,7 +871,7 @@ public:
 		return res;
 	}
 
-	bool has(const str& k)
+	bool has(const str& k) override
 	{
 		bool res = false;
 		lock_guard lock(mtx);
@@ -853,7 +883,7 @@ public:
 		return res;
 	}
 
-	str get_at(const str& k, siz n, const str& dflt = "")
+	str get_at(const str& k, siz n, const str& dflt = "") override
 	{
 		lock_guard lock(mtx);
 		str_vec store = load(k);
@@ -862,7 +892,7 @@ public:
 		return store[n];
 	}
 
-	str_vec get_vec(const str& k)
+	str_vec get_vec(const str& k) override
 	{
 		lock_guard lock(mtx);
 		return load(k);
@@ -871,7 +901,7 @@ public:
 	/**
 	 * Clear entire store.
 	 */
-	void clear()
+	void clear() override
 	{
 		lock_guard lock(mtx);
 		ofs.open(file, std::ios::trunc);
@@ -881,7 +911,7 @@ public:
 	/**
 	 * Clear entire key.
 	 */
-	void clear(const str& k)
+	void clear(const str& k) override
 	{
 		lock_guard lock(mtx);
 		str_vec store;
@@ -891,7 +921,7 @@ public:
 	/**
 	 * Add v to end of key vector.
 	 */
-	void add(const str& k, const str& v)
+	void add(const str& k, const str& v) override
 	{
 		lock_guard lock(mtx);
 		str_vec store = load(k);
@@ -902,7 +932,7 @@ public:
 	/**
 	 * Set nth element of key vector.
 	 */
-	void set_at(const str& k, siz n, const str& v)
+	void set_at(const str& k, siz n, const str& v) override
 	{
 		lock_guard lock(mtx);
 		str_vec store = load(k);
