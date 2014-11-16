@@ -75,7 +75,7 @@ str oa_handle_to_irc(str oa)
 //	oa = oa + "^7"; // default to white
 
 //	size_t pos = 0;
-	for(str_pair& p: subs)
+	for(auto&& p: subs)
 		replace(oa, p.first, p.second);
 	oa += IRC_NORMAL;
 	return oa;
