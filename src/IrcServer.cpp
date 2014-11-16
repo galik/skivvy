@@ -42,7 +42,7 @@ using namespace skivvy;
 using namespace skivvy::irc;
 
 using namespace sookee::types;
-using namespace sookee::string;
+using namespace sookee::utils;
 using namespace sookee::bug;
 using namespace sookee::log;
 

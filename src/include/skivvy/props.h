@@ -41,7 +41,7 @@ namespace skivvy { namespace props {
 
 using namespace sookee::types;
 using namespace skivvy::utils;
-using namespace sookee::string;
+using namespace sookee::utils;
 
 
 typedef std::map<const str, str> property_map;

@@ -42,7 +42,7 @@ namespace skivvy { namespace oa {
 
 using namespace skivvy::irc;
 using namespace sookee::types;
-using namespace sookee::string;
+using namespace sookee::utils;
 
 inline
 str oa_handle_to_irc(str oa)

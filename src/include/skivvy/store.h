@@ -47,7 +47,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 namespace skivvy { namespace utils {
 
 using namespace sookee::types;
-using namespace sookee::string;
+using namespace sookee::utils;
 using namespace sookee::bug;
 using namespace sookee::log;
 using namespace sookee::ios;
@@ -434,6 +434,8 @@ public:
 	virtual void set_at(const str& k, siz n, const str& v) = 0;
 };
 
+USING_MAP(str, str_vec, str_vec_map);
+
 class MappedStore
 : public Store
 {
@@ -482,7 +484,7 @@ private:
 
 		ofs.open(file);
 		if(ofs)
-			for(const str_vec_pair& p: store)
+			for(const auto& p: store)
 				for(const str& v: p.second)
 					ofs << p.first << ": " << v << '\n';
 		ofs.close();
@@ -508,7 +510,7 @@ public:
 		lock_guard lock(mtx);
 		if(store.empty())
 			load();
-		for(const str_vec_pair& p: store)
+		for(const auto& p: store)
 			if(pcre_match(reg, p.first))
 				res.insert(p.first);
 		return res;
@@ -520,7 +522,7 @@ public:
 		lock_guard lock(mtx);
 		if(store.empty())
 			load();
-		for(const str_vec_pair& p: store)
+		for(const auto& p: store)
 			if(wild_match(wld, p.first))
 				res.insert(p.first);
 		return res;
@@ -532,7 +534,7 @@ public:
 		lock_guard lock(mtx);
 		if(store.empty())
 			load();
-		for(const str_vec_pair& p: store)
+		for(const auto& p: store)
 			res.insert(p.first);
 		return res;
 	}

@@ -42,7 +42,7 @@ namespace skivvy { namespace net {
 
 using namespace sookee::bug;
 using namespace sookee::log;
-using namespace sookee::string;
+using namespace sookee::utils;
 using namespace sookee::types;
 
 

@@ -14,7 +14,7 @@
 
 using namespace skivvy;
 using namespace sookee::types;
-using namespace sookee::string;
+using namespace sookee::utils;
 
 bool send(const str& cmd, str& res)
 {

@@ -1,4 +1,3 @@
-#pragma once
 #ifndef _SKIVVY_SOCKETSTREAM_H_
 #define _SKIVVY_SOCKETSTREAM_H_
 
@@ -43,9 +42,6 @@ is granted under the same conditions.
 
 '----------------------------------------------------------------*/
 
-#include <sookee/log.h>
-#include <sookee/bug.h>
-
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
@@ -56,6 +52,9 @@ is granted under the same conditions.
 #include <fcntl.h>
 #include <cstring> // strerror()
 #include <cerrno>
+
+#include <sookee/log.h>
+#include <sookee/bug.h>
 
 //#include <skivvy/logrep.h>
 
@@ -195,7 +194,7 @@ public:
 
 		if((sd = socket(PF_INET, type, 0)) == -1)
 		{
-			log(strerror(errno));
+			log(std::strerror(errno));
 			stream_type::setstate(std::ios::failbit);
 			return false;
 		}

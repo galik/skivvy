@@ -41,7 +41,7 @@ namespace skivvy { namespace email {
 
 using namespace skivvy;
 using namespace sookee::types;
-using namespace sookee::string;
+using namespace sookee::utils;
 using namespace sookee::ios;
 
 class SMTP

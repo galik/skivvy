@@ -41,7 +41,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 namespace skivvy { namespace ircbot {
 
 using namespace sookee::types;
-using namespace sookee::string;
+using namespace sookee::utils;
 using namespace skivvy::utils;
 
 std::istream& operator>>(std::istream& is, message& m)

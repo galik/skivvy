@@ -77,7 +77,7 @@ using namespace skivvy::utils;
 
 using namespace sookee::bug;
 using namespace sookee::log;
-using namespace sookee::string;
+using namespace sookee::utils;
 
 static const str SERVER_HOST = "server.host";
 static const str SERVER_HOST_DEFAULT = "localhost";
@@ -231,6 +231,7 @@ IrcBot::IrcBot()
 , nick_number(0)
 , uptime(std::time(0))
 , config_loaded(0)
+, plugin_loaded(0)
 {
 }
 
@@ -277,11 +278,9 @@ std::istream& operator>>(std::istream& is, IrcBot& bot)
 			else
 			{
 				str file_path = bot.configfile.substr(0, bot.configfile.find_last_of('/'));
-				//bug_var(file_path);
 				file_name = file_path + "/" + val;
-				//bug_var(file_name);
 			}
-			//bug_var(file_name);
+
 			std::ifstream ifs(file_name);
 			if(!(ifs >> bot))
 				log("Failed to include: " << file_name);
