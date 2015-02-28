@@ -223,6 +223,7 @@ siss& message::getparams(siss& is, str_vec& middles, str& trailing) const
 	if(n == 14 && is.peek() == ' ' && is.get(c))
 		if(is.peek() != ':' || is.get(c))
 			return gettrailing(is, trailing);
+
 	return is;
 }
 

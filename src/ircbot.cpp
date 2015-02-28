@@ -30,11 +30,6 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 #include <skivvy/ircbot.h>
 
-#include <sookee/types.h>
-#include <sookee/bug.h>
-#include <sookee/log.h>
-#include <sookee/str.h>
-
 #include <string>
 #include <fstream>
 #include <sstream>
@@ -50,13 +45,6 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <cstring>
 #include <cstdlib>
 
-#include <skivvy/ios.h>
-#include <skivvy/stl.h>
-#include <skivvy/logrep.h>
-#include <skivvy/utils.h>
-#include <skivvy/irc-constants.h>
-#include <skivvy/message.h>
-
 #include <random>
 #include <functional>
 
@@ -65,6 +53,17 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <pcrecpp.h>
 //#include <readline/readline.h>
 //#include <readline/history.h>
+#include <sookee/types.h>
+#include <sookee/bug.h>
+#include <sookee/log.h>
+#include <sookee/str.h>
+
+#include <skivvy/ios.h>
+#include <skivvy/stl.h>
+#include <skivvy/logrep.h>
+#include <skivvy/utils.h>
+#include <skivvy/irc-constants.h>
+#include <skivvy/message.h>
 
 namespace skivvy { namespace ircbot {
 
@@ -208,11 +207,12 @@ void IrcBot::del_plugin(const str& id)
 			if(monitors.erase(dynamic_cast<IrcBotMonitor*>(p->get())))
 				log("Unregistering monitor: " << (*p)->get_name());
 
-			bug("exiting plugin: " << (*p)->get_name());
+			str name = (*p)->get_name();
+			bug("exiting plugin: " << name);
 			(*p)->exit();
-			bug("dlclose plugin: " << (*p)->get_name());
+			bug("dlclose plugin: " << name);
 			dlclose((*p)->dl);
-			log("Unregistering plugin : " << (*p)->get_name());
+			log("Unregistering plugin : " << name);
 			p = plugins.erase(p);
 		}
 	}
@@ -285,7 +285,11 @@ std::istream& operator>>(std::istream& is, IrcBot& bot)
 			if(!(ifs >> bot))
 				log("Failed to include: " << file_name);
 		}
-		else bot.props[key].push_back(val);
+		else
+		{
+			bot.props[key].push_back(val);
+			log('\t' << key << ": " << val);
+		}
 	}
 	if(is.eof())
 		is.clear();
@@ -400,7 +404,9 @@ void IrcBot::official_join(const str& channel)
 		return;
 
 	chans.insert(channel);
-	irc->say(channel, get_name() + " v" + get_version());
+
+	if(get("join.announce", false))
+		irc->say(channel, get_name() + " v" + get_version());
 
 	str_vec welcomes = get_vec(PROP_WELCOME);
 
@@ -533,6 +539,8 @@ bool IrcBot::init(const str& config_file)
 	if(!config_file.empty() && std::ifstream(config_file))
 		log("Using config file: " << (configfile = config_file));
 
+	bug_var(configfile);
+
 	if(!(std::ifstream(configfile) >> (*this)))
 	{
 		log("Error reading config file.");
@@ -542,6 +550,30 @@ bool IrcBot::init(const str& config_file)
 	config_loaded = std::time(0);
 
 //	bug_do_color = get("bug.do.color", true);
+
+	// =====================================
+	// OPEN LOG FILE
+	// =====================================
+
+//	if(has("log.file"))
+//	{
+//		logfile.open(getf("log.file"));
+//		if(logfile)
+//		{
+//			log("INFO: logging to file: " << getf("log.file"));
+//			sookee::log::out(&logfile);
+//		}
+//	}
+//
+//	if(has("bug.file"))
+//	{
+//		bugfile.open(getf("bug.file"));
+//		if(bugfile)
+//		{
+//			log("INFO: bugging to file: " << getf("bug.file"));
+//			sookee::bug::out(&bugfile);
+//		}
+//	}
 
 	// =====================================
 	// CREATE CRITICAL RESOURCES
@@ -569,22 +601,6 @@ bool IrcBot::init(const str& config_file)
 	{
 		log("Error creating IrcServer.");
 		return false;
-	}
-
-	// =====================================
-	// OPEN LOG FILE
-	// =====================================
-
-	std::ofstream logfile;
-
-	if(has("log.file"))
-	{
-		logfile.open(getf("log.file"));
-		if(logfile)
-		{
-			sookee::log::out(&logfile);
-			sookee::bug::out(&logfile);
-		}
 	}
 
 	load_plugins();
@@ -629,8 +645,6 @@ bool IrcBot::init(const str& config_file)
 		++p;
 	}
 
-	bug_var(done);
-
 	if(get<bool>("irc.test.mode") == true)
 		connected = true;
 	else
@@ -639,13 +653,16 @@ bool IrcBot::init(const str& config_file)
 	while(!done && !connected)
 		std::this_thread::sleep_for(std::chrono::seconds(1));
 
-	if(get<bool>("irc.test.mode") == false)
-		con = std::async(std::launch::async, [&]{ console(); });
+
+	//	if(get<bool>("irc.test.mode") == false)
+//		con = std::async(std::launch::async, [&]{ console(); });
 
 	str line;
 	message msg;
+//	log("TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT");
 	while(!done)
 	{
+//		log("UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUU");
 		if(!irc->receive(line))
 		{
 			if(get<bool>("irc.test.mode") == true)
@@ -662,12 +679,21 @@ bool IrcBot::init(const str& config_file)
 			while(!done && !connected)
 				std::this_thread::sleep_for(std::chrono::seconds(3));
 		}
+//		str xxx;
+//		log("L: " << line);
+//		log("CULPRIT: " << (int)line.back() << " \\r = " << (int)'\r');
+//		trim(line);//, "\r \n");
+//		log("T: " << line);
+//		xxx = line.substr(0, line.size() - 1);
+//		log("X: " << xxx);
 
 		if(done)
 			break;
 
-		if(line.empty())
+		if(trim(line).empty())
 			continue;
+
+//		log("line: " << line);
 
 		msg.clear();
 		if(!parsemsg(line, msg))
@@ -682,7 +708,7 @@ bool IrcBot::init(const str& config_file)
 
 		static const str_vec nologs =
 		{
-			"PING", "PONG", "372"
+			"PING", "PONG"//, "372"
 		};
 
 		if(stl::find(nologs, msg.command) == nologs.cend())
@@ -1405,24 +1431,24 @@ bool IrcBot::wild_match(const str& w, const str& s, int flags)
 	return !fnmatch(w.c_str(), s.c_str(), flags | FNM_EXTMATCH);
 }
 
-void IrcBot::console()
-{
-	bug_func();
-	std::istream& is = this->is ? *this->is : std::cin;
-	std::ostream& os = this->os ? *this->os : std::cout;
-
-	log("Console started:");
-	str line;
-	prompt(os, 3);
-	for(; !done && std::getline(is, line); prompt(os, 3))
-	{
-		trim(line);
-		if(line.empty())
-			continue;
-		exec(line, &os);
-	}
-	log("Console ended:");
-}
+//void IrcBot::console()
+//{
+//	bug_func();
+//	std::istream& is = this->is ? *this->is : std::cin;
+//	std::ostream& os = this->os ? *this->os : std::cout;
+//
+//	log("Console started:");
+//	str line;
+//	prompt(os, 3);
+//	for(; !done && std::getline(is, line); prompt(os, 3))
+//	{
+//		trim(line);
+//		if(line.empty())
+//			continue;
+//		exec(line, &os);
+//	}
+//	log("Console ended:");
+//}
 
 //void IrcBot::console()
 //{

@@ -27,25 +27,23 @@ skivvy_librarydir = $(libdir)/skivvy
 skivvy_manualsdir = $(datadir)/skivvy
 plugin_librarydir = $(libdir)/skivvy
 
-INC_SOOKEE = -I$(prefix)/include
-LIB_SOOKEE = -L$(libdir)/sookee -lsookee
+#INC_SOOKEE = -I$(prefix)/include
+#LIB_SOOKEE = -L$(libdir)/sookee -lsookee
 
 DEF_FLAGS = \
-	-D _GLIBCXX_USE_NANOSLEEP \
-	-D _GLIBCXX_USE_SCHED_YIELD \
 	-D STAMP=\"$(shell date +%Y%m%d-%H%M%S)\" \
 	-D DEV=\"$(shell git diff --quiet || echo -dev)\" \
 	-D COMMITS=\"$(shell printf %04d \"$(git log --after={yesterday} --pretty=oneline|wc -l)\")\" \
 	-D REVISION=\"$(shell git log -n 1 --pretty=format:%h|tr [:lower:] [:upper:])\" \
 	-D DEFAULT_PLUGIN_DIR=\"$(plugindir)\"
 
-GEN_FLAGS = -Wl,-E -Wfatal-errors -Wall -Wextra -Winit-self -ansi -pedantic -pipe -pthread \
+GEN_FLAGS = -Wl,-E -Wfatal-errors -Wall -Wextra -Winit-self -ansi -pedantic -pthread \
 	-I$(top_srcdir)/src/include
 
-LIBXML2_FLAG = $(shell xml2-config --cflags)
-LIBXML2_LIBS = $(shell xml2-config --libs)
+#LIBXML2_FLAG = $(shell xml2-config --cflags)
+#LIBXML2_LIBS = $(shell xml2-config --libs)
 	
-AM_CPPFLAGS = $(INC_SOOKEE)
+AM_CPPFLAGS = $(SOOKEE_CFLAGS)
 AM_CXXFLAGS = -std=gnu++11 $(GEN_FLAGS) $(DEF_FLAGS) $(LIBXML2_FLAG)
 
 skivvy_include_HEADERS = \
@@ -75,7 +73,7 @@ skivvy_include_HEADERS = \
 skivvy_include_bits_HEADERS = \
 	$(srcdir)/include/skivvy/bits/rpc.tcc
 
-BOTLIBS = -ldl -L$(builddir)/.libs -lskivvy -lpcrecpp $(LIB_SOOKEE)
+BOTLIBS = -ldl -L$(builddir)/.libs -lskivvy $(PCRECPP_LIBS) $(SOOKEE_LIBS)
 # -Wl,-E is required for programs that load plugin's
 BOTFLAGS = -Wl,-E
 
@@ -101,7 +99,7 @@ libskivvy_la_SOURCES = \
 	types.cpp \
 	utils.cpp
 	
-libskivvy_la_LIBADD = -L.libs $(LIB_SOOKEE)
+libskivvy_la_LIBADD = -L.libs $(SOOKEE_LIBS)
 libskivvy_la_LDFLAGS = -version-info 0:0:0
 
 # Development utils
@@ -123,14 +121,14 @@ libskivvy_la_LDFLAGS = -version-info 0:0:0
 
 # Skivvy IrcBot
 #bin_PROGRAMS = skivvy skivvy-client test-server
-bin_PROGRAMS = skivvy
+bin_PROGRAMS = skivvy skivvy-client
 
 skivvy_SOURCES = skivvy.cpp
-skivvy_LDADD = -ldl -lskivvy -lpcrecpp $(LIB_SOOKEE)
+skivvy_LDADD = -ldl -lskivvy $(PCRECPP_LIBS) $(SOOKEE_LIBS)
 skivvy_LDFLAGS = -Wl,-E
 
-#skivvy_client_SOURCES = skivvy-client.cpp
-#skivvy_client_LDADD = $(BOTLIBS) -lreadline
+skivvy_client_SOURCES = skivvy-client.cpp
+skivvy_client_LDADD = $(BOTLIBS) -lreadline
 
 #skivlet_SOURCES = skivlet.cpp
 #skivlet_LDADD = $(BOTLIBS)

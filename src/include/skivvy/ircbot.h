@@ -68,7 +68,7 @@ using namespace sookee::log;
 using namespace sookee::bug;
 using namespace skivvy::utils;
 
-const str DATA_DIR = "data_dir";
+const str DATA_DIR = "home";
 
 // Event to be triggered upon an incoming message
 // For example when a task needs to be performed
@@ -600,7 +600,7 @@ private:
 	std::future<void> con;
 	std::istream* is;
 	std::ostream* os;
-	void console();
+//	void console();
 
 	std::future<void> png;
 	std::mutex pinger_info_mtx;
@@ -618,6 +618,9 @@ private:
 
 	time_t config_loaded;
 	time_t plugin_loaded;
+
+	std::ofstream logfile;
+	std::ofstream bugfile;
 
 	void load_plugins();
 
@@ -641,6 +644,9 @@ public:
 		me.func = func;
 		return add_msgevent(msg, me);
 	}
+
+	std::istream* set_istream(std::istream* is) { std::istream* r = this->is; this->is = is; return r; }
+	std::ostream* set_ostream(std::ostream* os) { std::ostream* r = this->os; this->os = os; return r; }
 
 	time_t get_plugin_load_time() { return plugin_loaded; }
 	time_t get_config_load_time() { return config_loaded; }

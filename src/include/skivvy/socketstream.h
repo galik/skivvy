@@ -198,7 +198,6 @@ public:
 			stream_type::setstate(std::ios::failbit);
 			return false;
 		}
-		bug_var(sd);
 
 		if(!(he = gethostbyname(host.c_str())))
 		{

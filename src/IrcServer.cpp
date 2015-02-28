@@ -225,10 +225,10 @@ bool TestIrcServer::connect(const str& host, long port)
 
 bool TestIrcServer::receive(str& line)
 {
-	static siz no = 0;
-	++no;
+//	static siz no = 0;
+//	++no;
 //	bug_var(no);
-	sookee::bug::out() << no << ": ";
+//	sookee::bug::out() << no << ": ";
 	std::getline(ifs, line);
 	return ifs;
 }

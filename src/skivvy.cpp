@@ -29,6 +29,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 '-----------------------------------------------------------------*/
 
 #include <sookee/bug.h>
+#include <sookee/types/stream.h>
 #include <skivvy/ircbot.h>
 
 using namespace skivvy::ircbot;
@@ -48,13 +49,13 @@ int main(int argc, char* argv[])
 {
 	bug_func();
 
-	ADD_STACK_HANDLER();
+	str_vec args(argv + 1, argv + argc);
 
 	IrcBot bot;
 
 	log(bot.get_name() + " v" + bot.get_version());
 
-	bot.init(argc > 1 ? argv[1] : "");
+	bot.init(args.empty() ? "" :  args[0]);
 	bot.exit();
 
 	if(bot.restart)
