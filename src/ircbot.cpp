@@ -648,15 +648,22 @@ bool IrcBot::init(const str& config_file)
 	if(get<bool>("irc.test.mode") == true)
 		connected = true;
 	else
+	{
+		log("Starting pinger:");
 		png = std::async(std::launch::async, [&]{ pinger(); });
+	}
 
+	log("Awaiting connection: ");
 	while(!done && !connected)
+	{
+		bug("\tloop");
 		std::this_thread::sleep_for(std::chrono::seconds(1));
+	}
 
 
 	//	if(get<bool>("irc.test.mode") == false)
 //		con = std::async(std::launch::async, [&]{ console(); });
-
+	log("Starting main loop: ");
 	str line;
 	message msg;
 //	log("TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT");
