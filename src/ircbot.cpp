@@ -623,7 +623,7 @@ bool IrcBot::init(const str& config_file)
 	plugin_vec_iter p = plugins.begin();
 	while(p != plugins.end())
 	{
-		//bug_var(&(*p));
+		bug_var(&(*p));
 		if(!(*p))
 		{
 			log("Null plugin found during initialisation.");
