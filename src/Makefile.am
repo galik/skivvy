@@ -27,8 +27,8 @@ skivvy_librarydir = $(libdir)/skivvy
 skivvy_manualsdir = $(datadir)/skivvy
 plugin_librarydir = $(libdir)/skivvy
 
-#INC_SOOKEE = -I$(prefix)/include
-#LIB_SOOKEE = -L$(libdir)/sookee -lsookee
+#SOOKEE_CFLAGS = -I$(prefix)/include
+#SOOKEE_LIBS = -L$(libdir)/sookee -lsookee
 
 DEF_FLAGS = \
 	-D STAMP=\"$(shell date +%Y%m%d-%H%M%S)\" \
