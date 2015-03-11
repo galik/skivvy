@@ -46,5 +46,5 @@ PKG_CHECK_MODULES([PCRECPP], [libpcrecpp])
 AC_CONFIG_MACRO_DIR([m4])
 
 AC_LANG_CPLUSPLUS
-AC_CONFIG_FILES([Makefile src/Makefile])
+AC_CONFIG_FILES([pkg-config/libskivvy.pc Makefile src/Makefile])
 AC_OUTPUT

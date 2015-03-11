@@ -21,6 +21,9 @@
 # 
 # '-----------------------------------------------------------------*/
 
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = pkg-config/libskivvy.pc
+
 SUBDIRS = src
 
 ACLOCAL_AMFLAGS = -I m4

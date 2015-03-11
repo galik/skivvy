@@ -630,12 +630,14 @@ bool IrcBot::init(const str& config_file)
 			p = plugins.erase(p);
 			continue;
 		}
+		bug("preinit");
 		if(!(*p)->init())
 		{
 			log("Plugin failed during initialization.");
 			p = plugins.erase(p);
 			continue;
 		}
+		bug("postinit");
 		log("\tPlugin initialised: " << (*p)->get_id() << ": " << (*p)->get_name() << " v" << (*p)->get_version());
 		for(str& c: (*p)->list())
 		{

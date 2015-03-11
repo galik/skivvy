@@ -1,0 +1,11 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+includedir=@includedir@
+libdir=@libdir@
+
+Name: libskivvy
+Description: The Skivvy Bot library
+URL: https://github.com/sookee/skivvy
+Version: @PACKAGE_VERSION@
+Cflags: -I${includedir}
+Libs: -L${libdir}/skivvy -lskivvy
