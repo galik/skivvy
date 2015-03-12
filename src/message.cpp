@@ -154,6 +154,9 @@ std::ostream& printmsg(std::ostream& os, const message& m)
 
 void bug_message(const std::string& K, const std::string& V, const message& msg)
 {
+	(void) K;
+	(void) V;
+	(void) msg;
 	bug("//================================");
 	bug("// " << K << ": " << V);
 	bug("//--------------------------------");

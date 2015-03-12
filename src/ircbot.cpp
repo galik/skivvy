@@ -1179,11 +1179,11 @@ void IrcBot::exit()
 	log("ENDED");
 }
 
-static void prompt(std::ostream& os, size_t delay)
-{
-	std::this_thread::sleep_for(std::chrono::seconds(delay));
-	os << "> " << std::flush;
-}
+//static void prompt(std::ostream& os, size_t delay)
+//{
+//	std::this_thread::sleep_for(std::chrono::seconds(delay));
+//	os << "> " << std::flush;
+//}
 
 void IrcBot::exec(const std::string& cmd, std::ostream* os)
 {
