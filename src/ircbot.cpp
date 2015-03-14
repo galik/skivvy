@@ -101,6 +101,10 @@ static const siz FLOOD_TIME_BETWEEN_POLLS_DEFAULT = 300;
 static const str FLOOD_TIME_BETWEEN_EVENTS = "flood.event.time";
 static const siz FLOOD_TIME_BETWEEN_EVENTS_DEFAULT = 1600;
 
+//// TODO: move these to IrcBot class def
+//std::mutex status_mtx;
+//str_vec status;
+
 BasicIrcBotPlugin::BasicIrcBotPlugin(IrcBot& bot)
 : bot(bot), irc(0)
 {
@@ -148,11 +152,10 @@ str BasicIrcBotPlugin::help(const str& cmd) const
 	return actions.at(cmd).help;
 }
 
-IrcBotPluginSPtr IrcBotPluginLoader::operator()(const str& file, IrcBot& bot)
+IrcBotPluginRPtr IrcBotPluginLoader::operator()(const str& file, IrcBot& bot)
 {
 	void* dl = 0;
-	IrcBotPluginSPtr plugin;
-	IrcBotPluginPtr(*skivvy_ircbot_factory)(IrcBot&) = 0;
+	IrcBotPluginRPtr(*skivvy_ircbot_factory)(IrcBot&) = 0;
 
 	log("PLUGIN LOAD: " << file);
 
@@ -160,35 +163,36 @@ IrcBotPluginSPtr IrcBotPluginLoader::operator()(const str& file, IrcBot& bot)
 	if(!(dl = dlopen(file.c_str(), RTLD_LAZY|RTLD_GLOBAL)))
 	{
 		log(dlerror());
-		return plugin;
+		return 0;
 	}
 
 	if(!(*(void**)&skivvy_ircbot_factory = dlsym(dl, "skivvy_ircbot_factory")))
 	{
 		log(dlerror());
-		return plugin;
+		return 0;
 	}
 
-	if(!(plugin = IrcBotPluginSPtr(skivvy_ircbot_factory(bot))))
-		return plugin;
-
-	plugin->dl = dl;
-	bot.del_plugin(plugin->get_id());
-	bot.add_plugin(plugin);
+	IrcBotPluginRPtr plugin;
+	if((plugin = skivvy_ircbot_factory(bot)))
+	{
+		plugin->dl = dl;
+		bot.del_plugin(plugin->get_id());
+		bot.add_plugin(plugin);
+	}
 	return plugin;
 }
 
-void IrcBot::add_plugin(IrcBotPluginSPtr plugin)
+void IrcBot::add_plugin(IrcBotPluginRPtr plugin)
 {
 	if(plugin)
-		this->plugins.push_back(plugin);
+		this->plugins.emplace_back(plugin);
 	else
 		log("ERROR: Adding non-plugin.");
 }
 
 bool IrcBot::has_plugin(const str& id, const str&  version)
 {
-	for(const IrcBotPluginSPtr& p: plugins)
+	for(const auto& p: plugins)
 		if(p->get_id() == id && p->get_version() >= version)
 			return true;
 	return false;
@@ -464,7 +468,7 @@ void IrcBot::load_plugins()
 			if(stl::find(files, p) == files.end())
 				continue;
 
-			IrcBotPluginSPtr plugin;
+			IrcBotPluginRPtr plugin;
 			if(!(plugin = load(plugin_dir + "/" + p, *this)))
 			{
 				log("Failed to load: " << p);
@@ -638,11 +642,11 @@ bool IrcBot::init(const str& config_file)
 			continue;
 		}
 		bug("postinit");
-		log("\tPlugin initialised: " << (*p)->get_id() << ": " << (*p)->get_name() << " v" << (*p)->get_version());
+		log("\tPlugin initialized: " << (*p)->get_id() << ": " << (*p)->get_name() << " v" << (*p)->get_version());
 		for(str& c: (*p)->list())
 		{
 			log("\t\tRegister command: " << c);
-			commands[c] = *p;
+			commands[c] = p->get();
 		}
 		++p;
 	}
@@ -1015,7 +1019,7 @@ bool IrcBot::init(const str& config_file)
 				}
 				else if(cmd == "!debug")
 				{
-					fc_reply(msg, "Debug mode " + str((debug = !debug) ? "on" : "off") + ".");
+					fc_reply(msg, "Debug mode " + str(((debug = !debug)) ? "on" : "off") + ".");
 				}
 				else if(cmd == "!help")
 				{
@@ -1032,7 +1036,7 @@ bool IrcBot::init(const str& config_file)
 						continue;
 
 					fc_reply_pm(msg, "List of commands:");
-					for(const IrcBotPluginSPtr& p: plugins)
+					for(const auto& p: plugins)
 					{
 						fc_reply_pm(msg, "\t" + p->get_name() + " " + p->get_version());
 						std::ostringstream oss;
@@ -1078,7 +1082,7 @@ bool IrcBot::init(const str& config_file)
 str_vec IrcBot::list() const
 {
 	str_vec v;
-	for(const IrcBotPluginSPtr& p: plugins)
+	for(const auto& p: plugins)
 		for(str& i: p->list())
 			v.push_back(i);
 	return v;
@@ -1156,7 +1160,7 @@ str IrcBot::help(const str& cmd) const
 void IrcBot::exit()
 {
 	log("Closing down plugins:");
-	for(IrcBotPluginSPtr p: plugins)
+	for(auto& p: plugins)
 	{
 		log("\t" << p->get_name());
 		p->exit();
@@ -1236,6 +1240,17 @@ void IrcBot::exec(const std::string& cmd, std::ostream* os)
 			if(os)
 				(*os) << nick << std::flush;
 		}
+//		else if(cmd == "/get_status")
+//		{
+//			lock_guard lock(status_mtx);
+//			if(os)
+//			{
+//				for(const auto& s: status)
+//					(*os) << s << '\n';
+//				(*os) << std::flush;
+//				status.clear();
+//			}
+//		}
 		else if(cmd == "/die")
 		{
 			str_vec goodbyes = get_vec(PROP_GOODBYE);
@@ -1291,7 +1306,7 @@ void IrcBot::exec(const std::string& cmd, std::ostream* os)
 				for(str& c: (*p)->list())
 				{
 					log("\t\tRegister command: " << c);
-					commands[c] = *p;
+					commands[c] = p->get();
 				}
 				++p;
 			}

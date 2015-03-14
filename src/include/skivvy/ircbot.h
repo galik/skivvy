@@ -231,7 +231,22 @@ public:
 	virtual ~IrcBotPlugin() {}
 
 	/**
-	 * This provides an opportunity for a plugin to initialise
+	 * Opportunity for plugin to offer API for other
+	 * plugins to communicate over.
+	 *
+	 * @param call
+	 * @param args
+	 * @return
+	 */
+	virtual str_vec api(unsigned call, const str_vec& args = {})
+	{
+		(void) call;
+		(void) args;
+		return {};
+	}
+
+	/**
+	 * This provides an opportunity for a plugin to initialize
 	 * itself. It is called as the plugin is added to the IrcBot
 	 * but before its commands are registered.
 	 *
@@ -288,7 +303,7 @@ public:
 	virtual void exit() = 0;
 };
 
-typedef IrcBotPlugin* IrcBotPluginPtr;
+typedef IrcBotPlugin* IrcBotPluginRPtr;
 typedef std::unique_ptr<IrcBotPlugin> IrcBotPluginUPtr;
 typedef std::shared_ptr<IrcBotPlugin> IrcBotPluginSPtr;
 
@@ -463,7 +478,7 @@ public:
 
 #define IRC_BOT_PLUGIN(name) \
 extern "C" \
-IrcBotPluginPtr skivvy_ircbot_factory(IrcBot& bot) \
+IrcBotPluginRPtr skivvy_ircbot_factory(IrcBot& bot) \
 { \
 	return new name(bot); \
 } struct _missing_semicolon_{}
@@ -488,7 +503,7 @@ IrcBotPluginPtr skivvy_ircbot_factory(IrcBot& bot) \
 class IrcBotPluginLoader
 {
 public:
-	IrcBotPluginSPtr operator()(const str& file, IrcBot& bot);
+	IrcBotPluginRPtr operator()(const str& file, IrcBot& bot);
 };
 
 // ==================================================
@@ -497,26 +512,45 @@ public:
 
 class IrcBot;
 
-template<typename Plugin>
+//template<typename Plugin>
+//class IrcBotPluginHandle
+//{
+//	typedef std::shared_ptr<Plugin> PluginSPtr;
+//
+//	IrcBot& bot;
+//	str id;
+//	PluginSPtr plugin;// = 0;
+//	time_t plugin_load_time = 0;
+//
+//public:
+//	IrcBotPluginHandle(IrcBot& bot, const str& id);
+//	IrcBotPluginHandle(const IrcBotPluginHandle<Plugin>& handle);
+////	IrcBotPluginHandle(IrcBotPluginHandle<Plugin>&& handle);
+//
+//	operator void*() /*const*/;
+//	IrcBotPluginHandle& operator=(const IrcBotPluginHandle& handle);
+//	void ensure_plugin();
+//	Plugin& operator*();
+//	Plugin* operator->();
+//};
+
 class IrcBotPluginHandle
 {
-	typedef std::shared_ptr<Plugin> PluginSPtr;
-
 	IrcBot& bot;
 	str id;
-	PluginSPtr plugin;// = 0;
+	IrcBotPluginRPtr plugin = 0;
 	time_t plugin_load_time = 0;
 
 public:
 	IrcBotPluginHandle(IrcBot& bot, const str& id);
-	IrcBotPluginHandle(const IrcBotPluginHandle<Plugin>& handle);
+	IrcBotPluginHandle(const IrcBotPluginHandle& handle);
 //	IrcBotPluginHandle(IrcBotPluginHandle<Plugin>&& handle);
 
 	operator void*() /*const*/;
 	IrcBotPluginHandle& operator=(const IrcBotPluginHandle& handle);
 	void ensure_plugin();
-	Plugin& operator*();
-	Plugin* operator->();
+	IrcBotPlugin& operator*();
+	IrcBotPlugin* operator->();
 };
 
 class IrcBot
@@ -534,7 +568,7 @@ public:
 	typedef std::pair<property_iter, property_iter> property_iter_pair;
 	typedef std::pair<property_iter, property_iter> property_range;
 
-	typedef std::vector<IrcBotPluginSPtr> plugin_vec;
+	typedef std::vector<IrcBotPluginUPtr> plugin_vec;
 	typedef plugin_vec::iterator plugin_vec_iter;
 	typedef plugin_vec::const_iterator plugin_vec_citer;
 
@@ -542,8 +576,8 @@ public:
 	typedef std::set<IrcBotChoiceListener*> listener_set;
 	typedef std::map<str, IrcBotRPCService*> service_map;
 	typedef std::set<str> channel_set;
-	typedef std::map<str, IrcBotPluginSPtr> command_map;
-	typedef std::pair<str, IrcBotPluginSPtr> command_map_pair;
+	typedef std::map<str, IrcBotPluginRPtr> command_map;
+	typedef std::pair<str, IrcBotPluginRPtr> command_map_pair;
 
 	typedef std::map<const str, str_set> nicks_map;
 	typedef std::pair<const str, str_set> nicks_map_pair;
@@ -569,7 +603,7 @@ private:
 	listener_set listeners;
 	service_map services;
 
-	command_map commands; // str -> IrcBotPluginPtr
+	command_map commands; // str -> IrcBotPluginRPtr
 	// str -> { str -> IrcBotPluginPtr } // channel -> ( cmd -> plugin }
 
 //	command_map channels; //
@@ -732,7 +766,7 @@ public:
 
 	bool has_plugin(const str& id, const str& version = "");
 	void del_plugin(const str& id);
-	void add_plugin(IrcBotPluginSPtr p);
+	void add_plugin(IrcBotPluginRPtr p);
 	void add_monitor(IrcBotMonitor& m);
 	void add_rpc_service(IrcBotRPCService& s);
 
@@ -740,31 +774,39 @@ public:
 	{
 		return services.find(name) == services.end() ? 0 : services[name];
 	}
-
-	IrcBotPluginSPtr get_plugin(const str& id)
+private:
+	friend class IrcBotPluginHandle;
+	IrcBotPluginRPtr get_plugin(const str& id)
 	{
-		for(IrcBotPluginSPtr plugin: plugins)
+		for(auto& plugin: plugins)
 			if(plugin->get_id() == id)
-				return plugin;
-		return IrcBotPluginSPtr(0);
+				return plugin.get();
+		return IrcBotPluginRPtr(0);
 	}
-
-	template<typename Plugin>
-	std::shared_ptr<Plugin> get_typed_plugin(const str& id)
-	{
-		for(IrcBotPluginSPtr plugin: plugins)
-			if(plugin->get_id() == id)
-				return std::shared_ptr<Plugin>(dynamic_cast<Plugin*>(plugin.get()));
-		return std::shared_ptr<Plugin>(0);
-	}
-
-	template<typename Plugin>
-	IrcBotPluginHandle<Plugin> get_plugin_handle(const str& id)
+public:
+	IrcBotPluginHandle get_plugin_handle(const str& id)
 	{
 		bug_func();
 		bug_var(id);
-		return IrcBotPluginHandle<Plugin>(*this, id);
+		return IrcBotPluginHandle(*this, id);
 	}
+
+//	template<typename Plugin>
+//	std::shared_ptr<Plugin> get_typed_plugin(const str& id)
+//	{
+//		for(IrcBotPluginSPtr plugin: plugins)
+//			if(plugin->get_id() == id)
+//				return std::shared_ptr<Plugin>(dynamic_cast<Plugin*>(plugin.get()));
+//		return std::shared_ptr<Plugin>(0);
+//	}
+//
+//	template<typename Plugin>
+//	IrcBotPluginHandle<Plugin> get_plugin_handle(const str& id)
+//	{
+//		bug_func();
+//		bug_var(id);
+//		return IrcBotPluginHandle<Plugin>(*this, id);
+//	}
 
 	/**
 	 * Add channel to the list of channels
@@ -803,28 +845,24 @@ public:
 	virtual void exit();
 };
 
-template<typename Plugin>
-IrcBotPluginHandle<Plugin>::IrcBotPluginHandle(IrcBot& bot, const str& id)
+IrcBotPluginHandle::IrcBotPluginHandle(IrcBot& bot, const str& id)
 : bot(bot), id(id)
 {
 }
 
-template<typename Plugin>
-IrcBotPluginHandle<Plugin>::IrcBotPluginHandle(const IrcBotPluginHandle<Plugin>& handle)
+IrcBotPluginHandle::IrcBotPluginHandle(const IrcBotPluginHandle& handle)
 : bot(handle.bot), id(handle.id), plugin(handle.plugin)
 , plugin_load_time(handle.plugin_load_time)
 {
 }
 
-template<typename Plugin>
-IrcBotPluginHandle<Plugin>::operator void*() /*const*/
+IrcBotPluginHandle::operator void*() /*const*/
 {
 	ensure_plugin();
-	return plugin.get();
+	return plugin;
 }
 
-template<typename Plugin>
-IrcBotPluginHandle<Plugin>& IrcBotPluginHandle<Plugin>::operator=(const IrcBotPluginHandle& handle)
+IrcBotPluginHandle& IrcBotPluginHandle::operator=(const IrcBotPluginHandle& handle)
 {
 	id = handle.id;
 	plugin = handle.plugin;
@@ -832,38 +870,31 @@ IrcBotPluginHandle<Plugin>& IrcBotPluginHandle<Plugin>::operator=(const IrcBotPl
 	return *this;
 }
 
-template<typename Plugin>
-void IrcBotPluginHandle<Plugin>::ensure_plugin()
+void IrcBotPluginHandle::ensure_plugin()
 {
 	if(bot.get_plugin_load_time() > plugin_load_time)
 	{
-		plugin = bot.get_typed_plugin<Plugin>(id);
+		plugin = bot.get_plugin(id);
 		plugin_load_time = std::time(0);
 	}
 }
 
-template<typename Plugin>
-Plugin& IrcBotPluginHandle<Plugin>::operator*()
+IrcBotPlugin& IrcBotPluginHandle::operator*()
 {
 	ensure_plugin();
 
-	if(!plugin.get())
-	{
+	if(!plugin)
 		log("ERROR: Bad IrcBotPluginHandle: " << this);
-	}
 	return *plugin;
 }
 
-template<typename Plugin>
-Plugin* IrcBotPluginHandle<Plugin>::operator->()
+IrcBotPlugin* IrcBotPluginHandle::operator->()
 {
 	ensure_plugin();
 
-	if(!plugin.get())
-	{
+	if(!plugin)
 		log("ERROR: Bad IrcBotPluginHandle: " << this);
-	}
-	return plugin.get();
+	return plugin;
 }
 
 }} // skivvy::ircbot

@@ -27,9 +27,6 @@ skivvy_librarydir = $(libdir)/skivvy
 skivvy_manualsdir = $(datadir)/skivvy
 plugin_librarydir = $(libdir)/skivvy
 
-#SOOKEE_CFLAGS = -I$(prefix)/include
-#SOOKEE_LIBS = -L$(libdir)/sookee -lsookee
-
 DEF_FLAGS = \
 	-D STAMP=\"$(shell date +%Y%m%d-%H%M%S)\" \
 	-D DEV=\"$(shell git diff --quiet || echo -dev)\" \
@@ -40,11 +37,8 @@ DEF_FLAGS = \
 GEN_FLAGS = -Wl,-E -Wfatal-errors -Wall -Wextra -Winit-self -ansi -pedantic -pthread \
 	-I$(top_srcdir)/src/include
 
-#LIBXML2_FLAG = $(shell xml2-config --cflags)
-#LIBXML2_LIBS = $(shell xml2-config --libs)
-	
 AM_CPPFLAGS = $(SOOKEE_CFLAGS)
-AM_CXXFLAGS = -std=gnu++11 $(GEN_FLAGS) $(DEF_FLAGS) $(LIBXML2_FLAG)
+AM_CXXFLAGS = -std=gnu++11 $(GEN_FLAGS) $(DEF_FLAGS)
 
 skivvy_include_HEADERS = \
 	$(srcdir)/include/skivvy/ansi.h \
