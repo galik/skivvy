@@ -226,6 +226,7 @@ public:
 	 * reply to using PM (QUERY).
 	 */
 	virtual bool reply_pm(const message& msg, const str& text) = 0;
+	virtual bool reply_notice(const message& msg, const str& text) = 0;
 
 	/**
 	 * Get a line from the IRC server.
@@ -239,26 +240,27 @@ class BaseIrcServer
 : public IrcServer
 {
 public:
-	bool send(const str& cmd);
-	bool pass(const str& pwd);
-	bool nick(const str& n);
-	bool user(const str& u, const str m, const str r);
-	bool join(const str& channel, const str& key = "");
-	bool part(const str& channel, const str& message = "");
-	bool ping(const str& info);
-	bool pong(const str& info);
-	bool say(const str& to, const str& text);
-	bool notice(const str& to, const str& text);
-	bool kick(const str_set& chans, const str_set& users, const str& comment);
-	bool auth(const str& user, const str& pass);
-	bool me(const str& to, const str& text);
-	bool query(const str& nick);
-	bool quit(const str& reason);
-	bool whois(const str_set& masks);
-	bool mode(const str& chan, const str& mode, const str& nick);
-	bool mode(const str& nick, const str& mode);
-	bool reply(const message& msg, const str& text);
-	bool reply_pm(const message& msg, const str& text);
+	bool send(const str& cmd) override;
+	bool pass(const str& pwd) override;
+	bool nick(const str& n) override;
+	bool user(const str& u, const str m, const str r) override;
+	bool join(const str& channel, const str& key = "") override;
+	bool part(const str& channel, const str& message = "") override;
+	bool ping(const str& info) override;
+	bool pong(const str& info) override;
+	bool say(const str& to, const str& text) override;
+	bool notice(const str& to, const str& text) override;
+	bool kick(const str_set& chans, const str_set& users, const str& comment) override;
+	bool auth(const str& user, const str& pass) override;
+	bool me(const str& to, const str& text) override;
+	bool query(const str& nick) override;
+	bool quit(const str& reason) override;
+	bool whois(const str_set& masks) override;
+	bool mode(const str& chan, const str& mode, const str& nick) override;
+	bool mode(const str& nick, const str& mode) override;
+	bool reply(const message& msg, const str& text) override;
+	bool reply_pm(const message& msg, const str& text) override;
+	bool reply_notice(const message& msg, const str& text) override;
 };
 
 class RemoteIrcServer

@@ -325,16 +325,6 @@ IrcServer* IrcBot::get_irc_server() { return irc; }
 // Utility
 
 // flood control
-bool IrcBot::fc_reply_note(const message& msg, const str& text)
-{
-	return fc.send(msg.get_to(), [&,msg,text]()->bool{ return irc->notice(msg.get_to(), text); });
-}
-
-bool IrcBot::fc_reply(const message& msg, const str& text)
-{
-	return fc.send(msg.get_to(), [&,msg,text]()->bool{ return irc->reply(msg, text); });
-}
-
 bool IrcBot::fc_say(const str& to, const str& text)
 {
 	return fc.send(to, [&,to,text]()->bool{ return irc->say(to, text); });
@@ -357,9 +347,19 @@ bool IrcBot::fc_reply_help(const message& msg, const str& text, const str& prefi
 	return true;
 }
 
+bool IrcBot::fc_reply(const message& msg, const str& text)
+{
+	return fc.send(msg.get_to(), [&,msg,text]()->bool{ return irc->reply(msg, text); });
+}
+
 bool IrcBot::fc_reply_pm(const message& msg, const str& text)//, size_t priority)
 {
 	return fc.send(msg.get_to(), [&,msg,text]()->bool{ return irc->reply_pm(msg, text); });
+}
+
+bool IrcBot::fc_reply_note(const message& msg, const str& text)
+{
+	return fc.send(msg.get_to(), [&,msg,text]()->bool{ return irc->reply_notice(msg, text); });
 }
 
 bool IrcBot::fc_reply_pm_help(const message& msg, const str& text, const str& prefix)

@@ -140,11 +140,12 @@ std::ostream& printmsg(std::ostream& os, const message& m)
 	os << "// get_nickname()       : " << m.get_nickname() << '\n';
 	os << "// get_user()           : " << m.get_user() << '\n';
 	os << "// get_host()           : " << m.get_host() << '\n';
+	os << "// get_userhost()       : " << m.get_userhost() << '\n';
 	for(const str& param: m.get_params())
 		os << "// param                : " << param << '\n';
 	for(const str& middle: m.get_middles())
 		os << "// middle               : " << middle << '\n';
-	os << "// trailing             : " << m.get_trailing() << '\n';
+	os << "// get_trailing()       : " << m.get_trailing() << '\n';
 	os << "// get_nick()           : " << m.get_nick() << '\n';
 	os << "// get_chan()           : " << m.get_chan() << '\n';
 	os << "// get_user_cmd()       : " << m.get_user_cmd() << '\n';

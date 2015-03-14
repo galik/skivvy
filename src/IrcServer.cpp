@@ -173,6 +173,20 @@ bool BaseIrcServer::reply_pm(const message& msg, const str& text)
 	return say(msg.get_nick(), text);
 }
 
+bool BaseIrcServer::reply_notice(const message& msg, const str& text)
+{
+	str from;
+	if(!msg.prefix.empty())
+		from = msg.prefix.substr(0, msg.prefix.find("!"));
+
+	if(!msg.get_to().empty() && msg.get_to()[0] == '#')
+		return notice(msg.get_to(), text);
+	else
+		return notice(from, text);
+
+	return false;
+}
+
 // REMOTE
 
 bool RemoteIrcServer::send_unlogged(const str& cmd)
