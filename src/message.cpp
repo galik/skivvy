@@ -310,7 +310,7 @@ str message::get_host() const
 
 bool message::get_params(str_vec& middles, str& trailing) const
 {
-	return getparams(siss(params), middles, trailing);
+	return (bool)getparams(siss(params), middles, trailing);
 }
 
 str_vec message::get_params() const
@@ -352,7 +352,7 @@ bool message::parse(const str& line)
 	siss iss(soo::rtrim(this->line)); // solve cr crlf endings
 	if(iss.peek() == ':') // optional prefix
 		iss.ignore() >> prefix;
-	return sgl(iss >> command, params);
+	return (bool)sgl(iss >> command, params);
 }
 
 }} // skivvy::ircbot

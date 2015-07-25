@@ -75,7 +75,7 @@ std::istream& delay::parse(std::istream& is)
 bool delay::parse(const str& s)
 {
 	std::istringstream iss(s);
-	return parse(iss);
+	return (bool)parse(iss);
 }
 
 }} // sookee::types

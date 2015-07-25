@@ -5,8 +5,8 @@
  *      Author: oaskivvy@googlemail.com
  */
 
-#ifndef MAIL_H_
-#define MAIL_H_
+#ifndef SKIVVY_MAIL_H
+#define SKIVVY_MAIL_H
 
 /*-----------------------------------------------------------------.
 | Copyright (C) 2012 SooKee oaskivvy@gmail.com                     |
@@ -51,7 +51,7 @@ class SMTP
 
 	bool tx(std::ostream& os, const str& data = "")
 	{
-		return os << data << "\r\n" << std::flush;
+		return (bool)(os << data << "\r\n" << std::flush);
 	}
 
 	bool rx(std::istream& is, const str& code)
@@ -163,4 +163,4 @@ public:
 }} // skivvy::email
 
 
-#endif /* MAIL_H_ */
+#endif // SKIVVY_MAIL_H

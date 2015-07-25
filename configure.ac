@@ -39,7 +39,15 @@ AC_LANG(C++)
 AX_CXX_COMPILE_STDCXX_11([noext],[mandatory])
 
 PKG_CHECK_MODULES([SOOKEE], [libsookee])
+PKG_CHECK_MODULES([OPENSSL], [openssl])
 PKG_CHECK_MODULES([PCRECPP], [libpcrecpp])
+
+AC_ARG_WITH([ncurses], AS_HELP_STRING([--with-ncurses], [Build the ncurses client]))
+AS_IF([test "x$with_ncurses" = "xyes"], [
+	PKG_CHECK_MODULES([NCURSES], [ncurses], [HAVE_NCURSES=1], [HAVE_NCURSES=0])
+])
+AM_CONDITIONAL([MAKE_NCURSES], [test "x$NCURSES_LIBS" != "x"])
+
 
 AC_CONFIG_MACRO_DIR([m4])
 

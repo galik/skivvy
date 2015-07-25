@@ -1,4 +1,4 @@
-#pragma once
+//#pragma once
 #ifndef _SKIVVY_REMOTE_IRC_SERVER_H_
 #define _SKIVVY_REMOTE_IRC_SERVER_H_
 
@@ -34,13 +34,15 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 //#include <sookee/socketstream.h>
 
-#include <skivvy/socketstream.h>
+#include <sookee/socketstream.h>
+#include <sookee/ssl_socketstream.h>
 #include <skivvy/message.h>
 
 #include <sookee/types.h>
 
 namespace skivvy { namespace ircbot {
 
+using namespace sookee;
 using namespace sookee::types;
 
 /**
@@ -151,6 +153,9 @@ public:
 	 */
 	virtual bool say(const str& to, const str& text) = 0;
 
+	// send cctp message
+	virtual bool ctcp(const str& to, const str& text) = 0;
+
 	/**
 	 * Send a notice to either a channel or a specific user.
 	 *
@@ -249,6 +254,7 @@ public:
 	bool ping(const str& info) override;
 	bool pong(const str& info) override;
 	bool say(const str& to, const str& text) override;
+	bool ctcp(const str& to, const str& text) override;
 	bool notice(const str& to, const str& text) override;
 	bool kick(const str_set& chans, const str_set& users, const str& comment) override;
 	bool auth(const str& user, const str& pass) override;
@@ -263,18 +269,53 @@ public:
 	bool reply_notice(const message& msg, const str& text) override;
 };
 
-class RemoteIrcServer
+template<typename SocketStream>
+class BasicRemoteIrcServer
 : public BaseIrcServer
 {
 private:
 	std::mutex mtx_ss;
-	net::socketstream ss;
+//	net::socketstream ss;
+	SocketStream ss;
 
 public:
-	bool send_unlogged(const str& cmd);
-	bool connect(const str& host, long port = 6667);
-	bool receive(str& line);
+	bool send_unlogged(const str& cmd)
+	{
+		lock_guard lock(mtx_ss);
+		ss << cmd.substr(0, 510) << "\r\n" << std::flush;
+		if(!ss)
+			log("ERROR: send failed.");
+		return (bool)ss;
+	}
+
+	bool connect(const str& host, long port)
+	{
+		ss.clear();
+		ss.open(host, port);
+		return (bool)ss;
+	}
+
+	bool receive(str& line)
+	{
+		return (bool)std::getline(ss, line);
+	}
 };
+
+using RemoteIrcServer = BasicRemoteIrcServer<net::netstream>;
+using RemoteSSLIrcServer = BasicRemoteIrcServer<net::ssl_socketstream>;
+
+//class RemoteSSLIrcServer
+//: public BaseIrcServer
+//{
+//private:
+//	std::mutex mtx_ss;
+//	net::ssl_socketstream ss;
+//
+//public:
+//	bool send_unlogged(const str& cmd);
+//	bool connect(const str& host, long port = 9999);
+//	bool receive(str& line);
+//};
 
 class TestIrcServer
 : public BaseIrcServer

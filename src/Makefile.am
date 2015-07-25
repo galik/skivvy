@@ -26,6 +26,7 @@ skivvy_include_bitsdir = $(prefix)/include/skivvy/bits
 skivvy_librarydir = $(libdir)/skivvy
 skivvy_manualsdir = $(datadir)/skivvy
 plugin_librarydir = $(libdir)/skivvy
+# make $(libdir) ${pkglibdir)??
 
 DEF_FLAGS = \
 	-D STAMP=\"$(shell date +%Y%m%d-%H%M%S)\" \
@@ -37,7 +38,7 @@ DEF_FLAGS = \
 GEN_FLAGS = -Wl,-E -Wfatal-errors -Wall -Wextra -Winit-self -ansi -pedantic -pthread \
 	-I$(top_srcdir)/src/include
 
-AM_CPPFLAGS = $(SOOKEE_CFLAGS)
+AM_CPPFLAGS = $(SOOKEE_CFLAGS) $(OPENSSL_CFLAGS)
 AM_CXXFLAGS = -std=gnu++11 $(GEN_FLAGS) $(DEF_FLAGS)
 
 skivvy_include_HEADERS = \
@@ -67,7 +68,7 @@ skivvy_include_HEADERS = \
 skivvy_include_bits_HEADERS = \
 	$(srcdir)/include/skivvy/bits/rpc.tcc
 
-BOTLIBS = -ldl -L$(builddir)/.libs -lskivvy $(PCRECPP_LIBS) $(SOOKEE_LIBS)
+BOTLIBS = -ldl -L$(builddir)/.libs -lskivvy $(PCRECPP_LIBS) $(SOOKEE_LIBS) 
 # -Wl,-E is required for programs that load plugin's
 BOTFLAGS = -Wl,-E
 
@@ -93,7 +94,7 @@ libskivvy_la_SOURCES = \
 	types.cpp \
 	utils.cpp
 	
-libskivvy_la_LIBADD = -L.libs $(SOOKEE_LIBS)
+libskivvy_la_LIBADD = -L.libs $(SOOKEE_LIBS) $(OPENSSL_LIBS)
 libskivvy_la_LDFLAGS = -version-info 0:0:0
 
 # Development utils
@@ -118,7 +119,7 @@ libskivvy_la_LDFLAGS = -version-info 0:0:0
 bin_PROGRAMS = skivvy skivvy-client
 
 skivvy_SOURCES = skivvy.cpp
-skivvy_LDADD = -ldl -lskivvy $(PCRECPP_LIBS) $(SOOKEE_LIBS)
+skivvy_LDADD = -ldl -lskivvy $(PCRECPP_LIBS) $(SOOKEE_LIBS) $(OPENSSL_LIBS)
 skivvy_LDFLAGS = -Wl,-E
 
 skivvy_client_SOURCES = skivvy-client.cpp

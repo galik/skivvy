@@ -55,8 +55,8 @@ public:
 	call(std::iostream& i, std::iostream& o): i(i), o(o) {}
 	virtual ~call() {}
 
-	bool call_error() { return i; }
-	bool return_error() { return o; }
+	bool call_error() { return (bool)i; }
+	bool return_error() { return (bool)o; }
 	std::string get_error() { std::string e; std::getline(o, e); return e; }
 
 	/**

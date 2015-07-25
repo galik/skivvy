@@ -65,6 +65,10 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <skivvy/irc-constants.h>
 #include <skivvy/message.h>
 
+#include <skivvy/IrcServer.h>
+//#include <skivvy/socketstream.h>
+//#include <skivvy/ssl_socketstream.h>
+
 namespace skivvy { namespace ircbot {
 
 PLUGIN_INFO("skivvy", "IrcBot", "0.3.1");
@@ -590,7 +594,7 @@ bool IrcBot::init(const str& config_file)
 		return false;
 	}
 
-	if(get<bool>("irc.test.mode") == true)
+	if(get("irc.test.mode", false))
 	{
 		irc = new TestIrcServer;
 		str host = get("irc.test.host", "test-host");
@@ -598,12 +602,20 @@ bool IrcBot::init(const str& config_file)
 		if(irc)
 			irc->connect(host, port);
 	}
+	else if(get("server.ssl", false))
+	{
+		log("INFO: Using SSL");
+		irc = new RemoteSSLIrcServer;
+	}
 	else
+	{
+		log("WARN: Using INSECURE connection");
 		irc = new RemoteIrcServer;
+	}
 
 	if(!irc)
 	{
-		log("Error creating IrcServer.");
+		log("ERROR: Failed to create IrcServer");
 		return false;
 	}
 
@@ -1189,6 +1201,12 @@ void IrcBot::exit()
 //	os << "> " << std::flush;
 //}
 
+void exec_reply(std::ostream* os, const str& msg)
+{
+	if(os)
+		(*os) << msg << std::flush;
+}
+
 void IrcBot::exec(const std::string& cmd, std::ostream* os)
 {
 	bug_func();
@@ -1214,14 +1232,35 @@ void IrcBot::exec(const std::string& cmd, std::ostream* os)
 				//bug_var(line);
 				//irc->say(chan, line);
 				fc_say(chan, line);
-				if(os)
-					(*os) << "OK";
+				exec_reply(os, "OK");
 			}
-			else if(os)
-				(*os) << "ERROR: /say #channel then some dialogue.\n";
+			else
+				exec_reply(os, "ERROR: /say #channel then some dialogue.\n");
 		}
 		else if(cmd == "/nop") // do nothing
 		{
+		}
+		else if(cmd == "/ctcp")
+		{
+			// CTCP <target> <command> <arguments>
+			// <target> is the target nickname or channel
+			// <command> is the CTCP command (e.g. VERSION)
+			// <arguments> are additional information to be sent to the <target>.
+
+			// << PRIVMSG Mysfyt :VERSION
+			// >> :Mysfyt!~Mysfyt@3cf137b8.1dad8cc8.fios.verizon.net NOTICE Lelly :VERSION mIRC v7.36 Khaled Mardam-Bey
+
+			str target;
+			str command;
+
+			if(!(iss >> target))
+				exec_reply(os, "ERROR: ctcp target not found");
+			else if(!sgl(iss >> std::ws, command))
+				exec_reply(os, "ERROR: ctcp command not found");
+			else if(!irc->ctcp(target, command))
+				exec_reply(os, "ERROR: sending ctcp command");
+			else
+				exec_reply(os, "OK");
 		}
 		else if(cmd == "/raw")
 		{

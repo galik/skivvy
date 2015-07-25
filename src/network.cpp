@@ -141,7 +141,7 @@ std::istream& read_http_headers(std::istream&is, header_map& headers)
 	if(!std::getline(is, line))
 	{
 		log("STREAM ERROR: " << line);
-		log("          is: " << is);
+		log("          is: " << (bool)is);
 		return is;
 	}
 

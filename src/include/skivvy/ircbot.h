@@ -33,6 +33,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 '-----------------------------------------------------------------*/
 
 #include <sookee/socketstream.h>
+#include <sookee/ssl_socketstream.h>
 
 #include <skivvy/FloodController.h>
 #include <sookee/types.h>
@@ -41,7 +42,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <skivvy/message.h>
 #include <skivvy/IrcServer.h>
 #include <skivvy/rpc.h>
-#include <skivvy/socketstream.h>
+//#include <skivvy/socketstream.h>
 #include <skivvy/store.h>
 #include <skivvy/Timers.h>
 
@@ -122,7 +123,7 @@ struct user_info
 // Bot Plugin Framework
 // ==================================================
 
-class RemoteIrcServer;
+//class RemoteIrcServer;
 class IrcBot;
 class message;
 

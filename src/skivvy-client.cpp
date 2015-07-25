@@ -60,7 +60,7 @@ class SkivvyClient
 		}
 
 		(ss << cmd).put('\0') << std::flush;
-		return sgl(ss, res, '\0');
+		return (bool)sgl(ss, res, '\0');
 	}
 
 	std::atomic<bool> done;

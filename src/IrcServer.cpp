@@ -48,6 +48,11 @@ using namespace sookee::log;
 
 // BASE
 
+str ctcp_escape(str s)
+{
+	return s;
+}
+
 bool BaseIrcServer::send(const str& cmd)
 {
 	log("send: " << cmd);
@@ -94,6 +99,11 @@ bool BaseIrcServer::pong(const str& info)
 bool BaseIrcServer::say(const str& to, const str& text)
 {
 	return send(PRIVMSG + " " + to + " :" + text);
+}
+
+bool BaseIrcServer::ctcp(const str& to, const str& text)
+{
+	return send(PRIVMSG + " " + to + " :\001" + ctcp_escape(text) + '\001');
 }
 
 bool BaseIrcServer::notice(const str& to, const str& text)
@@ -189,26 +199,26 @@ bool BaseIrcServer::reply_notice(const message& msg, const str& text)
 
 // REMOTE
 
-bool RemoteIrcServer::send_unlogged(const str& cmd)
-{
-	lock_guard lock(mtx_ss);
-	ss << cmd.substr(0, 510) << "\r\n" << std::flush;
-	if(!ss)
-		log("ERROR: send failed.");
-	return ss;
-}
+//bool BasicRemoteIrcServer::send_unlogged(const str& cmd)
+//{
+//	lock_guard lock(mtx_ss);
+//	ss << cmd.substr(0, 510) << "\r\n" << std::flush;
+//	if(!ss)
+//		log("ERROR: send failed.");
+//	return (bool)ss;
+//}
 
-bool RemoteIrcServer::connect(const str& host, long port)
-{
-	ss.clear();
-	ss.open(host, port);
-	return ss;
-}
-
-bool RemoteIrcServer::receive(str& line)
-{
-	return std::getline(ss, line);
-}
+//bool BasicRemoteIrcServer::connect(const str& host, long port)
+//{
+//	ss.clear();
+//	ss.open(host, port);
+//	return (bool)ss;
+//}
+//
+//bool BasicRemoteIrcServer::receive(str& line)
+//{
+//	return (bool)std::getline(ss, line);
+//}
 
 // TEST
 
@@ -217,7 +227,7 @@ bool TestIrcServer::send_unlogged(const str& cmd)
 	ofs << cmd.substr(0, 510) << "\r\n" << std::flush;
 	if(!ofs)
 		log("ERROR: send failed.");
-	return ofs;
+	return (bool)ofs;
 }
 
 bool TestIrcServer::connect(const str& host, long port)
@@ -230,10 +240,10 @@ bool TestIrcServer::connect(const str& host, long port)
 
 	ifs.clear();
 	ifs.open(ifile);
-	bug_var(ifs);
+	bug_var((bool)ifs);
 	ofs.clear();
 	ofs.open(ofile);
-	bug_var(ofs);
+	bug_var((bool)ofs);
 	return ifs && ofs;
 }
 
@@ -244,7 +254,7 @@ bool TestIrcServer::receive(str& line)
 //	bug_var(no);
 //	sookee::bug::out() << no << ": ";
 	std::getline(ifs, line);
-	return ifs;
+	return ifs && true;
 }
 
 }} // skivvy::ircbot
