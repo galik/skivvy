@@ -21,7 +21,7 @@
 # 
 # '-----------------------------------------------------------------*/
 
-AC_INIT([skivvy],[0.1],[oasookee@gmail.com],[skivvy])
+AC_INIT([skivvy],[0.4.0],[oasookee@gmail.com],[skivvy])
 AC_CONFIG_SRCDIR([src/test.cpp])
 AC_CONFIG_HEADERS([config.h])
 

@@ -71,7 +71,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 namespace skivvy { namespace ircbot {
 
-PLUGIN_INFO("skivvy", "IrcBot", "0.3.1");
+PLUGIN_INFO("skivvy", "IrcBot", "0.4.0");
 
 using namespace skivvy;
 using namespace skivvy::irc;
