@@ -68,6 +68,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <skivvy/IrcServer.h>
 //#include <skivvy/socketstream.h>
 //#include <skivvy/ssl_socketstream.h>
+#include <regex>
 
 namespace skivvy { namespace ircbot {
 
@@ -136,6 +137,7 @@ str_vec BasicIrcBotPlugin::list() const
 			v.push_back(f.first);
 	return v;
 }
+
 void BasicIrcBotPlugin::execute(const str& cmd, const message& msg)
 {
 	actions[cmd].func(msg);
@@ -155,6 +157,106 @@ str BasicIrcBotPlugin::help(const str& cmd) const
 	bug_var(actions.at(cmd).help);
 	return actions.at(cmd).help;
 }
+
+bool ManagedIrcBotPlugin::init()
+{
+	if(!(irc = bot.get_irc_server()))
+		return false;
+	actions.clear();
+	return initialize();
+}
+
+// ManagedIrcBotPlugin ========================
+
+ManagedIrcBotPlugin::ManagedIrcBotPlugin(IrcBot& bot)
+: bot(bot), irc(0)
+{
+}
+
+ManagedIrcBotPlugin::~ManagedIrcBotPlugin() {}
+
+void ManagedIrcBotPlugin::add(const str& trigger, const str& alias, const str& help, action_func func)
+{
+	actions[trigger] = func;
+	infos[trigger] = {alias, help};
+	str word_key = get_trigger_key("word", trigger);
+	for(auto&& a: bot.get_vec(word_key, alias))
+		aliases[a] = trigger;
+}
+
+str_vec ManagedIrcBotPlugin::list() const
+{
+	str_vec aliases;
+	decltype(infos.begin()) inf;
+	for(auto&& action: actions)
+	{
+		bug_var(action.first);
+		if((inf = infos.find(action.first)) == infos.end())
+			continue;
+		bug_var(inf->first);
+		str word_key = get_trigger_key("word", action.first);
+		bug_var(word_key);
+		for(auto&& alias: bot.get_vec(word_key, inf->second.alias))
+		{
+			bug_var(alias);
+			aliases.push_back(alias);
+		}
+	}
+	return aliases;
+}
+
+str ManagedIrcBotPlugin::help(const str& cmd) const
+{
+	// cmd is an alias
+	auto a = aliases.find(cmd);
+	if(a == aliases.end())
+	{
+		log("ERROR: unknown command alias: " << cmd);
+		return {};
+	}
+
+	auto i = infos.find(a->second);
+	if(i == infos.end())
+	{
+		log("ERROR: unknown command trigger: " << a->second);
+		return {};
+	}
+
+	str h;
+	str sep;
+	str help_key = get_trigger_key("help", i->first);
+	for(auto&& help: bot.get_vec(help_key, i->second.help))
+	{
+		replace(help, "\\t", "\t");
+		replace(help, "\\n", "\n");
+		replace(help, "\\s", "  ");
+		h += sep + cmd + " " + help;
+		sep = "\n";
+	}
+	return h;
+}
+
+void ManagedIrcBotPlugin::execute(const str& cmd, const message& msg)
+{
+	// cmd is an alias
+	auto a = aliases.find(cmd);
+	if(a == aliases.end())
+	{
+		log("ERROR: unknon command alias: " << cmd);
+		return;
+	}
+
+	auto f = actions.find(a->second);
+	if(f == actions.end())
+	{
+		log("ERROR: unknown command trigger: " << a->second);
+		return;
+	}
+
+	f->second(msg);
+}
+
+// =======================================================================
 
 IrcBotPluginRPtr IrcBotPluginLoader::operator()(const str& file, IrcBot& bot)
 {
@@ -229,9 +331,9 @@ void IrcBot::del_plugin(const str& id)
 // IRCBot
 
 IrcBot::IrcBot()
-: irc()
+: /*irc()
 , store(0)
-, done(false)
+, */done(false)
 , debug(false)
 , connected(false)
 , registered(false)
@@ -243,13 +345,11 @@ IrcBot::IrcBot()
 {
 }
 
-std::istream& operator>>(std::istream& is, IrcBot& bot)
+std::istream& load_props(std::istream& is, IrcBot& bot, str_map& vars, str& prefix)
 {
 	log("Loading properties:");
 	siz pos;
 	str line;
-	//bot.props.clear();
-
 	while(std::getline(is, line))
 	{
 		if((pos = line.find("//")) != str::npos)
@@ -259,7 +359,46 @@ std::istream& operator>>(std::istream& is, IrcBot& bot)
 		if(line.empty() || line[0] == '#')
 			continue;
 
-//		bug("prop: " << line);
+		for(auto&& var: vars)
+			replace(line, "${" + var.first + "}", var.second);
+
+		// replace environment vars
+		str var;
+		str::size_type pos= 0;
+		while((pos = extract_delimited_text(line, "${", "}", var, pos)) != str::npos)
+			replace(line, "${" + var + "}", std::getenv(var.c_str()));
+
+		// prefix processing
+
+		if(line.front() == '[' && line.back() == ']')
+		{
+			prefix = line.substr(1, line.size() - 2);
+			bug_var(prefix);
+			continue;
+		}
+
+		// include: is special
+		if(line.find("include:") && !prefix.empty())
+			line = prefix + "." + line;
+
+		// prefix processing end
+
+//		bug("post-prop: " << line);
+
+		if(line[0] == '$') // variable
+		{
+//			bug("VARIABLE DETECTED");
+			str key, val;
+			if(!sgl(sgl(siss(line.substr(1)) >> std::ws, key, ':') >> std::ws, val))
+			{
+				log("Error parsing variable: " << line);
+				continue;
+			}
+//			bug_var(key);
+//			bug_var(val);
+			vars[trim(key)] = trim(val);
+			continue;
+		}
 
 		str key, val;
 		if(!sgl(sgl(siss(line) >> std::ws, key, ':') >> std::ws, val))
@@ -271,13 +410,17 @@ std::istream& operator>>(std::istream& is, IrcBot& bot)
 		trim(key);
 		trim(val);
 
-		if(key == "nick") bot.info.nicks.push_back(val);
-		else if(key == "user") bot.info.user = val;
-		else if(key == "mode") bot.info.mode = val;
-		else if(key == "real") bot.info.real = val;
+		if(key == "nick")
+			bot.info.nicks.push_back(val);
+		else if(key == "user")
+			bot.info.user = val;
+		else if(key == "mode")
+			bot.info.mode = val;
+		else if(key == "real")
+			bot.info.real = val;
 		else if(key == "include")
 		{
-			bug("include:" << val);
+			log("INFO: include: " << val);
 			if(val.empty())
 				continue;
 			str file_name;
@@ -285,13 +428,26 @@ std::istream& operator>>(std::istream& is, IrcBot& bot)
 				file_name = val;
 			else
 			{
-				str file_path = bot.configfile.substr(0, bot.configfile.find_last_of('/'));
-				file_name = file_path + "/" + val;
+				str file_path;
+				pos = bot.configfile.find_last_of('/');
+				bug_var(pos);
+				if(pos != str::npos)
+					file_path = bot.configfile.substr(0, pos);
+				bug_var(file_path);
+
+				file_name = val;
+				bug_var(file_name);
+
+				if(!file_path.empty())
+					file_name = file_path + "/" + val;
+				bug_var(file_name);
 			}
 
 			std::ifstream ifs(file_name);
-			if(!(ifs >> bot))
-				log("Failed to include: " << file_name);
+			if(!ifs)
+				log("WARN: include not found: " << file_name);
+			if(!load_props(ifs, bot, vars, prefix))
+				log("WARN: failed to load include: " << file_name);
 		}
 		else
 		{
@@ -302,6 +458,13 @@ std::istream& operator>>(std::istream& is, IrcBot& bot)
 	if(is.eof())
 		is.clear();
 	return is;
+}
+
+std::istream& operator>>(std::istream& is, IrcBot& bot)
+{
+	str prefix;
+	str_map vars;
+	return load_props(is, bot, vars, prefix);
 }
 
 ////    0: *!user@host.domain
@@ -324,7 +487,7 @@ void IrcBot::add_rpc_service(IrcBotRPCService& s)
 
 void IrcBot::add_channel(const str& c) { chans.insert(c); }
 
-IrcServer* IrcBot::get_irc_server() { return irc; }
+IrcServer* IrcBot::get_irc_server() { return irc.get(); }
 
 // Utility
 
@@ -391,7 +554,7 @@ bool IrcBot::cmd_error_pm(const message& msg, const str& text, bool rv)
 	return rv;
 }
 
-str IrcBot::locate_file(const str& name)
+str IrcBot::locate_file(const str& name) const
 {
 	if(name.empty() || name[0] == '/')
 		return name;
@@ -529,7 +692,6 @@ void IrcBot::dispatch_msgevent(const message& msg)
 
 bool IrcBot::init(const str& config_file)
 {
-	bug_func();
 	std::srand(std::time(0));
 
 	if(have(FLOOD_TIME_BETWEEN_POLLS))
@@ -557,37 +719,11 @@ bool IrcBot::init(const str& config_file)
 
 	config_loaded = std::time(0);
 
-//	bug_do_color = get("bug.do.color", true);
-
-	// =====================================
-	// OPEN LOG FILE
-	// =====================================
-
-//	if(has("log.file"))
-//	{
-//		logfile.open(getf("log.file"));
-//		if(logfile)
-//		{
-//			log("INFO: logging to file: " << getf("log.file"));
-//			sookee::log::out(&logfile);
-//		}
-//	}
-//
-//	if(has("bug.file"))
-//	{
-//		bugfile.open(getf("bug.file"));
-//		if(bugfile)
-//		{
-//			log("INFO: bugging to file: " << getf("bug.file"));
-//			sookee::bug::out(&bugfile);
-//		}
-//	}
-
 	// =====================================
 	// CREATE CRITICAL RESOURCES
 	// =====================================
 
-	store = new BackupStore(getf(IRCBOT_STORE_FILE, IRCBOT_STORE_FILE_DEFAULT));
+	store.reset(new BackupStore(getf(IRCBOT_STORE_FILE, IRCBOT_STORE_FILE_DEFAULT)));
 	if(!store)
 	{
 		log("Error creating Store.");
@@ -596,7 +732,7 @@ bool IrcBot::init(const str& config_file)
 
 	if(get("irc.test.mode", false))
 	{
-		irc = new TestIrcServer;
+		irc.reset(new TestIrcServer);
 		str host = get("irc.test.host", "test-host");
 		siz port = get("irc.test.port", 0);
 		if(irc)
@@ -605,12 +741,12 @@ bool IrcBot::init(const str& config_file)
 	else if(get("server.ssl", false))
 	{
 		log("INFO: Using SSL");
-		irc = new RemoteSSLIrcServer;
+		irc.reset(new RemoteSSLIrcServer);
 	}
 	else
 	{
 		log("WARN: Using INSECURE connection");
-		irc = new RemoteIrcServer;
+		irc.reset(new RemoteIrcServer);
 	}
 
 	if(!irc)
@@ -639,22 +775,21 @@ bool IrcBot::init(const str& config_file)
 	plugin_vec_iter p = plugins.begin();
 	while(p != plugins.end())
 	{
-		bug_var(&(*p));
 		if(!(*p))
 		{
 			log("Null plugin found during initialisation.");
 			p = plugins.erase(p);
 			continue;
 		}
-		bug("preinit");
 		if(!(*p)->init())
 		{
 			log("Plugin failed during initialization.");
 			p = plugins.erase(p);
 			continue;
 		}
-		bug("postinit");
+
 		log("\tPlugin initialized: " << (*p)->get_id() << ": " << (*p)->get_name() << " v" << (*p)->get_version());
+
 		for(str& c: (*p)->list())
 		{
 			log("\t\tRegister command: " << c);
@@ -672,22 +807,16 @@ bool IrcBot::init(const str& config_file)
 	}
 
 	log("Awaiting connection: ");
+
 	while(!done && !connected)
-	{
-		bug("\tloop");
 		std::this_thread::sleep_for(std::chrono::seconds(1));
-	}
 
-
-	//	if(get<bool>("irc.test.mode") == false)
-//		con = std::async(std::launch::async, [&]{ console(); });
 	log("Starting main loop: ");
 	str line;
 	message msg;
-//	log("TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT");
+
 	while(!done)
 	{
-//		log("UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUU");
 		if(!irc->receive(line))
 		{
 			if(get<bool>("irc.test.mode") == true)
@@ -704,13 +833,6 @@ bool IrcBot::init(const str& config_file)
 			while(!done && !connected)
 				std::this_thread::sleep_for(std::chrono::seconds(3));
 		}
-//		str xxx;
-//		log("L: " << line);
-//		log("CULPRIT: " << (int)line.back() << " \\r = " << (int)'\r');
-//		trim(line);//, "\r \n");
-//		log("T: " << line);
-//		xxx = line.substr(0, line.size() - 1);
-//		log("X: " << xxx);
 
 		if(done)
 			break;
@@ -864,11 +986,20 @@ bool IrcBot::init(const str& config_file)
 		}
 		else if(msg.command == PRIVMSG)
 		{
-			if(!msg.get_trailing().empty() && msg.get_trailing()[0] == '!')
-			{
+//			const str prefix = get("trigger.word.prefix", "!");
+//			if(msg.get_to() != nick)//!msg.get_trailing().find(prefix))
+//			{
 				str cmd = lower_copy(msg.get_user_cmd());
 				log("Processing command: " << cmd);
-				if(cmd == "!die")
+
+//				if((have("trigger.word.die") ? get_set("trigger.word.die"):str_set{"!die"}).count(cmd))
+//				{
+//
+//				}
+
+
+//				if(cmd == get("trigger.word.die", "!die"))
+				if(get_set("trigger.word.die", "!die").count(cmd))
 				{
 					if(!have(PROP_PASSWORD) || get(PROP_PASSWORD) == msg.get_user_params())
 					{
@@ -887,7 +1018,7 @@ bool IrcBot::init(const str& config_file)
 						fc_reply(msg, "Incorrect password.");
 					}
 				}
-				else if(cmd == "!uptime")
+				else if(get_set("trigger.word.uptime", "!uptime").count(cmd))//"!uptime")
 				{
 					soss oss;
 					print_duration(st_clk::now() - st_clk::from_time_t(uptime), oss);
@@ -895,10 +1026,9 @@ bool IrcBot::init(const str& config_file)
 					trim(time);
 					fc_reply(msg, "I have been active for " + time);
 				}
-				else if(cmd == "!join")
+				else if(get_set("trigger.word.join", "!join").count(cmd))//"!join")
 				{
 					str_vec param = split(msg.get_user_params(), ' ', true);
-					//split(msg.get_user_params(), param, ' ', true);
 
 					if(param.size() == 2)
 					{
@@ -920,11 +1050,9 @@ bool IrcBot::init(const str& config_file)
 						fc_reply(msg, "Usage: !join #channel <password>");
 					}
 				}
-				else if(cmd == "!part")
+				else if(get_set("trigger.word.part", "!part").count(cmd))//"!part")
 				{
 					str_vec param = split(msg.get_user_params(), ' ', true);
-
-					//split(msg.get_user_params(), param, ' ', true);
 
 					if(param.size() == 2)
 					{
@@ -942,12 +1070,12 @@ bool IrcBot::init(const str& config_file)
 						}
 					}
 				}
-				else if(cmd == "!reconfigure")
+				else if(get_set("trigger.word.reconfigure", "!reconfigure").count(cmd))
 				{
 					str pass;
 					if(!(ios::getstring(siss(msg.get_user_params()), pass)))
 					{
-						fc_reply(msg, "!restart <password>");
+						fc_reply(msg, "!reconfigure <password>");
 						continue;
 					}
 					bug_var(pass);
@@ -958,7 +1086,7 @@ bool IrcBot::init(const str& config_file)
 					}
 					fc_reply(msg, "Wrong password");
 				}
-				else if(cmd == "!restart")
+				else if(get_set("trigger.word.restart", "!restart").count(cmd))//"!restart")
 				{
 					str pass;
 					std::istringstream iss(msg.get_user_params());
@@ -975,10 +1103,8 @@ bool IrcBot::init(const str& config_file)
 						restart = true;
 					}
 				}
-				else if(cmd == "!pset")
+				else if(get_set("trigger.word.pset", "!pset").count(cmd))//"!pset")
 				{
-					//str_vec params = split_params(msg.get_user_params(), ' ');
-
 					str pass;
 					std::istringstream iss(msg.get_user_params());
 
@@ -1029,11 +1155,12 @@ bool IrcBot::init(const str& config_file)
 						fc_reply(msg, "Incorrect password.");
 					}
 				}
-				else if(cmd == "!debug")
+				else if(get_set("trigger.word.debug", "!debug").count(cmd))//"!debug")
 				{
 					fc_reply(msg, "Debug mode " + str(((debug = !debug)) ? "on" : "off") + ".");
 				}
-				else if(cmd == "!help")
+//				else if(cmd == "!help")
+				else if(get_set("trigger.word.help", "!help").count(cmd))
 				{
 					const str sender = msg.get_nickname();
 					const str params = msg.get_user_params();
@@ -1048,9 +1175,31 @@ bool IrcBot::init(const str& config_file)
 						continue;
 
 					fc_reply_pm(msg, "List of commands:");
+
+					// builtin
+					fc_reply_pm(msg, "\tBuilt in");
+					std::ostringstream oss;
+					oss << "\t\t";
+					str supersep;
+					for(auto&& key: get_wild_keys("trigger.word"))
+					{
+						oss << supersep;
+						str_set cmds = get_set(key);
+						std::string sep = cmds.size() > 1 ? "[":"";
+						for(auto&& cmd: cmds)
+						{
+							oss << sep << cmd;
+							sep = ", ";
+						}
+						if(cmds.size() > 1)
+							oss << "]";
+						supersep = ", ";
+					}
+					fc_reply_pm(msg, oss.str());
+
 					for(const auto& p: plugins)
 					{
-						fc_reply_pm(msg, "\t" + p->get_name() + " " + p->get_version());
+						fc_reply_pm(msg, "\t" + p->get_name() + " " + p->get_version());
 						std::ostringstream oss;
 						oss << "\t\t";
 						std::string sep;
@@ -1061,8 +1210,10 @@ bool IrcBot::init(const str& config_file)
 						}
 						fc_reply_pm(msg, oss.str());
 					}
+
 					if(have("help.append"))
 						fc_reply_pm(msg, "Additional Info:");
+
 					for(str h: get_vec("help.append"))
 						fc_reply_pm(msg, "\t" + replace(h, "$me", nick));
 				}
@@ -1077,14 +1228,14 @@ bool IrcBot::init(const str& config_file)
 					//std::async(std::launch::async, [=]{ execute(cmd, msg); });
 					execute(cmd, msg);
 				}
-			}
-			else if(!msg.get_trailing().empty() && msg.get_to() == nick)
-			{
-				// PM to bot accepts commands without !
-				str cmd = lower_copy(msg.get_user_cmd());
-				if(commands.find(cmd) != commands.end())
-					execute(cmd, msg);
-			}
+//			}
+//			else //!msg.get_trailing().empty() && msg.get_to() == nick)
+//			{
+//				// PM to bot accepts commands without <prefix> (dflt !)
+//				str cmd = lower_copy(msg.get_user_cmd());
+//				if(commands.find(cmd) != commands.end())
+//					execute(cmd, msg);
+//			}
 		}
 	}
 
@@ -1164,11 +1315,52 @@ str IrcBot::help(const str& cmd) const
 	if(commands.count(cmd))// != commands.end())
 		return commands.at(cmd)->help(cmd);
 
-	if(commands.count('!' + cmd))// != commands.end())
-		return commands.at('!' + cmd)->help('!' + cmd);
+//	if(commands.count('!' + cmd))// != commands.end())
+//		return commands.at('!' + cmd)->help('!' + cmd);
+
+	// builtins
+	str builtin;
+	str_set keys = get_wild_keys("trigger.word");
+	for(auto&& key: keys)
+	{
+		bug_var(key);
+		bug_var(key.size());
+		if((builtin = get(key)) != cmd)
+			continue;
+
+		bug_var(builtin);
+		bug_var(key.size());
+
+		auto pos = key.find_last_of('.');
+		bug_var(pos);
+
+		if(pos > key.size() - 1)
+			continue;
+
+		auto trigger = key.substr(pos + 1);
+		bug_var(trigger);
+		trigger = "trigger.help." + trigger;
+		bug_var(trigger);
+		if(have(trigger))
+		{
+			str h;
+			str sep;
+			for(auto&& t: get_vec(trigger))
+			{
+				replace(t, "\\t", "\t");
+				replace(t, "\\n", "\n");
+				replace(t, "\\s", "  ");
+				h += sep + builtin + " " + t;
+				sep = "\n";
+			}
+			return h;
+		}
+		break;
+	}
 
 	return "No help available for " + cmd + ".";
 }
+
 void IrcBot::exit()
 {
 	log("Closing down plugins:");
@@ -1443,53 +1635,23 @@ void IrcBot::exec(const std::string& cmd, std::ostream* os)
 			(*os) << "ERROR: Commands begin with /.\n";
 }
 
-//str get_regerror(int errcode, regex_t *compiled)
-//{
-//	size_t length = regerror(errcode, compiled, NULL, 0);
-//	char *buffer = new char[length];
-//	(void) regerror(errcode, compiled, buffer, length);
-//	str e(buffer);
-//	delete[] buffer;
-//	return e;
-//}
-//
-//bool IrcBot::ereg_match(const str& r, const str& s)
-//{
-//	bug_func();
-//	bug_var(s);
-//	bug_var(r);
-//	regex_t regex;
-//
-//	if(regcomp(&regex, r.c_str(), REG_EXTENDED | REG_ICASE))
-//	{
-//		log("Could not compile regex: " << r);
-//		return false;
-//	}
-//
-//	int reti = regexec(&regex, s.c_str(), 0, NULL, 0);
-//	regfree(&regex);
-//	if(!reti)
-//		return true;
-//	else if(reti != REG_NOMATCH)
-//		log("regex: " << get_regerror(reti, &regex));
-//
-//	return false;
-////	return lowercase(s).find(lowercase(r)) != str::npos;
-//}
-
-bool IrcBot::preg_match(const str& r, const str& s, bool full)
+bool IrcBot::preg_match(const str& r, const str& s, bool full) const
 {
-//	bug_func();
-//	bug_var(s);
-//	bug_var(r);
-//	bug_var(full);
-
+	log("WARN: deprecated function used: preg_match()");
 	if(full)
 		return pcrecpp::RE(r).FullMatch(s);
 	return pcrecpp::RE(r).PartialMatch(s);
 }
 
-bool IrcBot::wild_match(const str& w, const str& s, int flags)
+bool IrcBot::sreg_match(const str& r, const str& s, bool full) const
+{
+	std::regex e(r);
+	if(full)
+		return std::regex_match(s, e);
+	return std::regex_search(s, e);
+}
+
+bool IrcBot::wild_match(const str& w, const str& s, int flags) const
 {
 	return !fnmatch(w.c_str(), s.c_str(), flags | FNM_EXTMATCH);
 }
@@ -1618,7 +1780,8 @@ void IrcBot::pinger()
 	}
 }
 
-bool IrcBot::extract_params(const message& msg, std::initializer_list<str*> args, bool report)
+bool IrcBot::extract_params(const message& msg
+	, std::initializer_list<str*> args, bool report)
 {
 	std::istringstream iss(msg.get_user_params());
 	for(str* arg: args)

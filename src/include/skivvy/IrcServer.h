@@ -40,6 +40,8 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 #include <sookee/types.h>
 
+#include <memory>
+
 namespace skivvy { namespace ircbot {
 
 using namespace sookee;
@@ -240,6 +242,8 @@ public:
 	 */
 	virtual bool receive(str& line) = 0;
 };
+
+using IrcServerUptr = std::unique_ptr<IrcServer>;
 
 class BaseIrcServer
 : public IrcServer

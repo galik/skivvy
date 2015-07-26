@@ -39,7 +39,7 @@ GEN_FLAGS = -Wl,-E -Wfatal-errors -Wall -Wextra -Winit-self -ansi -pedantic -pth
 	-I$(top_srcdir)/src/include
 
 AM_CPPFLAGS = $(SOOKEE_CFLAGS) $(OPENSSL_CFLAGS)
-AM_CXXFLAGS = -std=gnu++11 $(GEN_FLAGS) $(DEF_FLAGS)
+AM_CXXFLAGS = $(GEN_FLAGS) $(DEF_FLAGS)
 
 skivvy_include_HEADERS = \
 	$(srcdir)/include/skivvy/ansi.h \

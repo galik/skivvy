@@ -362,7 +362,7 @@ public:
 		typedef std::function<void(const message& msg)> action_func;
 		enum
 		{
-			INVISIBLE = 0x01
+			INVISIBLE = 0b01, ALIAS = 0b10
 		};
 		str cmd;
 		str help;
@@ -373,13 +373,13 @@ public:
 		: cmd(cmd), help(help), func(func), flags(flags) {}
 	};
 
-	typedef std::vector<action> action_vec;
+//	typedef std::vector<action> action_vec;
 	typedef std::map<str, action> action_map;
 	typedef std::pair<str, action> action_pair;
 
 protected:
 	IrcBot& bot;
-	IrcServer* irc = 0;
+	IrcServer* irc = nullptr;
 	action_map actions;
 
 	/**
@@ -428,7 +428,7 @@ public:
 	 * BasicIrcBotPlugin::initialize(). Implementations
 	 * should override that instead.
 	 */
-	virtual bool init(); // final
+	virtual bool init() final;
 
 	/**
 	 * Implementing classes should not override this
@@ -437,7 +437,7 @@ public:
 	 * BasicIrcBotPlugin::action objects provided by calling
 	 * the void BasicIrcBotPlugin::add(const action& a) function.
 	 */
-	virtual str_vec list() const; // final
+	virtual str_vec list() const final;
 
 	/**
 	 * Implementing classes should not override this
@@ -446,7 +446,7 @@ public:
 	 * BasicIrcBotPlugin::action objects provided by calling
 	 * the void BasicIrcBotPlugin::add(const action& a) function.
 	 */
-	virtual void execute(const str& cmd, const message& msg); // final
+	virtual void execute(const str& cmd, const message& msg) final;
 
 	/**
 	 * Implementing classes should not override this
@@ -455,7 +455,113 @@ public:
 	 * BasicIrcBotPlugin::action objects provided by calling
 	 * the void BasicIrcBotPlugin::add(const action& a) function.
 	 */
-	virtual str help(const str& cmd) const; // final
+	virtual str help(const str& cmd) const final;
+
+	virtual str get_id() const = 0;
+	virtual str get_name() const = 0;
+	virtual str get_version() const = 0;
+
+	virtual void exit() = 0;
+};
+
+class ManagedIrcBotPlugin
+: public IrcBotPlugin
+{
+public:
+	typedef std::function<void(const message& msg)> action_func;
+	typedef std::map<str, action_func> action_map;
+
+private:
+	str get_trigger_key(const str& part, const str& trigger) const
+	{
+		return get_id() + ".trigger." + part + "." + trigger;
+	}
+
+protected:
+	IrcBot& bot;
+	IrcServer* irc = nullptr;
+
+	struct info
+	{
+		str alias; // default alias
+		str help; // default help
+	};
+
+	using info_map = std::map<str, info>;
+
+	action_map actions; // trigger -> action_func
+	info_map infos; // trigger -> {alias, help}
+	str_map aliases; // alias -> trigger
+
+	void add(const str& trigger, const str& alias, const str& help, action_func func);
+
+public:
+	ManagedIrcBotPlugin(IrcBot& bot);
+	virtual ~ManagedIrcBotPlugin();
+
+	/**
+	 * Implementing bots must override this function
+	 * to initialize themselves.
+	 *
+	 * This is where the bot should
+	 * check for the presence of plugins
+	 * that it depends on.
+	 *
+	 * Also action objects should be registered in this function
+	 * by calling void add():
+	 *
+	 * add
+	 * ({
+	 *     "trigger"
+	 *     , "default alias" // !alarm
+	 *     , "default help" // Does stuff
+	 *     , [&](const message& msg){ do_command(msg); }
+	 * });
+	 *
+	 * Where do_command(const message& msg) is the function that
+	 * actually performs the command.
+	 *
+	 * @return false on failure
+	 */
+	virtual bool initialize() = 0;
+
+	// INTERFACE: IrcBotPlugin DON'T Override
+
+	/**
+	 * Implementing classes should not override this
+	 * function. This class provides its own implementation
+	 * which calls the pure virtual function
+	 * BasicIrcBotPlugin::initialize(). Implementations
+	 * should override that instead.
+	 */
+	bool init() final override;
+
+	/**
+	 * Implementing classes should not override this
+	 * function. This class provides its own implementation
+	 * which supplies the return information from the list of
+	 * BasicIrcBotPlugin::action objects provided by calling
+	 * the void BasicIrcBotPlugin::add(const action& a) function.
+	 */
+	str_vec list() const final override;
+
+	/**
+	 * Implementing classes should not override this
+	 * function. This class provides its own implementation
+	 * which calls the relevant std::function from the list of
+	 * BasicIrcBotPlugin::action objects provided by calling
+	 * the void BasicIrcBotPlugin::add(const action& a) function.
+	 */
+	virtual void execute(const str& cmd, const message& msg) final;
+
+	/**
+	 * Implementing classes should not override this
+	 * function. This class provides its own implementation
+	 * which supplies the return information from the list of
+	 * BasicIrcBotPlugin::action objects provided by calling
+	 * the void BasicIrcBotPlugin::add(const action& a) function.
+	 */
+	virtual str help(const str& cmd) const final;
 
 	virtual str get_id() const = 0;
 	virtual str get_name() const = 0;
@@ -590,8 +696,8 @@ private:
 	FloodController fc;
 
 	// pointers because need to load config before creating
-	IrcServer* irc = 0;
-	Store* store = 0;
+	IrcServerUptr irc;
+	StoreUPtr store;
 
 	msgevent_map msgevents;
 	std::mutex msgevent_mtx;
@@ -649,7 +755,7 @@ private:
 //	str host;
 //	siz port;
 
-	str locate_file(const str& name);
+	str locate_file(const str& name) const;
 
 	time_t config_loaded;
 	time_t plugin_loaded;
@@ -683,8 +789,8 @@ public:
 	std::istream* set_istream(std::istream* is) { std::istream* r = this->is; this->is = is; return r; }
 	std::ostream* set_ostream(std::ostream* os) { std::ostream* r = this->os; this->os = os; return r; }
 
-	time_t get_plugin_load_time() { return plugin_loaded; }
-	time_t get_config_load_time() { return config_loaded; }
+	time_t get_plugin_load_time() const { return plugin_loaded; }
+	time_t get_config_load_time() const { return config_loaded; }
 
 	/**
 	 * The nick from the list of nicks in user_info that was
@@ -696,24 +802,26 @@ public:
 	channel_set chans;
 	nicks_map nicks; // last known nicks // chan -> nick_list
 
+	friend std::istream& load_props(std::istream&, IrcBot&, str_map&, str&);
 	friend std::istream& operator>>(std::istream& is, IrcBot& bot);
 	friend std::istream& operator>>(std::istream&& is, IrcBot& bot) { return is >> bot; }
 
 	/**
 	 * Match s according to regular expression r.
 	 */
-	bool preg_match(const str& r, const str& s, bool full = false); // pcre regex
-	bool wild_match(const str& w, const str& s, int flags = 0);
+	bool preg_match(const str& r, const str& s, bool full = false) const; // pcre regex
+	bool wild_match(const str& w, const str& s, int flags = 0) const;
+	bool sreg_match(const str& w, const str& s, bool full = false) const; // std::regex
 
-	bool is_connected() { return connected; }
+	bool is_connected() const { return connected; }
 
-	bool has(const str& s)
+	bool has(const str& s) const
 	{
-		property_iter_pair i = props.equal_range(s);
+		auto i = props.equal_range(s);
 		return i.first != i.second;
 	}
 
-	bool have(const str& s) { return has(s); }
+	bool have(const str& s) const { return has(s); }
 
 	/**
 	 * Join channel announcing bot version.
@@ -721,39 +829,87 @@ public:
 	void official_join(const str& channel);
 
 	template<typename T>
-	T get(const str& s, const T& dflt = T())
+	T get(const str& s, const T& dflt = T()) const
 	{
-		if(props[s].empty())
+		auto prop = props.find(s);
+		if(prop == props.end() || prop->second.empty())
 			return dflt;
 		T t;
-		std::istringstream(props[s][0]) >> std::boolalpha >> t;
+		std::istringstream(prop->second[0]) >> std::boolalpha >> t;
 		return t;
 	}
 
-	str get(const str& s, const str& dflt = "")
+	str get(const str& s, const str& dflt = "") const
 	{
-		return props[s].empty() ? dflt : props[s][0];
+		auto prop = props.find(s);
+		if(prop == props.end() || prop->second.empty())
+			return dflt;
+
+		return prop->second.at(0);
+//		return props[s].empty() ? dflt : props[s][0];
 	}
 
 	/**
 	 * Get a property variable intended to be a filename.
 	 * The name is resolved such that absolute paths are
-	 * left as they are but relative paths are apended
+	 * left as they are but relative paths are appended
 	 * to the value of the property variable data_dir:
 	 *
 	 * If data_dir: is unset the $HOME/.skivvy is used.
 	 */
-	str getf(const str& s, const str& dflt = "")
+	str getf(const str& s, const str& dflt = "") const
 	{
 		return locate_file(get(s, dflt));
 	}
 
-	str_vec get_vec(const str& s)
+	str get_data_folder() const
 	{
-		return props[s];
+		return get(DATA_DIR, str(std::getenv("HOME")) + "/" + ".skivvy");
 	}
 
-	bool extract_params(const message& msg, std::initializer_list<str*> args, bool report = true);
+	str_vec get_vec(const str& s) const
+	{
+		auto prop = props.find(s);
+		if(prop == props.end() || prop->second.empty())
+			return {};
+		return prop->second;
+	}
+
+	str_vec get_vec(const str& s, const str& dflt) const
+	{
+		str_vec v = get_vec(s);
+		if(v.empty())
+			v.push_back(dflt);
+		return v;
+//		str_vec& v = props[s];
+//		return v.empty() ? str_vec{dflt} : v;
+	}
+
+	str_set get_set(const str& s) const
+	{
+		str_vec v = get_vec(s);
+		return {v.begin(), v.end()};
+	}
+
+	str_set get_set(const str& s, const str& dflt) const
+	{
+		str_set r = get_set(s);
+		if(r.empty())
+			r.insert(dflt);
+		return r;
+	}
+
+	str_set get_wild_keys(const str& prefix) const
+	{
+		str_set s;
+		for(auto&& prop: props)
+			if(wild_match(prefix + "*", prop.first))
+				s.insert(prop.first);
+		return s;
+	}
+
+	bool extract_params(const message& msg
+		, std::initializer_list<str*> args, bool report = true);
 
 public:
 	IrcBot();

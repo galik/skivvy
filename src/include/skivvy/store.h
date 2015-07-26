@@ -36,6 +36,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <sookee/str.h>
 #include <sookee/ios.h>
 
+#include <memory>
 #include <istream>
 #include <ostream>
 #include <fstream>
@@ -433,6 +434,8 @@ public:
 	 */
 	virtual void set_at(const str& k, siz n, const str& v) = 0;
 };
+
+using StoreUPtr = std::unique_ptr<Store>;
 
 USING_MAP(str, str_vec, str_vec_map);
 
