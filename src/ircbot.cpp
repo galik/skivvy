@@ -373,6 +373,7 @@ std::istream& load_props(std::istream& is, IrcBot& bot, str_map& vars, str& pref
 		if(line.front() == '[' && line.back() == ']')
 		{
 			prefix = line.substr(1, line.size() - 2);
+			trim(prefix);
 			bug_var(prefix);
 			continue;
 		}
@@ -524,9 +525,14 @@ bool IrcBot::fc_reply_pm(const message& msg, const str& text)//, size_t priority
 	return fc.send(msg.get_to(), [&,msg,text]()->bool{ return irc->reply_pm(msg, text); });
 }
 
-bool IrcBot::fc_reply_note(const message& msg, const str& text)
+bool IrcBot::fc_reply_notice(const message& msg, const str& text)
 {
 	return fc.send(msg.get_to(), [&,msg,text]()->bool{ return irc->reply_notice(msg, text); });
+}
+
+bool IrcBot::fc_reply_pm_notice(const message& msg, const str& text)
+{
+	return fc.send(msg.get_to(), [&,msg,text]()->bool{ return irc->reply_pm_notice(msg, text); });
 }
 
 bool IrcBot::fc_reply_pm_help(const message& msg, const str& text, const str& prefix)

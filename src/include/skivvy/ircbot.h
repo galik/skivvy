@@ -980,11 +980,11 @@ public:
 	bool fc_say(const str& to, const str& text);
 
 	bool fc_reply(const message& msg, const str& text);
-//	bool fc_reply(const str& to, const str& text);
 	bool fc_reply_help(const message& msg, const str& text, const str& prefix = "");
+	bool fc_reply_notice(const message& msg, const str& text);
 	bool fc_reply_pm(const message& msg, const str& text);
 	bool fc_reply_pm_help(const message& msg, const str& text, const str& prefix = "");
-	bool fc_reply_note(const message& msg, const str& text);
+	bool fc_reply_pm_notice(const message& msg, const str& text);
 
 	bool cmd_error(const message& msg, const str& text, bool rv = false);
 	bool cmd_error_pm(const message& msg, const str& text, bool rv = false);

@@ -224,6 +224,7 @@ public:
 	 * @return false on failure.
 	 */
 	virtual bool reply(const message& msg, const str& text) = 0;
+	virtual bool reply_notice(const message& msg, const str& text) = 0;
 
 	/**
 	 * This function is like reply except that it always sends a PM (QUERY)
@@ -233,7 +234,7 @@ public:
 	 * reply to using PM (QUERY).
 	 */
 	virtual bool reply_pm(const message& msg, const str& text) = 0;
-	virtual bool reply_notice(const message& msg, const str& text) = 0;
+	virtual bool reply_pm_notice(const message& msg, const str& text) = 0;
 
 	/**
 	 * Get a line from the IRC server.
@@ -271,6 +272,7 @@ public:
 	bool reply(const message& msg, const str& text) override;
 	bool reply_pm(const message& msg, const str& text) override;
 	bool reply_notice(const message& msg, const str& text) override;
+	bool reply_pm_notice(const message& msg, const str& text) override;
 };
 
 template<typename SocketStream>
