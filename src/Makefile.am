@@ -68,7 +68,7 @@ skivvy_include_HEADERS = \
 skivvy_include_bits_HEADERS = \
 	$(srcdir)/include/skivvy/bits/rpc.tcc
 
-BOTLIBS = -ldl -L$(builddir)/.libs -lskivvy $(PCRECPP_LIBS) $(SOOKEE_LIBS) 
+BOTLIBS = -ldl -L$(builddir)/.libs -lskivvy $(SOOKEE_LIBS) 
 # -Wl,-E is required for programs that load plugin's
 BOTFLAGS = -Wl,-E
 
@@ -119,7 +119,7 @@ libskivvy_la_LDFLAGS = -version-info 0:0:0
 bin_PROGRAMS = skivvy skivvy-client
 
 skivvy_SOURCES = skivvy.cpp
-skivvy_LDADD = -ldl -lskivvy $(PCRECPP_LIBS) $(SOOKEE_LIBS) $(OPENSSL_LIBS)
+skivvy_LDADD = -ldl -lskivvy $(SOOKEE_LIBS) $(OPENSSL_LIBS)
 skivvy_LDFLAGS = -Wl,-E
 
 skivvy_client_SOURCES = skivvy-client.cpp

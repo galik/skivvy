@@ -50,7 +50,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 #include <dirent.h>
 //#include <regex.h>
-#include <pcrecpp.h>
+//#include <pcrecpp.h>
 //#include <readline/readline.h>
 //#include <readline/history.h>
 #include <sookee/types.h>
@@ -1643,10 +1643,11 @@ void IrcBot::exec(const std::string& cmd, std::ostream* os)
 
 bool IrcBot::preg_match(const str& r, const str& s, bool full) const
 {
-	log("WARN: deprecated function used: preg_match()");
-	if(full)
-		return pcrecpp::RE(r).FullMatch(s);
-	return pcrecpp::RE(r).PartialMatch(s);
+//	if(full)
+//		return pcrecpp::RE(r).FullMatch(s);
+//	return pcrecpp::RE(r).PartialMatch(s);
+	log("WARN: deprecated function use: preg_match()");
+	return sreg_match(r, s, full);
 }
 
 bool IrcBot::sreg_match(const str& r, const str& s, bool full) const

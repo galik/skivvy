@@ -42,7 +42,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <fstream>
 #include <sstream>
 
-#include <pcrecpp.h>
+//#include <pcrecpp.h>
 #include <fnmatch.h>
 
 namespace skivvy { namespace utils {
@@ -259,14 +259,24 @@ class Store
 {
 protected:
 
-	bool pcre_match(const str& r, const str& s, bool full = false)
+	static bool pcre_match(const str& r, const str& s, bool full = false)
 	{
-		if(full)
-			return pcrecpp::RE(r).FullMatch(s);
-		return pcrecpp::RE(r).PartialMatch(s);
+		log("WARN: deprecated function use: sreg_match()");
+//		if(full)
+//			return pcrecpp::RE(r).FullMatch(s);
+//		return pcrecpp::RE(r).PartialMatch(s);
+		return sreg_match(r, s, full);
 	}
 
-	bool wild_match(const str& w, const str& s, int flags = 0)
+	static bool sreg_match(const str& r, const str& s, bool full = false)
+	{
+		std::regex e(r);
+		if(full)
+			return std::regex_match(s, e);
+		return std::regex_search(s, e);
+	}
+
+	static bool wild_match(const str& w, const str& s, int flags = 0)
 	{
 		return !fnmatch(w.c_str(), s.c_str(), flags | FNM_EXTMATCH);
 	}
@@ -325,7 +335,10 @@ public:
 		set_at(k, 0, v);
 	}
 
+
+	[[deprecated("Replaced by get_keys_if_sreg")]]
 	virtual str_set get_keys_if_pcre(const str& r) = 0;
+	virtual str_set get_keys_if_sreg(const str& r) = 0;
 	virtual str_set get_keys_if_wild(const str& w) = 0;
 
 	/**
@@ -346,17 +359,29 @@ public:
 		return set;
 	}
 
+	[[deprecated]]
+	str_vec get_pcre_vec_with_key(const str& k, const str& r)
+	{
+//		str_vec res;
+//		for(const auto& v: get_vec(k))
+//			if(pcre_match(r, v, true))
+//				res.push_back(v);
+//		return res;
+		log("WARN: deprecated function use: get_sreg_vec_with_key()");
+		return get_sreg_vec_with_key(k, r);
+	}
+
 	/**
-	 * Return values for key that match PCRE regex
+	 * Return values for key that match std::regex
 	 * @param k Key
 	 * @param r Regex to match against values
 	 * @return str_vec of matching values
 	 */
-	str_vec get_pcre_vec_with_key(const str& k, const str& r)
+	str_vec get_sreg_vec_with_key(const str& k, const str& r)
 	{
 		str_vec res;
 		for(const auto& v: get_vec(k))
-			if(pcre_match(r, v, true))
+			if(sreg_match(r, v, true))
 				res.push_back(v);
 		return res;
 	}
@@ -509,12 +534,26 @@ public:
 
 	str_set get_keys_if_pcre(const str& reg) override
 	{
+//		str_set res;
+//		lock_guard lock(mtx);
+//		if(store.empty())
+//			load();
+//		for(const auto& p: store)
+//			if(pcre_match(reg, p.first))
+//				res.insert(p.first);
+//		return res;
+		log("WARN: deprecated function use: get_keys_if_sreg()");
+		return get_keys_if_sreg(reg);
+	}
+
+	str_set get_keys_if_sreg(const str& reg) override
+	{
 		str_set res;
 		lock_guard lock(mtx);
 		if(store.empty())
 			load();
 		for(const auto& p: store)
-			if(pcre_match(reg, p.first))
+			if(sreg_match(reg, p.first))
 				res.insert(p.first);
 		return res;
 	}
@@ -683,13 +722,30 @@ public:
 
 	str_set get_keys_if_pcre(const str& reg) override
 	{
+//		str_set res;
+//		lock_guard lock(mtx);
+//
+//		ifs.open(file);
+//		str line;
+//		while(sgl(ifs, line))
+//			if(sgl(siss(line), line, ':') && pcre_match(reg, line))
+//				res.insert(line);
+//		ifs.close();
+//
+//		return res;
+		log("WARN: deprecated function use: get_keys_if_sreg()");
+		return get_keys_if_sreg(reg);
+	}
+
+	str_set get_keys_if_sreg(const str& reg) override
+	{
 		str_set res;
 		lock_guard lock(mtx);
 
 		ifs.open(file);
 		str line;
 		while(sgl(ifs, line))
-			if(sgl(siss(line), line, ':') && pcre_match(reg, line))
+			if(sgl(siss(line), line, ':') && sreg_match(reg, line))
 				res.insert(line);
 		ifs.close();
 
@@ -849,12 +905,28 @@ public:
 
 	str_set get_keys_if_pcre(const str& reg) override
 	{
+//		str_set res;
+//		lock_guard lock(mtx);
+//
+//		ifs.open(file);
+//		while(sgl(ifs, line))
+//			if(sgl(siss(line), line, ':') && pcre_match(reg, line))
+//				res.insert(line);
+//		ifs.close();
+//
+//		return res;
+		log("WARN: deprecated function use: get_keys_if_sreg()");
+		return get_keys_if_sreg(reg);
+	}
+
+	str_set get_keys_if_sreg(const str& reg) override
+	{
 		str_set res;
 		lock_guard lock(mtx);
 
 		ifs.open(file);
 		while(sgl(ifs, line))
-			if(sgl(siss(line), line, ':') && pcre_match(reg, line))
+			if(sgl(siss(line), line, ':') && sreg_match(reg, line))
 				res.insert(line);
 		ifs.close();
 

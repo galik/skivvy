@@ -36,13 +36,11 @@ AC_CHECK_LIB(readline, readline,, AC_MSG_ERROR([can't find readline]))
 
 AC_PROG_CXX
 AC_PROG_INSTALL
-
-AC_LANG(C++)
+AC_LANG_CPLUSPLUS
 AX_CXX_COMPILE_STDCXX_14([noext],[mandatory])
 
 PKG_CHECK_MODULES([SOOKEE], [libsookee])
 PKG_CHECK_MODULES([OPENSSL], [openssl])
-PKG_CHECK_MODULES([PCRECPP], [libpcrecpp])
 
 AC_ARG_WITH([ncurses], AS_HELP_STRING([--with-ncurses], [Build the ncurses client]))
 AS_IF([test "x$with_ncurses" = "xyes"], [
