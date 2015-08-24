@@ -290,7 +290,7 @@ public:
 		lock_guard lock(mtx_ss);
 		ss << cmd.substr(0, 510) << "\r\n" << std::flush;
 		if(!ss)
-			log("ERROR: send failed.");
+			log("ERROR: send failed: " << ss.error);
 		return (bool)ss;
 	}
 
