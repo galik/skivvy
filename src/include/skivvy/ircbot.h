@@ -33,6 +33,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 '-----------------------------------------------------------------*/
 
 #include <sookee/socketstream.h>
+#include <skivvy/socketstream.h> // TODO: REMOVE THIS!!!
 #include <sookee/ssl_socketstream.h>
 
 #include <skivvy/FloodController.h>

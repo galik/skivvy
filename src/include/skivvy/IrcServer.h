@@ -36,6 +36,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 #include <sookee/socketstream.h>
 #include <sookee/ssl_socketstream.h>
+#include <skivvy/socketstream.h> // TODO: REMOVE THIS!!!
 #include <skivvy/message.h>
 
 #include <sookee/types.h>
@@ -281,34 +282,35 @@ class BasicRemoteIrcServer
 {
 private:
 	std::mutex mtx_ss;
-//	net::socketstream ss;
-	SocketStream ss;
+	skivvy::net::socketstream ss;
+//	SocketStream ss; TODO: PUT THIS BACK
 
 public:
 	bool send_unlogged(const str& cmd)
 	{
 		lock_guard lock(mtx_ss);
 		ss << cmd.substr(0, 510) << "\r\n" << std::flush;
-		if(!ss)
-			log("ERROR: send failed: " << ss.error);
-		return (bool)ss;
+		if(ss.fail())
+			log("ERROR: send failed:");
+		return ss.fail();
 	}
 
 	bool connect(const str& host, long port)
 	{
 		ss.clear();
 		ss.open(host, port);
-		return (bool)ss;
+		return ss.fail();
 	}
 
 	bool receive(str& line)
 	{
-		return (bool)std::getline(ss, line);
+		std::getline(ss, line);
+		return ss.fail();
 	}
 };
 
-using RemoteIrcServer = BasicRemoteIrcServer<net::netstream>;
-using RemoteSSLIrcServer = BasicRemoteIrcServer<net::ssl_socketstream>;
+using RemoteIrcServer = BasicRemoteIrcServer<sookee::net::netstream>;
+using RemoteSSLIrcServer = BasicRemoteIrcServer<sookee::net::ssl_socketstream>;
 
 //class RemoteSSLIrcServer
 //: public BaseIrcServer
