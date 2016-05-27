@@ -847,8 +847,6 @@ bool IrcBot::init(const str& config_file)
 		if(trim(line).empty())
 			continue;
 
-//		log("line: " << line);
-
 		msg.clear();
 		if(!parsemsg(line, msg))
 			continue;
@@ -896,12 +894,12 @@ bool IrcBot::init(const str& config_file)
 		}
 		else if(msg.command == RPL_NAMREPLY)
 		{
-			//BUG_MSG(msg, RPL_NAMREPLY);
 			str channel, nick;
+
 			str_vec params = msg.get_params();
 			if(params.size() > 2)
 				channel = params[2];
-			bug("channel: " << channel);
+
 			siss iss(msg.get_trailing());
 			while(iss >> nick)
 				if(!nick.empty())
@@ -909,11 +907,9 @@ bool IrcBot::init(const str& config_file)
 		}
 		else if(msg.command == ERR_NOORIGIN)
 		{
-			//BUG_MSG(msg, ERR_NOORIGIN);
 		}
 		else if(msg.command == ERR_NICKNAMEINUSE)
 		{
-			//BUG_MSG(msg, ERR_NICKNAMEINUSE);
 			if(nick_number < info.nicks.size())
 			{
 				irc->nick(info.nicks[nick_number++]);
@@ -927,11 +923,9 @@ bool IrcBot::init(const str& config_file)
 		}
 		else if(msg.command == RPL_WHOISCHANNELS)
 		{
-			//BUG_MSG(msg, RPL_WHOISCHANNELS);
 		}
 		else if(msg.command == INVITE)
 		{
-			//BUG_MSG(msg, INVITE);
 			str who, chan;
 			str_vec params = msg.get_params();
 
@@ -941,9 +935,6 @@ bool IrcBot::init(const str& config_file)
 				chan = params[1];
 
 			str_vec parts = get_vec("part");
-
-//			for(const str& part: parts)
-//				bug_var(part);
 
 			if(std::find(parts.begin(), parts.end(), chan) != parts.end())
 				continue;
@@ -958,7 +949,6 @@ bool IrcBot::init(const str& config_file)
 		}
 		else if(msg.command == JOIN)
 		{
-			//BUG_MSG(msg, JOIN);
 			// track known nicks
 			const str who = msg.get_nickname();
 			str_vec params = msg.get_params();
@@ -979,273 +969,243 @@ bool IrcBot::init(const str& config_file)
 		}
 		else if(msg.command == PART)
 		{
-			//BUG_MSG(msg, PART);
 		}
 		else if(msg.command == KICK)
 		{
-			//BUG_MSG(msg, KICK);
 		}
 		else if(msg.command == NICK)
 		{
-			// Is the bot changed its own nick?
+			// Is the bot changing its own nick?
 			if(msg.get_nickname() == nick)
 				nick = msg.get_trailing();
 		}
 		else if(msg.command == PRIVMSG)
 		{
-//			const str prefix = get("trigger.word.prefix", "!");
-//			if(msg.get_to() != nick)//!msg.get_trailing().find(prefix))
-//			{
-				str cmd = lower_copy(msg.get_user_cmd());
-				log("Processing command: " << cmd);
+			str cmd = lower_copy(msg.get_user_cmd());
+			log("Processing command: " << cmd);
 
-//				if((have("trigger.word.die") ? get_set("trigger.word.die"):str_set{"!die"}).count(cmd))
-//				{
-//
-//				}
-
-
-//				if(cmd == get("trigger.word.die", "!die"))
-				if(get_set("trigger.word.die", "!die").count(cmd))
+			if(get_set("trigger.word.die", "!die").count(cmd))
+			{
+				if(!have(PROP_PASSWORD) || get(PROP_PASSWORD) == msg.get_user_params())
 				{
-					if(!have(PROP_PASSWORD) || get(PROP_PASSWORD) == msg.get_user_params())
+					str_vec goodbyes = get_vec(PROP_GOODBYE);
+
+					for(const str& c: chans)
 					{
-						str_vec goodbyes = get_vec(PROP_GOODBYE);
-
-						for(const str& c: chans)
-						{
-							if(!goodbyes.empty())
-								irc->say(c, goodbyes[rand_int(0, goodbyes.size() - 1)]);
-							irc->part(c);
-						}
-						done = true;
+						if(!goodbyes.empty())
+							irc->say(c, goodbyes[rand_int(0, goodbyes.size() - 1)]);
+						irc->part(c);
 					}
-					else
-					{
-						fc_reply(msg, "Incorrect password.");
-					}
-				}
-				else if(get_set("trigger.word.uptime", "!uptime").count(cmd))//"!uptime")
-				{
-					soss oss;
-					print_duration(st_clk::now() - st_clk::from_time_t(uptime), oss);
-					str time = oss.str();
-					trim(time);
-					fc_reply(msg, "I have been active for " + time);
-				}
-				else if(get_set("trigger.word.join", "!join").count(cmd))//"!join")
-				{
-					str_vec param = split(msg.get_user_params(), ' ', true);
-
-					if(param.size() == 2)
-					{
-						if(!have(PROP_PASSWORD) || get(PROP_PASSWORD) == param[1])
-						{
-							if(irc->join(param[0]))
-							{
-								chans.insert(param[0]);
-								fc_reply(msg, nick + " has requested to join " + param[0]);
-							}
-						}
-						else
-						{
-							fc_reply(msg, "Incorrect password.");
-						}
-					}
-					else
-					{
-						fc_reply(msg, "Usage: !join #channel <password>");
-					}
-				}
-				else if(get_set("trigger.word.part", "!part").count(cmd))//"!part")
-				{
-					str_vec param = split(msg.get_user_params(), ' ', true);
-
-					if(param.size() == 2)
-					{
-						if(!have(PROP_PASSWORD) || get(PROP_PASSWORD) == param[1])
-						{
-							if(irc->part(param[0]))
-							{
-								chans.insert(param[0]);
-								fc_reply(msg, nick + " has requested to part " + param[0]);
-							}
-						}
-						else
-						{
-							fc_reply(msg, "Incorrect password.");
-						}
-					}
-				}
-				else if(get_set("trigger.word.reconfigure", "!reconfigure").count(cmd))
-				{
-					str pass;
-					if(!(ios::getstring(siss(msg.get_user_params()), pass)))
-					{
-						fc_reply(msg, "!reconfigure <password>");
-						continue;
-					}
-					bug_var(pass);
-					if(!have(PROP_PASSWORD) || get(PROP_PASSWORD) == pass)
-					{
-						exec("/reconfigure");
-						continue;
-					}
-					fc_reply(msg, "Wrong password");
-				}
-				else if(get_set("trigger.word.restart", "!restart").count(cmd))//"!restart")
-				{
-					str pass;
-					std::istringstream iss(msg.get_user_params());
-
-					if(!(ios::getstring(iss, pass)))
-					{
-						fc_reply(msg, "!restart <password>");
-						continue;
-					}
-					bug_var(pass);
-					if(!have(PROP_PASSWORD) || get(PROP_PASSWORD) == pass)
-					{
-						done = true;
-						restart = true;
-					}
-				}
-				else if(get_set("trigger.word.pset", "!pset").count(cmd))//"!pset")
-				{
-					str pass;
-					std::istringstream iss(msg.get_user_params());
-
-					if(!(ios::getstring(iss, pass)))
-					{
-						fc_reply(msg, "!pset <password> <key>: [<val1> <val2> ...]");
-						continue;
-					}
-					bug_var(pass);
-					// !pset <password> var: val1, val2, val3
-					if(!have(PROP_PASSWORD) || get(PROP_PASSWORD) == pass)
-					{
-						str key, val;
-
-						if(!std::getline(iss >> std::ws, key, ':') || trim(key).empty())
-						{
-							fc_reply(msg, "Expected <key>: [<val1> <val2> ...]");
-							continue;
-						}
-
-						bug_var(key);
-
-//						if(!key.empty() && key.top() == "]")
-
-						str_vec vals;
-
-						while(ios::getstring(iss, val))
-						{
-							bug_var(val);
-							vals.push_back(val);
-						}
-						if(vals.empty())
-						{
-							// report current values
-							siz i = 0;
-							for(const str& val: props[key])
-								fc_reply(msg, key + "[" + std::to_string(i++) + "]: " + val);
-							continue;
-						}
-
-						props.erase(key);
-						for(str val: vals)
-							props[key].push_back(trim(val));
-						fc_reply(msg, "Property " + key + " has been set.");
-					}
-					else
-					{
-						fc_reply(msg, "Incorrect password.");
-					}
-				}
-				else if(get_set("trigger.word.debug", "!debug").count(cmd))//"!debug")
-				{
-					fc_reply(msg, "Debug mode " + str(((debug = !debug)) ? "on" : "off") + ".");
-				}
-//				else if(cmd == "!help")
-				else if(get_set("trigger.word.help", "!help").count(cmd))
-				{
-					const str sender = msg.get_nickname();
-					const str params = msg.get_user_params();
-
-					if(!params.empty())
-					{
-						fc_reply_pm_help(msg, help(params));
-						continue;
-					}
-
-					if(msg.prefix.empty())
-						continue;
-
-					fc_reply_pm(msg, "List of commands:");
-
-					// builtin
-					fc_reply_pm(msg, "\tBuilt in");
-					std::ostringstream oss;
-					oss << "\t\t";
-					str supersep;
-					for(auto&& key: get_wild_keys("trigger.word"))
-					{
-						oss << supersep;
-						str_set cmds = get_set(key);
-						std::string sep = cmds.size() > 1 ? "[":"";
-						for(auto&& cmd: cmds)
-						{
-							oss << sep << cmd;
-							sep = ", ";
-						}
-						if(cmds.size() > 1)
-							oss << "]";
-						supersep = ", ";
-					}
-					fc_reply_pm(msg, oss.str());
-
-					for(const auto& p: plugins)
-					{
-						fc_reply_pm(msg, "\t" + p->get_name() + " " + p->get_version());
-						std::ostringstream oss;
-						oss << "\t\t";
-						std::string sep;
-						for(str& cmd: p->list())
-						{
-							oss << sep << cmd;
-							sep = ", ";
-						}
-						fc_reply_pm(msg, oss.str());
-					}
-
-					if(have("help.append"))
-						fc_reply_pm(msg, "Additional Info:");
-
-					for(str h: get_vec("help.append"))
-						fc_reply_pm(msg, "\t" + replace(h, "$me", nick));
+					done = true;
 				}
 				else
 				{
-					for(const str& ban: get_vec("ban"))
-						if(wild_match(ban, msg.get_userhost()))
-						{
-							log("BANNED: " << msg.get_nickname());
-							continue;
-						}
-					//std::async(std::launch::async, [=]{ execute(cmd, msg); });
-					execute(cmd, msg);
+					fc_reply(msg, "Incorrect password.");
 				}
-//			}
-//			else //!msg.get_trailing().empty() && msg.get_to() == nick)
-//			{
-//				// PM to bot accepts commands without <prefix> (dflt !)
-//				str cmd = lower_copy(msg.get_user_cmd());
-//				if(commands.find(cmd) != commands.end())
-//					execute(cmd, msg);
-//			}
+			}
+			else if(get_set("trigger.word.uptime", "!uptime").count(cmd))//"!uptime")
+			{
+				soss oss;
+				print_duration(st_clk::now() - st_clk::from_time_t(uptime), oss);
+				str time = oss.str();
+				trim(time);
+				fc_reply(msg, "I have been active for " + time);
+			}
+			else if(get_set("trigger.word.join", "!join").count(cmd))//"!join")
+			{
+				str_vec param = split(msg.get_user_params(), ' ', true);
+
+				if(param.size() == 2)
+				{
+					if(!have(PROP_PASSWORD) || get(PROP_PASSWORD) == param[1])
+					{
+						if(irc->join(param[0]))
+						{
+							chans.insert(param[0]);
+							fc_reply(msg, nick + " has requested to join " + param[0]);
+						}
+					}
+					else
+					{
+						fc_reply(msg, "Incorrect password.");
+					}
+				}
+				else
+				{
+					fc_reply(msg, "Usage: !join #channel <password>");
+				}
+			}
+			else if(get_set("trigger.word.part", "!part").count(cmd))//"!part")
+			{
+				str_vec param = split(msg.get_user_params(), ' ', true);
+
+				if(param.size() == 2)
+				{
+					if(!have(PROP_PASSWORD) || get(PROP_PASSWORD) == param[1])
+					{
+						if(irc->part(param[0]))
+						{
+							chans.insert(param[0]);
+							fc_reply(msg, nick + " has requested to part " + param[0]);
+						}
+					}
+					else
+					{
+						fc_reply(msg, "Incorrect password.");
+					}
+				}
+			}
+			else if(get_set("trigger.word.reconfigure", "!reconfigure").count(cmd))
+			{
+				str pass;
+				if(!(ios::getstring(siss(msg.get_user_params()), pass)))
+				{
+					fc_reply(msg, "!reconfigure <password>");
+					continue;
+				}
+				if(!have(PROP_PASSWORD) || get(PROP_PASSWORD) == pass)
+				{
+					exec("/reconfigure");
+					continue;
+				}
+				fc_reply(msg, "Wrong password");
+			}
+			else if(get_set("trigger.word.restart", "!restart").count(cmd))//"!restart")
+			{
+				str pass;
+				std::istringstream iss(msg.get_user_params());
+
+				if(!(ios::getstring(iss, pass)))
+				{
+					fc_reply(msg, "!restart <password>");
+					continue;
+				}
+				if(!have(PROP_PASSWORD) || get(PROP_PASSWORD) == pass)
+				{
+					done = true;
+					restart = true;
+				}
+			}
+			else if(get_set("trigger.word.pset", "!pset").count(cmd))//"!pset")
+			{
+				str pass;
+				std::istringstream iss(msg.get_user_params());
+
+				if(!(ios::getstring(iss, pass)))
+				{
+					fc_reply(msg, "!pset <password> <key>: [<val1> <val2> ...]");
+					continue;
+				}
+
+				// !pset <password> var: val1, val2, val3
+				if(!have(PROP_PASSWORD) || get(PROP_PASSWORD) == pass)
+				{
+					str key, val;
+
+					if(!std::getline(iss >> std::ws, key, ':') || trim(key).empty())
+					{
+						fc_reply(msg, "Expected <key>: [<val1> <val2> ...]");
+						continue;
+					}
+
+					bug_var(key);
+					str_vec vals;
+					while(ios::getstring(iss, val))
+						vals.push_back(val);
+
+					if(vals.empty())
+					{
+						// report current values
+						siz i = 0;
+						for(const str& val: props[key])
+							fc_reply(msg, key + "[" + std::to_string(i++) + "]: " + val);
+						continue;
+					}
+
+					props.erase(key);
+					for(str val: vals)
+						props[key].push_back(trim(val));
+					fc_reply(msg, "Property " + key + " has been set.");
+				}
+				else
+				{
+					fc_reply(msg, "Incorrect password.");
+				}
+			}
+			else if(get_set("trigger.word.debug", "!debug").count(cmd))//"!debug")
+			{
+				fc_reply(msg, "Debug mode " + str(((debug = !debug)) ? "on" : "off") + ".");
+			}
+			else if(get_set("trigger.word.help", "!help").count(cmd))
+			{
+				const str sender = msg.get_nickname();
+				const str params = msg.get_user_params();
+
+				if(!params.empty())
+				{
+					fc_reply_pm_help(msg, help(params));
+					continue;
+				}
+
+				if(msg.prefix.empty())
+					continue;
+
+				fc_reply_pm(msg, "List of commands:");
+
+				// builtin
+				fc_reply_pm(msg, "\tBuilt in");
+				std::ostringstream oss;
+				oss << "\t\t";
+				str supersep;
+				for(auto&& key: get_wild_keys("trigger.word"))
+				{
+					oss << supersep;
+					str_set cmds = get_set(key);
+					std::string sep = cmds.size() > 1 ? "[":"";
+					for(auto&& cmd: cmds)
+					{
+						oss << sep << cmd;
+						sep = ", ";
+					}
+					if(cmds.size() > 1)
+						oss << "]";
+					supersep = ", ";
+				}
+				fc_reply_pm(msg, oss.str());
+
+				for(const auto& p: plugins)
+				{
+					fc_reply_pm(msg, "\t" + p->get_name() + " " + p->get_version());
+					std::ostringstream oss;
+					oss << "\t\t";
+					std::string sep;
+					for(str& cmd: p->list())
+					{
+						oss << sep << cmd;
+						sep = ", ";
+					}
+					fc_reply_pm(msg, oss.str());
+				}
+
+				if(have("help.append"))
+					fc_reply_pm(msg, "Additional Info:");
+
+				for(str h: get_vec("help.append"))
+					fc_reply_pm(msg, "\t" + replace(h, "$me", nick));
+			}
+			else
+			{
+				for(const str& ban: get_vec("ban"))
+					if(wild_match(ban, msg.get_userhost()))
+					{
+						log("BANNED: " << msg.get_nickname());
+						continue;
+					}
+				//std::async(std::launch::async, [=]{ execute(cmd, msg); });
+				execute(cmd, msg);
+			}
 		}
 	}
-
 	return true;
 }
 
