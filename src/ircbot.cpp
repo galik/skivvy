@@ -145,7 +145,7 @@ void BasicIrcBotPlugin::execute(const str& cmd, const message& msg)
 
 str BasicIrcBotPlugin::help(const str& cmd) const
 {
-	bug_func();
+	bug_fun();
 	bug_var(cmd);
 	if(!actions.count(cmd))
 	{
@@ -306,7 +306,7 @@ bool IrcBot::has_plugin(const str& id, const str&  version)
 
 void IrcBot::del_plugin(const str& id)
 {
-	bug_func();
+	bug_fun();
 	for(plugin_vec_iter p =  plugins.begin(); p != plugins.end();)
 	{
 		if((*p)->get_id() != id)
@@ -495,7 +495,7 @@ IrcServer* IrcBot::get_irc_server() { return irc.get(); }
 // flood control
 bool IrcBot::fc_say(const str& to, const str& text)
 {
-	return fc.send(to, [&,to,text]()->bool{ return irc->say(to, text); });
+	return fc.send(to, [this,to,text]()->bool{ return irc->say(to, text); });
 }
 
 //bool IrcBot::fc_reply(const str& to, const str& text)
@@ -507,9 +507,9 @@ bool IrcBot::fc_say(const str& to, const str& text)
 
 bool IrcBot::fc_reply_help(const message& msg, const str& text, const str& prefix)
 {
-	const str_vec v = split(text, '\n'); // FIXME: crasher?
+	const str_vec v = split(text, '\n');
 	for(const str& s: v)
-		if(!fc.send(msg.get_to(), [&,msg,prefix,s]()->bool{ return irc->reply(msg, prefix + s); }))
+		if(!fc.send(msg.get_to(), [this,msg,prefix,s]()->bool{ return irc->reply(msg, prefix + s); }))
 			return false;
 
 	return true;
@@ -517,22 +517,22 @@ bool IrcBot::fc_reply_help(const message& msg, const str& text, const str& prefi
 
 bool IrcBot::fc_reply(const message& msg, const str& text)
 {
-	return fc.send(msg.get_to(), [&,msg,text]()->bool{ return irc->reply(msg, text); });
+	return fc.send(msg.get_to(), [this,msg,text]()->bool{ return irc->reply(msg, text); });
 }
 
-bool IrcBot::fc_reply_pm(const message& msg, const str& text)//, size_t priority)
+bool IrcBot::fc_reply_pm(const message& msg, const str& text)
 {
-	return fc.send(msg.get_to(), [&,msg,text]()->bool{ return irc->reply_pm(msg, text); });
+	return fc.send(msg.get_to(), [this,msg,text]()->bool{ return irc->reply_pm(msg, text); });
 }
 
 bool IrcBot::fc_reply_notice(const message& msg, const str& text)
 {
-	return fc.send(msg.get_to(), [&,msg,text]()->bool{ return irc->reply_notice(msg, text); });
+	return fc.send(msg.get_to(), [this,msg,text]()->bool{ return irc->reply_notice(msg, text); });
 }
 
 bool IrcBot::fc_reply_pm_notice(const message& msg, const str& text)
 {
-	return fc.send(msg.get_to(), [&,msg,text]()->bool{ return irc->reply_pm_notice(msg, text); });
+	return fc.send(msg.get_to(), [this,msg,text]()->bool{ return irc->reply_pm_notice(msg, text); });
 }
 
 bool IrcBot::fc_reply_pm_help(const message& msg, const str& text, const str& prefix)
@@ -542,7 +542,7 @@ bool IrcBot::fc_reply_pm_help(const message& msg, const str& text, const str& pr
 	for(const str& s: v)
 	{
 		str to = msg.get_to();
-		if(!fc.send(to, [&,msg,prefix,s]()->bool{ return irc->reply_pm(msg, prefix + s); }))
+		if(!fc.send(to, [this,msg,prefix,s]()->bool{ return irc->reply_pm(msg, prefix + s); }))
 			return false;
 	}
 	return true;
@@ -601,7 +601,7 @@ void IrcBot::official_join(const str& channel)
 
 void IrcBot::load_plugins()
 {
-	bug_func();
+	bug_fun();
 	plugin_loaded = std::time(0);
 
 	IrcBotPluginLoader load;
@@ -809,7 +809,7 @@ bool IrcBot::init(const str& config_file)
 	else
 	{
 		log("Starting pinger:");
-		png = std::async(std::launch::async, [&]{ pinger(); });
+		png = std::async(std::launch::async, [this]{ pinger(); });
 	}
 
 	log("Awaiting connection: ");
@@ -825,6 +825,7 @@ bool IrcBot::init(const str& config_file)
 	{
 		if(!irc->receive(line))
 		{
+			bug("failed to receive");
 			if(get<bool>("irc.test.mode") == true)
 			{
 				done = true;
@@ -1274,10 +1275,10 @@ bool IrcBot::allow_cmd_access(const str& cmd, const message& msg)
 	// "*" -> free pass list
 	// "PM" -> PM list
 
-	std::function<bool(const chan_prefix&)> chan_prefix_pred_eq = [&](const chan_prefix& cp)
-	{
-		return cp.plugin == commands[cmd]->get_name();
-	};
+//	std::function<bool(const chan_prefix&)> chan_prefix_pred_eq = [&](const chan_prefix& cp)
+//	{
+//		return cp.plugin == commands[cmd]->get_name();
+//	};
 
 	if(has_access(cmd, "*"))
 		return true;
@@ -1294,30 +1295,35 @@ bool IrcBot::allow_cmd_access(const str& cmd, const message& msg)
 
 void IrcBot::execute(const str& cmd, const message& msg)
 {
-//	bug_func();
-//	bug_var(cmd);
-//	bug_msg(msg);
-	if(commands.find(cmd) == commands.end())
+	auto found = commands.find(cmd);
+	if(found == commands.end())
 	{
 		log("IrcBot::execute(): Unknown command: " << cmd);
 		return;
 	}
-	if(commands[cmd])
+
+	if(auto plugin = found->second)
 	{
-		if(allow_cmd_access(cmd, msg))
-			commands[cmd]->execute(cmd, msg);
-		else if(msg.from_channel())
-			log("PLUGIN " << commands[cmd]->get_name()
-				<< " NOT AUTHORISED FOR CHANNEL: " << msg.get_to());
-		else
-			log("PLUGIN " << commands[cmd]->get_name()
-				<< " NOT AUTHORISED FOR PM TO: " << msg.get_nickname());
+		try
+		{
+			if(allow_cmd_access(cmd, msg))
+				plugin->execute(cmd, msg);
+			else if(msg.from_channel())
+				log("PLUGIN " << plugin->get_name()
+					<< " NOT AUTHORISED FOR CHANNEL: " << msg.get_to());
+			else
+				log("PLUGIN " << plugin->get_name()
+					<< " NOT AUTHORISED FOR PM TO: " << msg.get_nickname());
+		}
+		catch(const std::exception& e)
+		{
+			log("E: from plugin: " << plugin->get_name() << ": " << e.what());
+		}
 	}
 }
-
 str IrcBot::help(const str& cmd) const
 {
-	bug_func();
+	bug_fun();
 	if(commands.count(cmd))// != commands.end())
 		return commands.at(cmd)->help(cmd);
 
@@ -1407,7 +1413,7 @@ void exec_reply(std::ostream* os, const str& msg)
 
 void IrcBot::exec(const std::string& cmd, std::ostream* os)
 {
-	bug_func();
+	bug_fun();
 	bug_var(cmd);
 	bug_var(os);
 	str line = cmd;
@@ -1665,7 +1671,7 @@ bool IrcBot::wild_match(const str& w, const str& s, int flags) const
 
 //void IrcBot::console()
 //{
-//	bug_func();
+//	bug_fun();
 //	std::istream& is = this->is ? *this->is : std::cin;
 //	std::ostream& os = this->os ? *this->os : std::cout;
 //
@@ -1714,7 +1720,7 @@ bool IrcBot::wild_match(const str& w, const str& s, int flags) const
 
 void IrcBot::pinger()
 {
-	bug_func();
+	bug_fun();
 	log("Pinger started:");
 	while(!done && irc)
 	{

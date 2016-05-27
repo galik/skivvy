@@ -11,7 +11,7 @@ WITH="$WITH --with-ncurses=${MAKE_NCURSES:-no}"
 
 export PKG_CONFIG_PATH="$LIBDIR/pkgconfig"
 
-export CXXFLAGS="-g3 -O0 -D DEBUG"
+export CXXFLAGS="-g3 -O0 -D DEBUG -U NDEBUG"
 
 rm -fr $top_dir/build-debug
 mkdir -p $top_dir/build-debug

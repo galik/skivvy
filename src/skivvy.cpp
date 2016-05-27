@@ -47,7 +47,7 @@ using namespace sookee::log;
 
 int main(int argc, char* argv[])
 {
-	bug_func();
+	bug_fun();
 
 	str_vec args(argv + 1, argv + argc);
 

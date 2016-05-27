@@ -101,7 +101,7 @@ str unescaped(const str& cs);
 template<typename Container>
 std::ostream& write_container(std::ostream& os, const Container& container)
 {
-//	bug_func();
+//	bug_fun();
 	os << '{';
 	str s;
 	for(auto i: container)
@@ -120,14 +120,14 @@ std::ostream& write_container(std::ostream& os, const Container& container)
 template<typename T>
 std::istream& extract(std::istream& is, T& t)
 {
-//	bug_func();
+//	bug_fun();
 	return is >> t;
 }
 
 template<typename T>
 std::istream& extract(std::istream&& is, T& t)
 {
-//	bug_func();
+//	bug_fun();
 	return extract(is, t);
 }
 
@@ -139,7 +139,7 @@ std::istream& extract(std::istream&& is, str& s);
 template<typename Container>
 std::istream& read_container(std::istream& is, Container& container)
 {
-//	bug_func();
+//	bug_fun();
 	container.clear();
 	str skip, line;
 	if(!getobject(is, line))
@@ -163,7 +163,7 @@ std::istream& read_container(std::istream& is, Container& container)
 template<typename K, typename V>
 std::ostream& operator<<(std::ostream& os, const std::pair<K, V>& p)
 {
-//	bug_func();
+//	bug_fun();
 	K key;
 	V val;
 	key = p.first;
@@ -177,7 +177,7 @@ std::ostream& operator<<(std::ostream& os, const std::pair<K, V>& p)
 template<typename K, typename V>
 std::ostream& operator<<(std::ostream& os, const std::map<K, V>& m)
 {
-//	bug_func();
+//	bug_fun();
 	os << "{";
 	for(const std::pair<K, V>& p: m)
 		os << p;
@@ -189,7 +189,7 @@ std::ostream& operator<<(std::ostream& os, const std::map<K, V>& m)
 template<typename K, typename V>
 std::istream& operator>>(std::istream& is, std::pair<K, V>& p)
 {
-//	bug_func();
+//	bug_fun();
 	str skip, line, key, val;
 	if(!getobject(is, line))
 		is.clear(is.rdstate() | std::ios::failbit); // protocol error
@@ -215,7 +215,7 @@ std::istream& operator>>(std::istream& is, std::pair<K, V>& p)
 template<typename K, typename V>
 std::istream& operator>>(std::istream& is, std::map<K, V>& m)
 {
-//	bug_func();
+//	bug_fun();
 	str skip, line;
 	if(!getobject(is, line))
 		is.clear(is.rdstate() | std::ios::failbit); // protocol error
@@ -478,18 +478,16 @@ class BackupStore
 private:
 	static const str VERSION_KEY;
 
+	std::unique_lock<std::mutex> move_lock;
 	mutable std::mutex mtx;
 	const str file;
 
 	void load()
 	{
-		static str line, k, v;
-		static std::ifstream ifs;
-		static std::istringstream iss;
+		thread_local static str line, k, v;
+		thread_local static std::istringstream iss;
 
-		ifs.open(file);
-
-		if(ifs)
+		if(auto ifs = std::ifstream(file))
 		{
 			store.clear();
 			while(std::getline(ifs, line))
@@ -503,27 +501,32 @@ private:
 					store[k].push_back(v);
 			}
 		}
-		ifs.close();
 	}
 
 	void save()
 	{
-		static std::ofstream ofs;
-
-		ofs.open(file);
-		if(ofs)
+		if(auto ofs = std::ofstream(file))
+		{
 			for(const auto& p: store)
 				for(const str& v: p.second)
 					ofs << p.first << ": " << v << '\n';
-		ofs.close();
+		}
+		else
+		{
+			throw std::runtime_error("Unable to save store: " + file + " " + std::strerror(errno));
+		}
 	}
 
 public:
+	BackupStore(BackupStore&& bs)
+	: move_lock(bs.mtx), file(std::move(bs.file))
+	{
+		move_lock.unlock();
+	}
+
 	BackupStore(const str& file): file(file)
 	{
 		reload();
-//		if(store[VERSION_KEY].empty())
-//			store[VERSION_KEY].push_back("0.0");
 	}
 
 	void reload()
@@ -534,14 +537,6 @@ public:
 
 	str_set get_keys_if_pcre(const str& reg) override
 	{
-//		str_set res;
-//		lock_guard lock(mtx);
-//		if(store.empty())
-//			load();
-//		for(const auto& p: store)
-//			if(pcre_match(reg, p.first))
-//				res.insert(p.first);
-//		return res;
 		log("WARN: deprecated function use: get_keys_if_sreg()");
 		return get_keys_if_sreg(reg);
 	}

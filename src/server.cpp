@@ -97,7 +97,7 @@ server::~server()
 
 void server::insert(int cs)
 {
-	bug_func();
+	bug_fun();
 	lock_guard lock(mtx);
 	bug("adding...");
 	pool.push_back(proc{cs, std::async(std::launch::async, func, cs)});
@@ -128,7 +128,7 @@ const std::chrono::seconds ONE_SECOND(1);
 
 void server::clean()
 {
-	bug_func();
+	bug_fun();
 	while(!done || !pool.empty())
 	{
 		bug("waiting...");

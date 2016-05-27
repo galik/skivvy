@@ -43,7 +43,7 @@ using namespace sookee::bug;
 #define QUOTE(s) #s
 #define bug_msg(m) do{printmsg(sookee::bug::out(), (m));}while(false)
 #define BUG_COMMAND(m) \
-bug_func(); \
+bug_fun(); \
 bug("//---------------------------------------------------"); \
 bug_msg(msg); \
 bug("//---------------------------------------------------")

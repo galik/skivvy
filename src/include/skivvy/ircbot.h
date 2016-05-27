@@ -60,8 +60,8 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <dlfcn.h>
 #include <fnmatch.h>
 
-#define _final_ final
-#define _override_ override
+//#define _final_ final
+//#define _override_ override
 
 namespace skivvy { namespace ircbot {
 
@@ -944,27 +944,10 @@ private:
 public:
 	IrcBotPluginHandle get_plugin_handle(const str& id)
 	{
-		bug_func();
+		bug_fun();
 		bug_var(id);
 		return IrcBotPluginHandle(*this, id);
 	}
-
-//	template<typename Plugin>
-//	std::shared_ptr<Plugin> get_typed_plugin(const str& id)
-//	{
-//		for(IrcBotPluginSPtr plugin: plugins)
-//			if(plugin->get_id() == id)
-//				return std::shared_ptr<Plugin>(dynamic_cast<Plugin*>(plugin.get()));
-//		return std::shared_ptr<Plugin>(0);
-//	}
-//
-//	template<typename Plugin>
-//	IrcBotPluginHandle<Plugin> get_plugin_handle(const str& id)
-//	{
-//		bug_func();
-//		bug_var(id);
-//		return IrcBotPluginHandle<Plugin>(*this, id);
-//	}
 
 	/**
 	 * Add channel to the list of channels

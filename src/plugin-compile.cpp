@@ -203,7 +203,7 @@ str CompileIrcBotPlugin::get_version() const { return VERSION; }
 
 void CompileIrcBotPlugin::exit()
 {
-//	bug_func();
+//	bug_fun();
 }
 
 // INTERFACE: IrcBotMonitor

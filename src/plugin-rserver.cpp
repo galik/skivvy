@@ -71,7 +71,7 @@ RServerIrcBotPlugin::~RServerIrcBotPlugin() {}
 
 bool RServerIrcBotPlugin::bind()//port p, const std::string& iface)
 {
-	bug_func();
+	bug_fun();
 	port p = bot.get(RSERVER_PORT, RSERVER_PORT_DEFAULT);
 	str host = bot.get(RSERVER_HOST, RSERVER_HOST_DEFAULT);
 	sockaddr_in addr;
@@ -84,7 +84,7 @@ bool RServerIrcBotPlugin::bind()//port p, const std::string& iface)
 
 bool RServerIrcBotPlugin::listen()//port p)
 {
-	bug_func();
+	bug_fun();
 	if(!bind())
 	{
 		log("ERROR: " << std::strerror(errno));
@@ -153,7 +153,7 @@ void RServerIrcBotPlugin::off(const message& msg)
 
 bool RServerIrcBotPlugin::initialize()
 {
-	bug_func();
+	bug_fun();
 	con = std::async(std::launch::async, [&]{ listen(); });
 	return true;
 }

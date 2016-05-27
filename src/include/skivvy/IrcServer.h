@@ -282,30 +282,32 @@ class BasicRemoteIrcServer
 {
 private:
 	std::mutex mtx_ss;
-	skivvy::net::socketstream ss;
-//	SocketStream ss; TODO: PUT THIS BACK
+//	skivvy::net::socketstream ss;
+	SocketStream ss; //TODO: PUT THIS BACK
 
 public:
 	bool send_unlogged(const str& cmd)
 	{
 		lock_guard lock(mtx_ss);
 		ss << cmd.substr(0, 510) << "\r\n" << std::flush;
-		if(ss.fail())
-			log("ERROR: send failed:");
-		return ss.fail();
+		if(ss)
+			return true;
+		return false;
 	}
 
 	bool connect(const str& host, long port)
 	{
 		ss.clear();
-		ss.open(host, port);
-		return ss.fail();
+		if(ss.open(host, port))
+			return true;
+		return false;
 	}
 
 	bool receive(str& line)
 	{
-		std::getline(ss, line);
-		return ss.fail();
+		if(std::getline(ss, line))
+			return true;
+		return false;
 	}
 };
 

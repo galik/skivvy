@@ -56,7 +56,7 @@ using namespace skivvy::string;
 
 std::istream& operator>>(std::istream& is, question& q)
 {
-	bug_func();
+	bug_fun();
 	q.q.clear();
 	q.a.clear();
 	q.i.clear();
@@ -83,7 +83,7 @@ std::istream& operator>>(std::istream& is, question& q)
 
 bool get_http(const str& url, str& html)
 {
-//	bug_func();
+//	bug_fun();
 	// http://my.ip.com[:port]/path/to/resource
 	static net::cookie_jar cookies;
 
@@ -157,7 +157,7 @@ bool get_http(const str& url, str& html)
 
 bool get_onlinequizarea_quiz()
 {
-	bug_func();
+	bug_fun();
 	const str URL_PREFIX = "http://www.onlinequizarea.com/multiple-choice/general-knowledge-quiz/start/added&next=";
 	const str URL_SUFFIX = "/32/1/";
 	const str LOC = "question_and_answer_quizzes.php?";

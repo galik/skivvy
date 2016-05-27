@@ -50,7 +50,7 @@ std::istream& operator>>(std::istream& is, std::pair<K, V>& p)
 template<typename Param>
 Param copy_container(const Param& p, Param& rp)
 {
-	bug_func();
+	bug_fun();
 	Param ret = p;
 	rp = p;
 	return ret;
@@ -62,7 +62,7 @@ typedef std::vector<std::string> str_vector;
 template<typename Param>
 bool rpc(call& c)
 {
-	bug_func();
+	bug_fun();
 	std::string func = c.get_func();
 	if(func == "copy_container")
 	{
@@ -79,7 +79,7 @@ bool rpc(call& c)
 template<typename Param>
 Param rpc_copy_container(const Param& p, Param& rp)
 {
-	bug_func();
+	bug_fun();
 	local_call c;
 	c.set_func("copy_container");
 	c.add_param(p);

@@ -87,7 +87,7 @@ void call::get_return_param<std::string>(std::string& t)
 template<>
 std::istream& inputter<std::string>(std::istream& is, std::string& t)
 {
-//	bug_func();
+//	bug_fun();
 	return std::getline(is, t);
 }
 

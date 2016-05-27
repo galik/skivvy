@@ -25,7 +25,7 @@ AC_INIT([skivvy],[0.4.0],[oasookee@gmail.com],[skivvy])
 AC_CONFIG_SRCDIR([src/test.cpp])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
-AC_CONFIG_AUX_DIR([aux])
+AC_CONFIG_AUX_DIR([aux-bits])
 
 AM_INIT_AUTOMAKE([1.10 foreign])
 AM_SILENT_RULES
