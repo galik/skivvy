@@ -117,7 +117,10 @@ BasicIrcBotPlugin::BasicIrcBotPlugin(IrcBot& bot)
 
 BasicIrcBotPlugin::~BasicIrcBotPlugin() {}
 
-void BasicIrcBotPlugin::add(const action& a) { actions.insert(action_pair{a.cmd, a}); }
+void BasicIrcBotPlugin::add(const action& a)
+{
+	actions.insert(action_pair{a.cmd, a});
+}
 
 bool BasicIrcBotPlugin::init()
 {
@@ -158,103 +161,103 @@ str BasicIrcBotPlugin::help(const str& cmd) const
 	return actions.at(cmd).help;
 }
 
-bool ManagedIrcBotPlugin::init()
-{
-	if(!(irc = bot.get_irc_server()))
-		return false;
-	actions.clear();
-	return initialize();
-}
-
 // ManagedIrcBotPlugin ========================
 
-ManagedIrcBotPlugin::ManagedIrcBotPlugin(IrcBot& bot)
-: bot(bot), irc(0)
-{
-}
-
-ManagedIrcBotPlugin::~ManagedIrcBotPlugin() {}
-
-void ManagedIrcBotPlugin::add(const str& trigger, const str& alias, const str& help, action_func func)
-{
-	actions[trigger] = func;
-	infos[trigger] = {alias, help};
-	str word_key = get_trigger_key("word", trigger);
-	for(auto&& a: bot.get_vec(word_key, alias))
-		aliases[a] = trigger;
-}
-
-str_vec ManagedIrcBotPlugin::list() const
-{
-	str_vec aliases;
-	decltype(infos.begin()) inf;
-	for(auto&& action: actions)
-	{
-		bug_var(action.first);
-		if((inf = infos.find(action.first)) == infos.end())
-			continue;
-		bug_var(inf->first);
-		str word_key = get_trigger_key("word", action.first);
-		bug_var(word_key);
-		for(auto&& alias: bot.get_vec(word_key, inf->second.alias))
-		{
-			bug_var(alias);
-			aliases.push_back(alias);
-		}
-	}
-	return aliases;
-}
-
-str ManagedIrcBotPlugin::help(const str& cmd) const
-{
-	// cmd is an alias
-	auto a = aliases.find(cmd);
-	if(a == aliases.end())
-	{
-		log("ERROR: unknown command alias: " << cmd);
-		return {};
-	}
-
-	auto i = infos.find(a->second);
-	if(i == infos.end())
-	{
-		log("ERROR: unknown command trigger: " << a->second);
-		return {};
-	}
-
-	str h;
-	str sep;
-	str help_key = get_trigger_key("help", i->first);
-	for(auto&& help: bot.get_vec(help_key, i->second.help))
-	{
-		replace(help, "\\t", "\t");
-		replace(help, "\\n", "\n");
-		replace(help, "\\s", "  ");
-		h += sep + cmd + " " + help;
-		sep = "\n";
-	}
-	return h;
-}
-
-void ManagedIrcBotPlugin::execute(const str& cmd, const message& msg)
-{
-	// cmd is an alias
-	auto a = aliases.find(cmd);
-	if(a == aliases.end())
-	{
-		log("ERROR: unknon command alias: " << cmd);
-		return;
-	}
-
-	auto f = actions.find(a->second);
-	if(f == actions.end())
-	{
-		log("ERROR: unknown command trigger: " << a->second);
-		return;
-	}
-
-	f->second(msg);
-}
+//bool ManagedIrcBotPlugin::init()
+//{
+//	if(!(irc = bot.get_irc_server()))
+//		return false;
+//	actions.clear();
+//	return initialize();
+//}
+//
+//ManagedIrcBotPlugin::ManagedIrcBotPlugin(IrcBot& bot)
+//: bot(bot), irc(0)
+//{
+//}
+//
+//ManagedIrcBotPlugin::~ManagedIrcBotPlugin() {}
+//
+//void ManagedIrcBotPlugin::add(const str& trigger, const str& alias, const str& help, action_func func)
+//{
+//	actions[trigger] = func;
+//	infos[trigger] = {alias, help};
+//	str word_key = get_trigger_key("word", trigger);
+//	for(auto&& a: bot.get_vec(word_key, alias))
+//		aliases[a] = trigger;
+//}
+//
+//str_vec ManagedIrcBotPlugin::list() const
+//{
+//	str_vec aliases;
+//	decltype(infos.begin()) inf;
+//	for(auto&& action: actions)
+//	{
+//		bug_var(action.first);
+//		if((inf = infos.find(action.first)) == infos.end())
+//			continue;
+//		bug_var(inf->first);
+//		str word_key = get_trigger_key("word", action.first);
+//		bug_var(word_key);
+//		for(auto&& alias: bot.get_vec(word_key, inf->second.alias))
+//		{
+//			bug_var(alias);
+//			aliases.push_back(alias);
+//		}
+//	}
+//	return aliases;
+//}
+//
+//str ManagedIrcBotPlugin::help(const str& cmd) const
+//{
+//	// cmd is an alias
+//	auto a = aliases.find(cmd);
+//	if(a == aliases.end())
+//	{
+//		log("ERROR: unknown command alias: " << cmd);
+//		return {};
+//	}
+//
+//	auto i = infos.find(a->second);
+//	if(i == infos.end())
+//	{
+//		log("ERROR: unknown command trigger: " << a->second);
+//		return {};
+//	}
+//
+//	str h;
+//	str sep;
+//	str help_key = get_trigger_key("help", i->first);
+//	for(auto&& help: bot.get_vec(help_key, i->second.help))
+//	{
+//		replace(help, "\\t", "\t");
+//		replace(help, "\\n", "\n");
+//		replace(help, "\\s", "  ");
+//		h += sep + cmd + " " + help;
+//		sep = "\n";
+//	}
+//	return h;
+//}
+//
+//void ManagedIrcBotPlugin::execute(const str& cmd, const message& msg)
+//{
+//	// cmd is an alias
+//	auto a = aliases.find(cmd);
+//	if(a == aliases.end())
+//	{
+//		log("ERROR: unknon command alias: " << cmd);
+//		return;
+//	}
+//
+//	auto f = actions.find(a->second);
+//	if(f == actions.end())
+//	{
+//		log("ERROR: unknown command trigger: " << a->second);
+//		return;
+//	}
+//
+//	f->second(msg);
+//}
 
 // =======================================================================
 
@@ -419,6 +422,14 @@ std::istream& load_props(std::istream& is, IrcBot& bot, str_map& vars, str& pref
 			bot.info.mode = val;
 		else if(key == "real")
 			bot.info.real = val;
+//		else if(key == "plugin.alias")
+//		{
+//
+//		}
+//		else if(key == "channel.alias")
+//		{
+//
+//		}
 		else if(key == "include")
 		{
 			log("INFO: include: " << val);
@@ -560,11 +571,22 @@ bool IrcBot::cmd_error_pm(const message& msg, const str& text, bool rv)
 	return rv;
 }
 
-str IrcBot::locate_file(const str& name) const
+str safe_home()
+{
+	auto HOME = std::getenv("HOME");
+	return HOME ? HOME : "";
+}
+
+str IrcBot::locate_config_dir() const
+{
+	return get(DATA_DIR, safe_home() + "/" + ".skivvy");
+}
+
+str IrcBot::locate_config_file(const str& name) const
 {
 	if(name.empty() || name[0] == '/')
 		return name;
-	return get(DATA_DIR, str(std::getenv("HOME")) + "/" + ".skivvy") + "/" + name;
+	return locate_config_dir() + "/" + name;
 }
 
 // INTERFACE: IrcBotPlugin
@@ -621,6 +643,9 @@ void IrcBot::load_plugins()
 	// We need to try exhaustively to load each plugin in turn
 	// in order to respect dependencies.
 
+	// We can't load two plugins with the same id
+	str_set ids;
+
 	for(const str& line: pv)
 	{
 		//bug_var(line);
@@ -646,6 +671,14 @@ void IrcBot::load_plugins()
 			{
 				log("Failed to load: " << p);
 				continue;
+			}
+
+			// Ensure unique id
+			if(!ids.insert(plugin->get_id()).second)
+			{
+				log("E: Duplicate plugin id: " << plugin->get_id());
+				del_plugin(plugin->get_id());
+				break;
 			}
 
 			// // ("#channel"|"*"|"PM") -> {{ {"plugin#1", "prefix1"}, {"plugin#2", "prefix2"} }
@@ -724,6 +757,9 @@ bool IrcBot::init(const str& config_file)
 	}
 
 	config_loaded = std::time(0);
+
+	// aliases
+
 
 	// =====================================
 	// CREATE CRITICAL RESOURCES

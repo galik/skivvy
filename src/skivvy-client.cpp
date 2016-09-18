@@ -118,7 +118,7 @@ public:
 
 		input.reset(readline(shell_prompt.c_str()));
 
-		while(input && trim(line = input.get()) != "exit")
+		while(line != "/die" && input && trim(line = input.get()) != "exit")
 		{
 			if(!line.empty())
 			{
@@ -129,8 +129,9 @@ public:
 					prev = line;
 				}
 
-				if(send(line, line) && !trim(line).empty())
-					os << line << std::endl;
+				str res;
+				if(send(line, res) && !trim(res).empty())
+					os << res << std::endl;
 
 				if(send("/botnick", name))
 					shell_prompt = "<" + name + ">: ";

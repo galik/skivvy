@@ -56,8 +56,8 @@ using namespace sookee::types;
 using namespace skivvy::utils;
 using namespace skivvy::string;
 
-const str RSERVER_PORT = "rserver.port";
-const RServerIrcBotPlugin::port RSERVER_PORT_DEFAULT = 7334L;
+const str PORT_KEY = "rserver.port";
+const RServerIrcBotPlugin::port PORT_VAL = 7334L;
 const str RSERVER_HOST = "rserver.host";
 const str RSERVER_HOST_DEFAULT = "0.0.0.0";
 
@@ -72,7 +72,7 @@ RServerIrcBotPlugin::~RServerIrcBotPlugin() {}
 bool RServerIrcBotPlugin::bind()//port p, const std::string& iface)
 {
 	bug_fun();
-	port p = bot.get(RSERVER_PORT, RSERVER_PORT_DEFAULT);
+	port p = bot.get(PORT_KEY, PORT_VAL);
 	str host = bot.get(RSERVER_HOST, RSERVER_HOST_DEFAULT);
 	sockaddr_in addr;
 	std::memset(&addr, 0, sizeof(addr));

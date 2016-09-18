@@ -1,6 +1,5 @@
-#pragma once
-#ifndef _SKIVVY_MESSAGE_H__
-#define _SKIVVY_MESSAGE_H__
+#ifndef SKIVVY_MESSAGE_H
+#define SKIVVY_MESSAGE_H
 
 /*
  * ircbot.h
@@ -294,7 +293,6 @@ public:
 		return msg.parse(line);
 	}
 
-
 	/**
 	 * deserialize
 	 */
@@ -323,4 +321,4 @@ void bug_message(const std::string& K, const std::string& V, const message& msg)
 #endif
 }} // skivvy::ircbot
 
-#endif // _SKIVVY_MESSAGE_H__
+#endif // SKIVVY_MESSAGE_H

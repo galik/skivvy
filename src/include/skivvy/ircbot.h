@@ -32,6 +32,8 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 '-----------------------------------------------------------------*/
 
+#include <experimental/filesystem>
+
 #include <sookee/socketstream.h>
 #include <skivvy/socketstream.h> // TODO: REMOVE THIS!!!
 #include <sookee/ssl_socketstream.h>
@@ -60,8 +62,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <dlfcn.h>
 #include <fnmatch.h>
 
-//#define _final_ final
-//#define _override_ override
+namespace fs = std::experimental::filesystem;
 
 namespace skivvy { namespace ircbot {
 
@@ -465,111 +466,111 @@ public:
 	virtual void exit() = 0;
 };
 
-class ManagedIrcBotPlugin
-: public IrcBotPlugin
-{
-public:
-	typedef std::function<void(const message& msg)> action_func;
-	typedef std::map<str, action_func> action_map;
-
-private:
-	str get_trigger_key(const str& part, const str& trigger) const
-	{
-		return get_id() + ".trigger." + part + "." + trigger;
-	}
-
-protected:
-	IrcBot& bot;
-	IrcServer* irc = nullptr;
-
-	struct info
-	{
-		str alias; // default alias
-		str help; // default help
-	};
-
-	using info_map = std::map<str, info>;
-
-	action_map actions; // trigger -> action_func
-	info_map infos; // trigger -> {alias, help}
-	str_map aliases; // alias -> trigger
-
-	void add(const str& trigger, const str& alias, const str& help, action_func func);
-
-public:
-	ManagedIrcBotPlugin(IrcBot& bot);
-	virtual ~ManagedIrcBotPlugin();
-
-	/**
-	 * Implementing bots must override this function
-	 * to initialize themselves.
-	 *
-	 * This is where the bot should
-	 * check for the presence of plugins
-	 * that it depends on.
-	 *
-	 * Also action objects should be registered in this function
-	 * by calling void add():
-	 *
-	 * add
-	 * ({
-	 *     "trigger"
-	 *     , "default alias" // !alarm
-	 *     , "default help" // Does stuff
-	 *     , [&](const message& msg){ do_command(msg); }
-	 * });
-	 *
-	 * Where do_command(const message& msg) is the function that
-	 * actually performs the command.
-	 *
-	 * @return false on failure
-	 */
-	virtual bool initialize() = 0;
-
-	// INTERFACE: IrcBotPlugin DON'T Override
-
-	/**
-	 * Implementing classes should not override this
-	 * function. This class provides its own implementation
-	 * which calls the pure virtual function
-	 * BasicIrcBotPlugin::initialize(). Implementations
-	 * should override that instead.
-	 */
-	bool init() final override;
-
-	/**
-	 * Implementing classes should not override this
-	 * function. This class provides its own implementation
-	 * which supplies the return information from the list of
-	 * BasicIrcBotPlugin::action objects provided by calling
-	 * the void BasicIrcBotPlugin::add(const action& a) function.
-	 */
-	str_vec list() const final override;
-
-	/**
-	 * Implementing classes should not override this
-	 * function. This class provides its own implementation
-	 * which calls the relevant std::function from the list of
-	 * BasicIrcBotPlugin::action objects provided by calling
-	 * the void BasicIrcBotPlugin::add(const action& a) function.
-	 */
-	virtual void execute(const str& cmd, const message& msg) final;
-
-	/**
-	 * Implementing classes should not override this
-	 * function. This class provides its own implementation
-	 * which supplies the return information from the list of
-	 * BasicIrcBotPlugin::action objects provided by calling
-	 * the void BasicIrcBotPlugin::add(const action& a) function.
-	 */
-	virtual str help(const str& cmd) const final;
-
-	virtual str get_id() const = 0;
-	virtual str get_name() const = 0;
-	virtual str get_version() const = 0;
-
-	virtual void exit() = 0;
-};
+//class ManagedIrcBotPlugin
+//: public IrcBotPlugin
+//{
+//public:
+//	typedef std::function<void(const message& msg)> action_func;
+//	typedef std::map<str, action_func> action_map;
+//
+//private:
+//	str get_trigger_key(const str& part, const str& trigger) const
+//	{
+//		return get_id() + ".trigger." + part + "." + trigger;
+//	}
+//
+//protected:
+//	IrcBot& bot;
+//	IrcServer* irc = nullptr;
+//
+//	struct info
+//	{
+//		str alias; // default alias
+//		str help; // default help
+//	};
+//
+//	using info_map = std::map<str, info>;
+//
+//	action_map actions; // trigger -> action_func
+//	info_map infos; // trigger -> {alias, help}
+//	str_map aliases; // alias -> trigger
+//
+//	void add(const str& trigger, const str& alias, const str& help, action_func func);
+//
+//public:
+//	ManagedIrcBotPlugin(IrcBot& bot);
+//	virtual ~ManagedIrcBotPlugin();
+//
+//	/**
+//	 * Implementing bots must override this function
+//	 * to initialize themselves.
+//	 *
+//	 * This is where the bot should
+//	 * check for the presence of plugins
+//	 * that it depends on.
+//	 *
+//	 * Also action objects should be registered in this function
+//	 * by calling void add():
+//	 *
+//	 * add
+//	 * ({
+//	 *     "trigger"
+//	 *     , "default alias" // !alarm
+//	 *     , "default help" // Does stuff
+//	 *     , [&](const message& msg){ do_command(msg); }
+//	 * });
+//	 *
+//	 * Where do_command(const message& msg) is the function that
+//	 * actually performs the command.
+//	 *
+//	 * @return false on failure
+//	 */
+//	virtual bool initialize() = 0;
+//
+//	// INTERFACE: IrcBotPlugin DON'T Override
+//
+//	/**
+//	 * Implementing classes should not override this
+//	 * function. This class provides its own implementation
+//	 * which calls the pure virtual function
+//	 * BasicIrcBotPlugin::initialize(). Implementations
+//	 * should override that instead.
+//	 */
+//	bool init() final override;
+//
+//	/**
+//	 * Implementing classes should not override this
+//	 * function. This class provides its own implementation
+//	 * which supplies the return information from the list of
+//	 * BasicIrcBotPlugin::action objects provided by calling
+//	 * the void BasicIrcBotPlugin::add(const action& a) function.
+//	 */
+//	str_vec list() const final override;
+//
+//	/**
+//	 * Implementing classes should not override this
+//	 * function. This class provides its own implementation
+//	 * which calls the relevant std::function from the list of
+//	 * BasicIrcBotPlugin::action objects provided by calling
+//	 * the void BasicIrcBotPlugin::add(const action& a) function.
+//	 */
+//	virtual void execute(const str& cmd, const message& msg) final;
+//
+//	/**
+//	 * Implementing classes should not override this
+//	 * function. This class provides its own implementation
+//	 * which supplies the return information from the list of
+//	 * BasicIrcBotPlugin::action objects provided by calling
+//	 * the void BasicIrcBotPlugin::add(const action& a) function.
+//	 */
+//	virtual str help(const str& cmd) const final;
+//
+//	virtual str get_id() const = 0;
+//	virtual str get_name() const = 0;
+//	virtual str get_version() const = 0;
+//
+//	virtual void exit() = 0;
+//};
 
 /**
  * The plugin implementation source should
@@ -586,10 +587,10 @@ public:
 
 #define IRC_BOT_PLUGIN(name) \
 extern "C" \
-IrcBotPluginRPtr skivvy_ircbot_factory(IrcBot& bot) \
+skivvy::ircbot::IrcBotPluginRPtr skivvy_ircbot_factory(skivvy::ircbot::IrcBot& bot) \
 { \
 	return new name(bot); \
-} struct _missing_semicolon_{}
+} struct _missing_semicolon_
 
 /**
  * Deals with all the dynamic loading jiggery pokery.
@@ -714,6 +715,29 @@ private:
 	command_map commands; // str -> IrcBotPluginRPtr
 	// str -> { str -> IrcBotPluginPtr } // channel -> ( cmd -> plugin }
 
+//	/*
+//	 * plugin_aliases is build by reading the config and
+//	 * each "plugin.alias: plugin_id:!cmd !alias1 !alias2"
+//	 * is converted into a set of entries in plugin_aliases,
+//	 * one for each alias associated with a given cmd of the form:
+//	 *
+//	 * plugin_id:!cmd !alias1 !alias2
+//	 *
+//	 * When a plugin registers with command <cmd> that <cmd>
+//	 * is looked up in the plugin_aliases and translated into
+//	 * <alias1> <alias2> which are placed in command_map commands
+//	 * against the same action function.
+//	 */
+//	str_map plugin_aliases; // "plugin:cmd" -> "alias"
+//
+//	/*
+//	 * When a command <cmd> arrives at the bot, it applies
+//	 * the channel_aliases to it producing <alias>.
+//	 *
+//	 * That <alias> is used to access command_map commands.
+//	 */
+//	str_map channel_aliases; // "plugin:cmd" -> "alias"
+
 //	command_map channels; //
 //	ban_set banned;
 	property_map props;
@@ -756,7 +780,8 @@ private:
 //	str host;
 //	siz port;
 
-	str locate_file(const str& name) const;
+	str locate_config_dir() const;
+	str locate_config_file(const str& name) const;
 
 	time_t config_loaded;
 	time_t plugin_loaded;
@@ -860,12 +885,12 @@ public:
 	 */
 	str getf(const str& s, const str& dflt = "") const
 	{
-		return locate_file(get(s, dflt));
+		return locate_config_file(get(s, dflt));
 	}
 
 	str get_data_folder() const
 	{
-		return get(DATA_DIR, str(std::getenv("HOME")) + "/" + ".skivvy");
+		return locate_config_dir();
 	}
 
 	str_vec get_vec(const str& s) const

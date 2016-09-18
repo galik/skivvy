@@ -119,7 +119,7 @@ libskivvy_la_LDFLAGS = -version-info 0:0:0 --enable-new-dtags
 bin_PROGRAMS = skivvy skivvy-client
 
 skivvy_SOURCES = skivvy.cpp
-skivvy_LDADD = -ldl -lskivvy $(SOOKEE_LIBS) $(OPENSSL_LIBS)
+skivvy_LDADD = -ldl -lskivvy $(SOOKEE_LIBS) $(OPENSSL_LIBS) -lstdc++fs
 skivvy_LDFLAGS = -Wl,-E --enable-new-dtags
 
 skivvy_client_SOURCES = skivvy-client.cpp

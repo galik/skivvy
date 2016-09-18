@@ -257,6 +257,9 @@ std::ostream& operator<<(std::ostream& os, const std::vector<T>& vec)
 
 class Store
 {
+public:
+	using UPtr = std::unique_ptr<Store>;
+
 protected:
 
 	static bool pcre_match(const str& r, const str& s, bool full = false)

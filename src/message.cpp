@@ -59,8 +59,6 @@ std::ostream& operator<<(std::ostream& os, const message& m)
 	return os << '{' << escaped(m.line) << '}';
 }
 
-
-
 bool message::from_channel() const
 {
 	str_vec params = get_params();
