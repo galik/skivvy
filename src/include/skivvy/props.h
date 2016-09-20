@@ -82,7 +82,7 @@ public:
 
 	virtual str get(const str& s, const str& dflt = "") const
 	{
-		bug_func();
+		bug_fun();
 
 		property_citer ci;
 		lock_guard lock(mtx);
@@ -96,7 +96,7 @@ public:
 
 	virtual void set(const str& s, const str& v)
 	{
-		bug_func();
+		bug_fun();
 		lock_guard lock(mtx);
 		t[s] = v;
 	}
@@ -131,7 +131,7 @@ public:
 	template<typename T>
 	T get(const str& s, const T& dflt = T()) const
 	{
-		bug_func();
+		bug_fun();
 		T t;
 		if(std::istringstream(props.get(s)) >> std::boolalpha >> t)
 			return t;
@@ -147,7 +147,7 @@ public:
 	template<typename Container>
 	Container get_c(const str& s, const Container& dflt = Container()) const
 	{
-		bug_func();
+		bug_fun();
 		str line;
 		Container c;
 		typename Container::value_type t;
@@ -164,7 +164,7 @@ public:
 	template<typename T>
 	void set(const str& s, const T& t)
 	{
-		bug_func();
+		bug_fun();
 		std::ostringstream oss;
 		oss << t;
 		props.set(s, oss.str());

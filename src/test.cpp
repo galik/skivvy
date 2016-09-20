@@ -22,7 +22,7 @@ using namespace skivvy::ircbot;
 
 //bool preg_match(const str& s, const str& r)
 //{
-//	bug_func();
+//	bug_fun();
 //	using namespace boost;
 //
 ////	regex reg(r, regex::perl | regex::icase);
@@ -36,7 +36,7 @@ using namespace skivvy::ircbot;
 //
 //bool preg_match(const str& s, const str& r, str_vec& matches)
 //{
-//	bug_func();
+//	bug_fun();
 //	using namespace boost;
 //
 //	regex e(r, regex::perl | regex::icase);

@@ -1,6 +1,5 @@
-#pragma once
-#ifndef _SOOKEE_AI_GRAMMAR_H_
-#define _SOOKEE_AI_GRAMMAR_H_
+#ifndef SOOKEE_AI_GRAMMAR_H
+#define SOOKEE_AI_GRAMMAR_H
 
 /*
  * irc.h
@@ -76,4 +75,4 @@ class AI
 
 }} // sookee::ai
 
-#endif /* _SOOKEE_AI_GRAMMAR_H_ */
+#endif // SOOKEE_AI_GRAMMAR_H

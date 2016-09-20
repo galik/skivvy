@@ -19,3 +19,5 @@
 /build-release/
 /compile
 /m4/
+/aux/
+/aux-bits/

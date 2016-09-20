@@ -172,7 +172,7 @@ private:
 	bool done = false;
 	void async_queue()
 	{
-		bug_func();
+		bug_fun();
 		str line;
 		message msg;
 		while(!done && sgl(is, line))
@@ -261,7 +261,7 @@ public:
 
 	bool async_get_traffic(message& msg, siz timeout = 60)
 	{
-		bug_func();
+		bug_fun();
 		if(done)
 			return false;
 
@@ -289,7 +289,7 @@ public:
 
 	bool async_send(const str& m)
 	{
-		bug_func();
+		bug_fun();
 		os << m << "\r\n" << std::flush;
 		return os;
 	}

@@ -197,6 +197,12 @@ bool BaseIrcServer::reply_notice(const message& msg, const str& text)
 	return false;
 }
 
+bool BaseIrcServer::reply_pm_notice(const message& msg, const str& text)
+{
+	return notice(msg.get_nick(), text);
+}
+
+
 // REMOTE
 
 //bool BasicRemoteIrcServer::send_unlogged(const str& cmd)

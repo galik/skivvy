@@ -1,6 +1,5 @@
-#pragma once
-#ifndef _SKIVVY_MESSAGE_H__
-#define _SKIVVY_MESSAGE_H__
+#ifndef SKIVVY_MESSAGE_H
+#define SKIVVY_MESSAGE_H
 
 /*
  * ircbot.h
@@ -209,13 +208,50 @@ private:
 public:
 	// message    =  [ ":" prefix SPACE ] command [ params ] crlf
 	str line; // original message line
-	std::time_t when; // arrival time
+	std::time_t when = 0; // arrival time
 
 	str prefix;
 	str command;
 	str params;
 
-	message(): when(0) {}
+	message() noexcept {}
+	message(const message& msg) noexcept
+	: line(msg.line)
+	, when(msg.when)
+	, prefix(msg.prefix)
+	, command(msg.command)
+	, params(msg.params)
+	{
+	}
+
+	message(message&& msg) noexcept
+	: line(std::move(msg.line))
+	, when(msg.when)
+	, prefix(std::move(msg.prefix))
+	, command(std::move(msg.command))
+	, params(std::move(msg.params))
+	{
+	}
+
+	message& operator=(const message& msg)
+	{
+		line = msg.line;
+		when = msg.when;
+		prefix = msg.prefix;
+		command = msg.command;
+		params = msg.params;
+		return *this;
+	}
+
+	message& operator=(message&& msg)
+	{
+		line = std::move(msg.line);
+		when = msg.when;
+		prefix = std::move(msg.prefix);
+		command = std::move(msg.command);
+		params = std::move(msg.params);
+		return *this;
+	}
 
 	void clear()
 	{
@@ -257,7 +293,6 @@ public:
 		return msg.parse(line);
 	}
 
-
 	/**
 	 * deserialize
 	 */
@@ -286,4 +321,4 @@ void bug_message(const std::string& K, const std::string& V, const message& msg)
 #endif
 }} // skivvy::ircbot
 
-#endif // _SKIVVY_MESSAGE_H__
+#endif // SKIVVY_MESSAGE_H

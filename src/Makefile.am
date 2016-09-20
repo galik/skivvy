@@ -35,11 +35,11 @@ DEF_FLAGS = \
 	-D REVISION=\"$(shell git log -n 1 --pretty=format:%h|tr [:lower:] [:upper:])\" \
 	-D DEFAULT_PLUGIN_DIR=\"$(plugindir)\"
 
-GEN_FLAGS = -Wl,-E -Wfatal-errors -Wall -Wextra -Winit-self -ansi -pedantic -pthread \
+GEN_FLAGS = -Wl,-E -Wfatal-errors -Wall -Wextra -Winit-self -ansi -pedantic-errors -pthread \
 	-I$(top_srcdir)/src/include
 
 AM_CPPFLAGS = $(SOOKEE_CFLAGS) $(OPENSSL_CFLAGS)
-AM_CXXFLAGS = -std=gnu++11 $(GEN_FLAGS) $(DEF_FLAGS)
+AM_CXXFLAGS = $(GEN_FLAGS) $(DEF_FLAGS)
 
 skivvy_include_HEADERS = \
 	$(srcdir)/include/skivvy/ansi.h \
@@ -68,7 +68,7 @@ skivvy_include_HEADERS = \
 skivvy_include_bits_HEADERS = \
 	$(srcdir)/include/skivvy/bits/rpc.tcc
 
-BOTLIBS = -ldl -L$(builddir)/.libs -lskivvy $(PCRECPP_LIBS) $(SOOKEE_LIBS) 
+BOTLIBS = -ldl -L$(builddir)/.libs -lskivvy $(SOOKEE_LIBS) 
 # -Wl,-E is required for programs that load plugin's
 BOTFLAGS = -Wl,-E
 
@@ -95,7 +95,7 @@ libskivvy_la_SOURCES = \
 	utils.cpp
 	
 libskivvy_la_LIBADD = -L.libs $(SOOKEE_LIBS) $(OPENSSL_LIBS)
-libskivvy_la_LDFLAGS = -version-info 0:0:0
+libskivvy_la_LDFLAGS = -version-info 0:0:0 --enable-new-dtags
 
 # Development utils
 #noinst_PROGRAMS = \
@@ -119,8 +119,8 @@ libskivvy_la_LDFLAGS = -version-info 0:0:0
 bin_PROGRAMS = skivvy skivvy-client
 
 skivvy_SOURCES = skivvy.cpp
-skivvy_LDADD = -ldl -lskivvy $(PCRECPP_LIBS) $(SOOKEE_LIBS) $(OPENSSL_LIBS)
-skivvy_LDFLAGS = -Wl,-E
+skivvy_LDADD = -ldl -lskivvy $(SOOKEE_LIBS) $(OPENSSL_LIBS) -lstdc++fs
+skivvy_LDFLAGS = -Wl,-E --enable-new-dtags
 
 skivvy_client_SOURCES = skivvy-client.cpp
 skivvy_client_LDADD = $(BOTLIBS) -lreadline

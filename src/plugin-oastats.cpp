@@ -540,7 +540,7 @@ void OAStatsIrcBotPlugin::oastat(const message& msg)
 
 bool OAStatsIrcBotPlugin::rpc(rpc::call& c)
 {
-	bug_func();
+	bug_fun();
 	str func = c.get_func();
 	bug("func: " << func);
 	if(func == "get_oatop")
@@ -613,7 +613,7 @@ str dtos(double d, siz dp = 2)
 
 bool OAStatsIrcBotPlugin::get_oatop(const str& params, stats_vector& v)
 {
-	bug_func();
+	bug_fun();
 
 	v.clear();
 
@@ -790,7 +790,7 @@ const siz STATS_DIVIDIONS_DEFAULT = 4; // Top 4 divisions
 
 void OAStatsIrcBotPlugin::oastats_on(const message& msg)
 {
-	bug_func();
+	bug_fun();
 	siz delay = bot.get(STATS_DELAY, STATS_DELAY_DEFAULT);
 	timer.set_mindelay(delay);
 	timer.set_maxdelay(delay);
@@ -815,7 +815,7 @@ void OAStatsIrcBotPlugin::oastats_on(const message& msg)
 
 void OAStatsIrcBotPlugin::oastats_off(const message& msg)
 {
-	bug_func();
+	bug_fun();
 	lock_guard lock(channels_mtx);
 	channels.insert(msg.reply_to_cp());
 	if(timer.off(&(*channels.find(msg.reply_to_cp()))))

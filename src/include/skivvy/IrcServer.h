@@ -36,9 +36,12 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 #include <sookee/socketstream.h>
 #include <sookee/ssl_socketstream.h>
+#include <skivvy/socketstream.h> // TODO: REMOVE THIS!!!
 #include <skivvy/message.h>
 
 #include <sookee/types.h>
+
+#include <memory>
 
 namespace skivvy { namespace ircbot {
 
@@ -222,6 +225,7 @@ public:
 	 * @return false on failure.
 	 */
 	virtual bool reply(const message& msg, const str& text) = 0;
+	virtual bool reply_notice(const message& msg, const str& text) = 0;
 
 	/**
 	 * This function is like reply except that it always sends a PM (QUERY)
@@ -231,7 +235,7 @@ public:
 	 * reply to using PM (QUERY).
 	 */
 	virtual bool reply_pm(const message& msg, const str& text) = 0;
-	virtual bool reply_notice(const message& msg, const str& text) = 0;
+	virtual bool reply_pm_notice(const message& msg, const str& text) = 0;
 
 	/**
 	 * Get a line from the IRC server.
@@ -240,6 +244,8 @@ public:
 	 */
 	virtual bool receive(str& line) = 0;
 };
+
+using IrcServerUptr = std::unique_ptr<IrcServer>;
 
 class BaseIrcServer
 : public IrcServer
@@ -267,6 +273,7 @@ public:
 	bool reply(const message& msg, const str& text) override;
 	bool reply_pm(const message& msg, const str& text) override;
 	bool reply_notice(const message& msg, const str& text) override;
+	bool reply_pm_notice(const message& msg, const str& text) override;
 };
 
 template<typename SocketStream>
@@ -275,34 +282,37 @@ class BasicRemoteIrcServer
 {
 private:
 	std::mutex mtx_ss;
-//	net::socketstream ss;
-	SocketStream ss;
+//	skivvy::net::socketstream ss;
+	SocketStream ss; //TODO: PUT THIS BACK
 
 public:
 	bool send_unlogged(const str& cmd)
 	{
 		lock_guard lock(mtx_ss);
 		ss << cmd.substr(0, 510) << "\r\n" << std::flush;
-		if(!ss)
-			log("ERROR: send failed.");
-		return (bool)ss;
+		if(ss)
+			return true;
+		return false;
 	}
 
 	bool connect(const str& host, long port)
 	{
 		ss.clear();
-		ss.open(host, port);
-		return (bool)ss;
+		if(ss.open(host, port))
+			return true;
+		return false;
 	}
 
 	bool receive(str& line)
 	{
-		return (bool)std::getline(ss, line);
+		if(std::getline(ss, line))
+			return true;
+		return false;
 	}
 };
 
-using RemoteIrcServer = BasicRemoteIrcServer<net::netstream>;
-using RemoteSSLIrcServer = BasicRemoteIrcServer<net::ssl_socketstream>;
+using RemoteIrcServer = BasicRemoteIrcServer<sookee::net::netstream>;
+using RemoteSSLIrcServer = BasicRemoteIrcServer<sookee::net::ssl_socketstream>;
 
 //class RemoteSSLIrcServer
 //: public BaseIrcServer

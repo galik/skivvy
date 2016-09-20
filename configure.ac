@@ -21,9 +21,11 @@
 # 
 # '-----------------------------------------------------------------*/
 
-AC_INIT([skivvy],[0.1],[oasookee@gmail.com],[skivvy])
+AC_INIT([skivvy],[0.4.0],[oasookee@gmail.com],[skivvy])
 AC_CONFIG_SRCDIR([src/test.cpp])
 AC_CONFIG_HEADERS([config.h])
+AC_CONFIG_MACRO_DIR([m4])
+AC_CONFIG_AUX_DIR([aux-bits])
 
 AM_INIT_AUTOMAKE([1.10 foreign])
 AM_SILENT_RULES
@@ -34,13 +36,11 @@ AC_CHECK_LIB(readline, readline,, AC_MSG_ERROR([can't find readline]))
 
 AC_PROG_CXX
 AC_PROG_INSTALL
-
-AC_LANG(C++)
-AX_CXX_COMPILE_STDCXX_11([noext],[mandatory])
+AC_LANG_CPLUSPLUS
+AX_CXX_COMPILE_STDCXX_14([noext],[mandatory])
 
 PKG_CHECK_MODULES([SOOKEE], [libsookee])
 PKG_CHECK_MODULES([OPENSSL], [openssl])
-PKG_CHECK_MODULES([PCRECPP], [libpcrecpp])
 
 AC_ARG_WITH([ncurses], AS_HELP_STRING([--with-ncurses], [Build the ncurses client]))
 AS_IF([test "x$with_ncurses" = "xyes"], [
@@ -49,7 +49,6 @@ AS_IF([test "x$with_ncurses" = "xyes"], [
 AM_CONDITIONAL([MAKE_NCURSES], [test "x$NCURSES_LIBS" != "x"])
 
 
-AC_CONFIG_MACRO_DIR([m4])
 
 AC_LANG_CPLUSPLUS
 AC_CONFIG_FILES([pkg-config/libskivvy.pc Makefile src/Makefile])

@@ -1,5 +1,5 @@
 #! /bin/sh
 mkdir -p m4
-mkdir -p config
+mkdir -p aux-bits
 autoheader --warnings=all
-autoreconf --force --install -I config -I m4
+autoreconf --force --install -I aux-bits -I m4

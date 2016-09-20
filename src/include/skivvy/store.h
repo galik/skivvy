@@ -36,12 +36,13 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <sookee/str.h>
 #include <sookee/ios.h>
 
+#include <memory>
 #include <istream>
 #include <ostream>
 #include <fstream>
 #include <sstream>
 
-#include <pcrecpp.h>
+//#include <pcrecpp.h>
 #include <fnmatch.h>
 
 namespace skivvy { namespace utils {
@@ -100,7 +101,7 @@ str unescaped(const str& cs);
 template<typename Container>
 std::ostream& write_container(std::ostream& os, const Container& container)
 {
-//	bug_func();
+//	bug_fun();
 	os << '{';
 	str s;
 	for(auto i: container)
@@ -119,14 +120,14 @@ std::ostream& write_container(std::ostream& os, const Container& container)
 template<typename T>
 std::istream& extract(std::istream& is, T& t)
 {
-//	bug_func();
+//	bug_fun();
 	return is >> t;
 }
 
 template<typename T>
 std::istream& extract(std::istream&& is, T& t)
 {
-//	bug_func();
+//	bug_fun();
 	return extract(is, t);
 }
 
@@ -138,7 +139,7 @@ std::istream& extract(std::istream&& is, str& s);
 template<typename Container>
 std::istream& read_container(std::istream& is, Container& container)
 {
-//	bug_func();
+//	bug_fun();
 	container.clear();
 	str skip, line;
 	if(!getobject(is, line))
@@ -162,7 +163,7 @@ std::istream& read_container(std::istream& is, Container& container)
 template<typename K, typename V>
 std::ostream& operator<<(std::ostream& os, const std::pair<K, V>& p)
 {
-//	bug_func();
+//	bug_fun();
 	K key;
 	V val;
 	key = p.first;
@@ -176,7 +177,7 @@ std::ostream& operator<<(std::ostream& os, const std::pair<K, V>& p)
 template<typename K, typename V>
 std::ostream& operator<<(std::ostream& os, const std::map<K, V>& m)
 {
-//	bug_func();
+//	bug_fun();
 	os << "{";
 	for(const std::pair<K, V>& p: m)
 		os << p;
@@ -188,7 +189,7 @@ std::ostream& operator<<(std::ostream& os, const std::map<K, V>& m)
 template<typename K, typename V>
 std::istream& operator>>(std::istream& is, std::pair<K, V>& p)
 {
-//	bug_func();
+//	bug_fun();
 	str skip, line, key, val;
 	if(!getobject(is, line))
 		is.clear(is.rdstate() | std::ios::failbit); // protocol error
@@ -214,7 +215,7 @@ std::istream& operator>>(std::istream& is, std::pair<K, V>& p)
 template<typename K, typename V>
 std::istream& operator>>(std::istream& is, std::map<K, V>& m)
 {
-//	bug_func();
+//	bug_fun();
 	str skip, line;
 	if(!getobject(is, line))
 		is.clear(is.rdstate() | std::ios::failbit); // protocol error
@@ -256,16 +257,29 @@ std::ostream& operator<<(std::ostream& os, const std::vector<T>& vec)
 
 class Store
 {
+public:
+	using UPtr = std::unique_ptr<Store>;
+
 protected:
 
-	bool pcre_match(const str& r, const str& s, bool full = false)
+	static bool pcre_match(const str& r, const str& s, bool full = false)
 	{
-		if(full)
-			return pcrecpp::RE(r).FullMatch(s);
-		return pcrecpp::RE(r).PartialMatch(s);
+		log("WARN: deprecated function use: sreg_match()");
+//		if(full)
+//			return pcrecpp::RE(r).FullMatch(s);
+//		return pcrecpp::RE(r).PartialMatch(s);
+		return sreg_match(r, s, full);
 	}
 
-	bool wild_match(const str& w, const str& s, int flags = 0)
+	static bool sreg_match(const str& r, const str& s, bool full = false)
+	{
+		std::regex e(r);
+		if(full)
+			return std::regex_match(s, e);
+		return std::regex_search(s, e);
+	}
+
+	static bool wild_match(const str& w, const str& s, int flags = 0)
 	{
 		return !fnmatch(w.c_str(), s.c_str(), flags | FNM_EXTMATCH);
 	}
@@ -324,7 +338,10 @@ public:
 		set_at(k, 0, v);
 	}
 
+
+	[[deprecated("Replaced by get_keys_if_sreg")]]
 	virtual str_set get_keys_if_pcre(const str& r) = 0;
+	virtual str_set get_keys_if_sreg(const str& r) = 0;
 	virtual str_set get_keys_if_wild(const str& w) = 0;
 
 	/**
@@ -345,17 +362,29 @@ public:
 		return set;
 	}
 
+	[[deprecated]]
+	str_vec get_pcre_vec_with_key(const str& k, const str& r)
+	{
+//		str_vec res;
+//		for(const auto& v: get_vec(k))
+//			if(pcre_match(r, v, true))
+//				res.push_back(v);
+//		return res;
+		log("WARN: deprecated function use: get_sreg_vec_with_key()");
+		return get_sreg_vec_with_key(k, r);
+	}
+
 	/**
-	 * Return values for key that match PCRE regex
+	 * Return values for key that match std::regex
 	 * @param k Key
 	 * @param r Regex to match against values
 	 * @return str_vec of matching values
 	 */
-	str_vec get_pcre_vec_with_key(const str& k, const str& r)
+	str_vec get_sreg_vec_with_key(const str& k, const str& r)
 	{
 		str_vec res;
 		for(const auto& v: get_vec(k))
-			if(pcre_match(r, v, true))
+			if(sreg_match(r, v, true))
 				res.push_back(v);
 		return res;
 	}
@@ -434,6 +463,8 @@ public:
 	virtual void set_at(const str& k, siz n, const str& v) = 0;
 };
 
+using StoreUPtr = std::unique_ptr<Store>;
+
 USING_MAP(str, str_vec, str_vec_map);
 
 class MappedStore
@@ -450,18 +481,16 @@ class BackupStore
 private:
 	static const str VERSION_KEY;
 
+	std::unique_lock<std::mutex> move_lock;
 	mutable std::mutex mtx;
 	const str file;
 
 	void load()
 	{
-		static str line, k, v;
-		static std::ifstream ifs;
-		static std::istringstream iss;
+		thread_local static str line, k, v;
+		thread_local static std::istringstream iss;
 
-		ifs.open(file);
-
-		if(ifs)
+		if(auto ifs = std::ifstream(file))
 		{
 			store.clear();
 			while(std::getline(ifs, line))
@@ -475,27 +504,32 @@ private:
 					store[k].push_back(v);
 			}
 		}
-		ifs.close();
 	}
 
 	void save()
 	{
-		static std::ofstream ofs;
-
-		ofs.open(file);
-		if(ofs)
+		if(auto ofs = std::ofstream(file))
+		{
 			for(const auto& p: store)
 				for(const str& v: p.second)
 					ofs << p.first << ": " << v << '\n';
-		ofs.close();
+		}
+		else
+		{
+			throw std::runtime_error("Unable to save store: " + file + " " + std::strerror(errno));
+		}
 	}
 
 public:
+	BackupStore(BackupStore&& bs)
+	: move_lock(bs.mtx), file(std::move(bs.file))
+	{
+		move_lock.unlock();
+	}
+
 	BackupStore(const str& file): file(file)
 	{
 		reload();
-//		if(store[VERSION_KEY].empty())
-//			store[VERSION_KEY].push_back("0.0");
 	}
 
 	void reload()
@@ -506,12 +540,18 @@ public:
 
 	str_set get_keys_if_pcre(const str& reg) override
 	{
+		log("WARN: deprecated function use: get_keys_if_sreg()");
+		return get_keys_if_sreg(reg);
+	}
+
+	str_set get_keys_if_sreg(const str& reg) override
+	{
 		str_set res;
 		lock_guard lock(mtx);
 		if(store.empty())
 			load();
 		for(const auto& p: store)
-			if(pcre_match(reg, p.first))
+			if(sreg_match(reg, p.first))
 				res.insert(p.first);
 		return res;
 	}
@@ -680,13 +720,30 @@ public:
 
 	str_set get_keys_if_pcre(const str& reg) override
 	{
+//		str_set res;
+//		lock_guard lock(mtx);
+//
+//		ifs.open(file);
+//		str line;
+//		while(sgl(ifs, line))
+//			if(sgl(siss(line), line, ':') && pcre_match(reg, line))
+//				res.insert(line);
+//		ifs.close();
+//
+//		return res;
+		log("WARN: deprecated function use: get_keys_if_sreg()");
+		return get_keys_if_sreg(reg);
+	}
+
+	str_set get_keys_if_sreg(const str& reg) override
+	{
 		str_set res;
 		lock_guard lock(mtx);
 
 		ifs.open(file);
 		str line;
 		while(sgl(ifs, line))
-			if(sgl(siss(line), line, ':') && pcre_match(reg, line))
+			if(sgl(siss(line), line, ':') && sreg_match(reg, line))
 				res.insert(line);
 		ifs.close();
 
@@ -846,12 +903,28 @@ public:
 
 	str_set get_keys_if_pcre(const str& reg) override
 	{
+//		str_set res;
+//		lock_guard lock(mtx);
+//
+//		ifs.open(file);
+//		while(sgl(ifs, line))
+//			if(sgl(siss(line), line, ':') && pcre_match(reg, line))
+//				res.insert(line);
+//		ifs.close();
+//
+//		return res;
+		log("WARN: deprecated function use: get_keys_if_sreg()");
+		return get_keys_if_sreg(reg);
+	}
+
+	str_set get_keys_if_sreg(const str& reg) override
+	{
 		str_set res;
 		lock_guard lock(mtx);
 
 		ifs.open(file);
 		while(sgl(ifs, line))
-			if(sgl(siss(line), line, ':') && pcre_match(reg, line))
+			if(sgl(siss(line), line, ':') && sreg_match(reg, line))
 				res.insert(line);
 		ifs.close();
 

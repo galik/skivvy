@@ -178,7 +178,7 @@ public:
 
 	void close()
 	{
-//		bug_func();
+//		bug_fun();
 //		bug_var(buf.get_socket());
 		if(buf.get_socket() != 0) ::close(buf.get_socket());
 		stream_type::clear();
@@ -186,7 +186,7 @@ public:
 
 	bool open(const std::string& host, uint16_t port, int type = SOCK_STREAM, bool nb = false)
 	{
-//		bug_func();
+//		bug_fun();
 		close();
 
 		int sd;
@@ -194,13 +194,15 @@ public:
 
 		if((sd = socket(PF_INET, type, 0)) == -1)
 		{
-			log(std::strerror(errno));
+//			bug(std::strerror(errno));
 			stream_type::setstate(std::ios::failbit);
 			return false;
 		}
 
 		if(!(he = gethostbyname(host.c_str())))
 		{
+//			bug_var(h_errno);
+//			bug(std::strerror(h_errno));
 			::close(sd);
 			stream_type::setstate(std::ios::failbit);
 			return false;
@@ -217,6 +219,7 @@ public:
 
 		if(connect(sd, reinterpret_cast<sockaddr*>(&sin), sizeof(sin)) < 0)
 		{
+//			bug(std::strerror(errno));
 			::close(sd);
 			stream_type::setstate(std::ios::failbit);
 			return false;
@@ -225,8 +228,8 @@ public:
 		if(nb)
 			fcntl(sd, F_SETFL, O_NONBLOCK);
 		buf.set_socket(sd);
-
-		return (bool)*this;
+//		bug_var(std::basic_iostream<char_type>::operator bool());
+		return true; //std::basic_iostream<char_type>::operator bool();
 	}
 };
 

@@ -22,7 +22,26 @@ using GCC 4.7.2
 Skivvy needs a config file to run. By default Skivvy looks
 for the file $HOME/.skivvy/skivvy.conf
 
-The vital settings are:
+== Format ==
+
+# Lines starting with # are comments
+# Basic key - value pairs:
+
+key1: value1
+key2: value2
+
+# Lines starting with $ are user defined variables
+$DATA: ${HOME}/.skivvy
+
+# variable substitution with ${}
+test.key: ${variable}/stuff
+
+# environment variable also substituted with ${}
+# user defined variables mask environment variables
+# of the same name
+home: ${HOME}
+
+== The vital settings are: ==
 
 # The IRC network host to connect to
 server.host: irc.quakenet.org
@@ -33,7 +52,20 @@ nick: Skivvy
 nick: Skavvy
 nick: Skevvy
 
+user: skivvy // username (for server login)
+mode: 0
+real: Skivvy // real name (for server login)
+
+// arbitrary command on connection complete
+on_connect: /msg nickserv identify <password>
+
+
 # You will also need some plugins
+
+//where to look
+plugin.dir: /usr/lib/skivvy
+plugin.dir: ${HOME}/dev/lib/skivvy
+
 plugin: skivvy-plugin-chanops.so
 plugin: skivvy-plugin-diction.so
 plugin: skivvy-plugin-grabber.so
@@ -43,3 +75,23 @@ plugin: skivvy-plugin-rquotes.so
 join: #channel1
 join: #channel2
 join: #channel3
+
+join.announce: false // say hello when joining?
+
+
+#========================================
+# More indepth
+#========================================
+
+server.ssl: true // server:port accepts SSL
+server.password: <nick>: <password>
+server.feature.chanserv: true // ??
+server.feature.nickserv: true // ??
+
+home: ${HOME}/.skivvy // data folder
+log.file: skivvy.log
+bug.file: skivvy.log
+password: trout // some builtin commands need this password
+
+
+

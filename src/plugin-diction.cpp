@@ -558,7 +558,7 @@ std::string DictionIrcBotPlugin::get_version() const { return VERSION; }
 
 void DictionIrcBotPlugin::exit()
 {
-//	bug_func();
+//	bug_fun();
 }
 
 // INTERFACE: IrcBotMonitor

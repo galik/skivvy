@@ -130,7 +130,7 @@ str prompt_color(const str& seed)
 
 int rand_int(int low, int high)
 {
-	static std::minstd_rand g(std::time(0));
+	thread_local static std::mt19937 g(std::random_device{}());
 	std::uniform_int_distribution<> d(low, high);
 	return d(g);
 }

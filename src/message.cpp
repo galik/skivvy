@@ -59,8 +59,6 @@ std::ostream& operator<<(std::ostream& os, const message& m)
 	return os << '{' << escaped(m.line) << '}';
 }
 
-
-
 bool message::from_channel() const
 {
 	str_vec params = get_params();
@@ -141,6 +139,7 @@ std::ostream& printmsg(std::ostream& os, const message& m)
 	os << "// get_user()           : " << m.get_user() << '\n';
 	os << "// get_host()           : " << m.get_host() << '\n';
 	os << "// get_userhost()       : " << m.get_userhost() << '\n';
+	os << "// get_to()             : " << m.get_to() << '\n';
 	for(const str& param: m.get_params())
 		os << "// param                : " << param << '\n';
 	for(const str& middle: m.get_middles())
