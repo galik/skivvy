@@ -4,7 +4,7 @@
 #include <iostream>
 
 #include <skivvy/props.h>
-#include <sookee/types.h>
+#include <hol/small_types.h>
 #include <skivvy/logrep.h>
 
 using namespace skivvy;

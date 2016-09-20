@@ -27,20 +27,24 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 '-----------------------------------------------------------------*/
 
+#include <random>
+
 #include <skivvy/utils.h>
 
-#include <sookee/log.h>
-#include <sookee/types.h>
-#include <sookee/ios.h>
+#include <hol/simple_logger.h>
+#include <hol/small_types.h>
+//#include <sookee/ios.h>
 //#include <skivvy/logrep.h>
 #include <skivvy/irc.h>
 
 namespace skivvy { namespace utils {
 
-using namespace sookee::types;
+using namespace hol::small_types::ios;
+using namespace hol::small_types::ios::functions;
+using namespace hol::small_types::basic;
 using namespace skivvy::irc;
-using namespace sookee::log;
-using namespace sookee::ios;
+using namespace hol::simple_logger;
+//using namespace sookee::ios;
 
 bool parse_rangelist(const str& rangelist, siz_vec& items)
 {
@@ -55,7 +59,7 @@ bool parse_rangelist(const str& rangelist, siz_vec& items)
 		sgl(sgl(iss, lb, '-'), ub);
 		if(lb.empty())
 		{
-			log("Bad range: " << range);
+			LOG::E << "Bad range: " << range;
 			continue;
 		}
 
@@ -63,7 +67,7 @@ bool parse_rangelist(const str& rangelist, siz_vec& items)
 
 		if(!(siss(lb) >> l))
 		{
-			log("Bad range (unrecognized number): " << range);
+			LOG::E << "Bad range (unrecognized number): " << range;
 			continue;
 		}
 
@@ -72,7 +76,7 @@ bool parse_rangelist(const str& rangelist, siz_vec& items)
 
 		if(u < l)
 		{
-			log("Bad range (higher to lower): " << range);
+			LOG::E << "Bad range (higher to lower): " << range;
 			continue;
 		}
 
@@ -158,6 +162,24 @@ str wild_replace(const str wild, const str_vec& replacements)
 			fixed += c;
 	}
 	return fixed;
+}
+
+// Missing from removal of libsookee
+
+str::size_type extract_delimited_text(const str& in, const str& d1, const str& d2, str& out, size_t pos)
+{
+//	if(pos == str::npos)
+//		return pos;
+
+	auto end = pos;
+
+	if((pos = in.find(d1, pos)) != str::npos)
+		if((end = in.find(d2, (pos = pos + d1.size()))) != str::npos)
+		{
+			out = in.substr(pos, end - pos);
+			return end + d2.size();
+		}
+	return str::npos;
 }
 
 }} // skivvy::cal

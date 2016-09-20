@@ -23,7 +23,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 #include <skivvy/server.h>
 
-#include <sookee/bug.h>
+#include <hol/bug.h>
 
 #include <cstdio>
 #include <cstdlib>
@@ -48,12 +48,13 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <list>
 #include <tuple>
 
-#include <sookee/types.h>
+#include <hol/small_types.h>
 
 namespace skivvy { namespace net {
 
-using namespace sookee::types;
-using namespace sookee::bug;
+using namespace hol::small_types::basic;
+
+using lock_guard = std::lock_guard<std::mutex>;
 
 #define throw_server_exception(msg) throw server_exception(msg, __FILE__, __LINE__)
 

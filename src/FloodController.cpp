@@ -35,9 +35,9 @@ http://www.gnu.org/licenses/gpl-2.0.html
 //#include <skivvy/logrep.h>
 //#include <skivvy/irc-constants.h>
 
-#include <sookee/types.h>
-#include <sookee/bug.h>
-#include <sookee/log.h>
+#include <hol/small_types.h>
+#include <hol/bug.h>
+#include <hol/simple_logger.h>
 
 #include <random>
 #include <functional>
@@ -45,10 +45,13 @@ http://www.gnu.org/licenses/gpl-2.0.html
 namespace skivvy { namespace ircbot {
 
 using namespace skivvy;
-using namespace sookee::types;
-//using namespace skivvy::utils;
-using namespace sookee::bug;
-using namespace sookee::log;
+//using namespace hol::small_types::ios;
+//using namespace hol::small_types::ios::functions;
+using namespace hol::small_types::basic;
+using namespace hol::small_types::string_containers;
+using namespace hol::simple_logger;
+
+using lock_guard = std::lock_guard<std::mutex>;
 
 FloodController::FloodController()
 : idx(0)
@@ -90,7 +93,7 @@ void FloodController::dispatcher()
 		std::this_thread::sleep_for(std::chrono::milliseconds(time_between_events - time_between_checks));
 	}
 
-	log("Dispatcher ended.");
+	LOG::I << "Dispatcher ended.";
 }
 
 bool FloodController::send(const str& channel, std::function<bool()> func)
@@ -115,17 +118,18 @@ void FloodController::clear()
 void FloodController::clear(const str& channel)
 {
 	lock_guard lock(mtx);
-	str_vec_iter itr = stl::find(keys, channel);
-	if(itr != keys.end())
+	auto found = stl::find(keys, channel);
+	if(found != keys.end())
 	{
 		m.erase(channel);
-		keys.erase(itr);
+		keys.erase(found);
 	}
 }
 
 void FloodController::start()
 {
-	log("Starting up dispatcher:");
+	LOG::I << "Starting up dispatcher:";
+
 	if(!dispatching)
 	{
 		dispatching = true;
@@ -135,7 +139,7 @@ void FloodController::start()
 
 void FloodController::stop()
 {
-	log("Closing down dispatcher:");
+	LOG::I << "Closing down dispatcher:";
 	if(!dispatching)
 		return;
 	dispatching = false;

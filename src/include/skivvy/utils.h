@@ -27,14 +27,18 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 '-----------------------------------------------------------------*/
 
-#ifndef _SKIVVY_UTILS_H_
-#define _SKIVVY_UTILS_H_
+#ifndef SKIVVY_UTILS_H
+#define SKIVVY_UTILS_H
 
-#include <sookee/types.h>
+#include <chrono>
+#include <hol/small_types.h>
 
 namespace skivvy { namespace utils {
 
-using namespace sookee::types;
+using namespace hol::small_types::basic;
+using namespace hol::small_types::string_containers;
+
+using siz_vec = std::vector<siz>;
 
 // "1-4", "7", "9-11 ", " 15 - 16" ... -> siz_vec{1,2,3,4,7,9,10,11,15,16}
 bool parse_rangelist(const str& rangelist, siz_vec& items);
@@ -100,6 +104,11 @@ str wild_replace(const str wild, const str& replacement);
  */
 str wild_replace(const str wild, const str_vec& replacements);
 
+// Missing from removal of libsookee
+
+str::size_type extract_delimited_text(const str& in, const str& d1, const str& d2, str& out, size_t pos);
+
+
 }} // skivvy::utils
 
-#endif // _SKIVVY_UTILS_H_
+#endif // SKIVVY_UTILS_H

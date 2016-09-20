@@ -30,11 +30,11 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 #include <skivvy/ios.h>
 
-#include <sookee/types.h>
+#include <hol/small_types.h>
 
 namespace skivvy { namespace ios {
 
-using namespace sookee::types;
+using namespace hol::small_types::basic;
 
 std::istream& getstring(std::istream& is, str& s)
 {

@@ -34,14 +34,16 @@ http://www.gnu.org/licenses/gpl-2.0.html
 //#include <sookee/socketstream.h>
 
 //#include <sookee/stl.h>
-#include <sookee/str.h>
-#include <sookee/types.h>
-#include <sookee/bug.h>
+#include <hol/string_utils.h>
+#include <hol/small_types.h>
+#include <hol/bug.h>
 
 
 namespace skivvy { namespace ircbot {
 
-using namespace sookee::types;
+using namespace hol::small_types::ios;
+using namespace hol::small_types::basic;
+using namespace hol::small_types::string_containers;
 
 class message
 {

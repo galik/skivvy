@@ -37,11 +37,11 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <ctime>
 #include <chrono>
 
-#include <sookee/types.h>
+#include <hol/small_types.h>
 
 namespace skivvy { namespace types {
 
-using namespace sookee::types;
+using namespace hol::small_types::basic;
 
 struct delay
 {

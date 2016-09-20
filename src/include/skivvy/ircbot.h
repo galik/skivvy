@@ -34,14 +34,16 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 #include <experimental/filesystem>
 
-#include <sookee/socketstream.h>
-#include <skivvy/socketstream.h> // TODO: REMOVE THIS!!!
-#include <sookee/ssl_socketstream.h>
+//#include <sookee/socketstream.h>
+//#include <skivvy/socketstream.h> // TODO: REMOVE THIS!!!
+//#include <sookee/ssl_socketstream.h>
+
+#include <boost/asio.hpp>
 
 #include <skivvy/FloodController.h>
-#include <sookee/types.h>
-#include <sookee/bug.h>
-#include <sookee/log.h>
+#include <hol/small_types.h>
+#include <hol/bug.h>
+#include <hol/simple_logger.h>
 #include <skivvy/message.h>
 #include <skivvy/IrcServer.h>
 #include <skivvy/rpc.h>
@@ -66,9 +68,9 @@ namespace fs = std::experimental::filesystem;
 
 namespace skivvy { namespace ircbot {
 
-using namespace sookee::types;
-using namespace sookee::log;
-using namespace sookee::bug;
+using namespace hol::small_types::basic;
+using namespace hol::small_types::string_containers;
+using namespace hol::simple_logger;
 using namespace skivvy::utils;
 
 const str DATA_DIR = "home";
@@ -757,11 +759,11 @@ private:
 
 	chan_access_map chan_access; // ("#channel"|"*"|"PM") -> { {"plugin#1", "prefix1"}, {"plugin#2", "prefix2"} }
 
-	bool done;
 	bool debug;
 
-	bool connected;
-	bool registered;
+	std::atomic_bool done{false};
+	std::atomic_bool connected{false};
+	std::atomic_bool registered{false};
 
 	std::future<void> con;
 	std::istream* is;
@@ -1050,7 +1052,7 @@ IrcBotPlugin& IrcBotPluginHandle::operator*()
 	ensure_plugin();
 
 	if(!plugin)
-		log("ERROR: Bad IrcBotPluginHandle: " << this);
+		LOG::E << "Bad IrcBotPluginHandle: " << this;
 	return *plugin;
 }
 
@@ -1059,7 +1061,7 @@ IrcBotPlugin* IrcBotPluginHandle::operator->()
 	ensure_plugin();
 
 	if(!plugin)
-		log("ERROR: Bad IrcBotPluginHandle: " << this);
+		LOG::E << "Bad IrcBotPluginHandle: " << this;
 	return plugin;
 }
 

@@ -29,13 +29,13 @@ http://www.gnu.org/licenses/gpl-2.0.html
 '-----------------------------------------------------------------*/
 
 #include <skivvy/types.h>
-#include <sookee/log.h>
+#include <hol/simple_logger.h>
 
 #include <sstream>
 
 namespace skivvy { namespace types {
 
-using namespace sookee::log;
+using namespace hol::simple_logger;
 
 std::istream& delay::parse(std::istream& is)
 {
@@ -53,7 +53,7 @@ std::istream& delay::parse(std::istream& is)
 				case 'd': d *= 60 * 60 * 24; break;
 				case 'w': d *= 60 * 60 * 24 * 7; break;
 				default:
-				log("UNKNOWN DELAY FACTOR: " << f);
+				LOG::E << "UNKNOWN DELAY FACTOR: " << f;
 				is.clear(is.rdstate() | std::ios::failbit);
 			}
 //		}

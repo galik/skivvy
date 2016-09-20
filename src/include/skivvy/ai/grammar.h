@@ -37,7 +37,7 @@ namespace skivvy { namespace types {
 
 typedef std::string str;
 
-}} // sookee::types
+}} // skivvy::types
 
 namespace skivvy { namespace ai {
 

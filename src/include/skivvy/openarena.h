@@ -34,8 +34,8 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <array>
 #include <string>
 
-#include <sookee/str.h>
-#include <sookee/types.h>
+#include <hol/string_utils.h>
+#include <hol/small_types.h>
 #include <skivvy/irc.h>
 
 namespace skivvy { namespace oa {
