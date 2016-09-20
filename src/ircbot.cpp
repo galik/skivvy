@@ -71,7 +71,7 @@ namespace skivvy { namespace ircbot {
 
 using st_clk = std::chrono::system_clock;
 
-PLUGIN_INFO("skivvy", "IrcBot", "0.4.0");
+PLUGIN_INFO("skivvy", "IrcBot", "0.5.0");
 
 using namespace skivvy;
 using namespace skivvy::irc;

@@ -966,7 +966,7 @@ private:
 		for(auto& plugin: plugins)
 			if(plugin->get_id() == id)
 				return plugin.get();
-		return IrcBotPluginRPtr(0);
+		return {};
 	}
 public:
 	IrcBotPluginHandle get_plugin_handle(const str& id)
