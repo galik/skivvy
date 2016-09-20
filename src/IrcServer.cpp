@@ -228,6 +228,12 @@ bool TestIrcServer::connect(const str& host, long port)
 	return ifs && ofs;
 }
 
+void TestIrcServer::close()
+{
+	ifs.close();
+	ofs.close();
+}
+
 bool TestIrcServer::receive(str& line)
 {
 	std::getline(ifs, line);
@@ -239,8 +245,9 @@ bool TestIrcServer::receive(str& line)
 bool RemoteIrcServer::connect(const str& host, long port)
 {
 	bug_fun();
-	if(ss.is_open())
-		ss.close();
+	close();
+//	if(ss.is_open())
+//		ss.close();
 
 	io_service.reset();
 
@@ -255,6 +262,12 @@ bool RemoteIrcServer::connect(const str& host, long port)
 	}
 
 	return true;
+}
+
+void RemoteIrcServer::close()
+{
+	if(ss.is_open())
+		ss.close();
 }
 
 bool RemoteIrcServer::send_unlogged(const str& cmd)

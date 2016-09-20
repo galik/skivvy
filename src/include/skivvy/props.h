@@ -44,10 +44,10 @@ using namespace skivvy::utils;
 
 using lock_guard = std::lock_guard<std::mutex>;
 
-typedef std::map<const str, str> property_map;
-typedef std::pair<const str, str> property_pair;
-//typedef property_map::iterator property_iter;
-//typedef property_map::const_iterator property_citer;
+using property_map = std::map<const str, str>;
+using property_pair = std::pair<const str, str>;
+//using property_iter = property_map::iterator;
+//using property_citer = property_map::const_iterator;
 
 template<typename T>
 struct serialize
@@ -66,10 +66,10 @@ class properties
 {
 protected:
 
-//	typedef std::map<const str, str> property_map;
-//	typedef std::pair<const str, str> property_pair;
-//	typedef property_map::iterator property_iter;
-//	typedef property_map::const_iterator property_citer;
+//	using property_map = std::map<const str, str>;
+//	using property_pair = std::pair<const str, str>;
+//	using property_iter = property_map::iterator;
+//	using property_citer = property_map::const_iterator;
 
 private:
 	mutable std::mutex mtx;

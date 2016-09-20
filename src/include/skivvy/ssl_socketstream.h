@@ -58,8 +58,8 @@ is granted under the same conditions.
 #include <string>
 #include <iostream>
 
-typedef std::string str;
-typedef size_t siz;
+using str = std::string;
+using siz = size_t;
 
 namespace skivvy { namespace net {
 
@@ -76,11 +76,11 @@ class basic_ssl_socketbuf
 : public std::basic_streambuf<Char>
 {
 public:
-	typedef Char char_type;
-	typedef std::basic_streambuf<char_type> buf_type;
-	typedef std::basic_ostream<char_type> stream_type;
-	typedef typename buf_type::int_type int_type;
-	typedef typename std::basic_streambuf<Char>::traits_type traits_type;
+	using char_type = Char;
+	using buf_type = std::basic_streambuf<char_type>;
+	using stream_type = std::basic_ostream<char_type>;
+	using buf_type::int_type int_type = typename;
+	using std::basic_streambuf<Char>::traits_type traits_type = typename;
 
 protected:
 	static const int char_size = sizeof(char_type);
@@ -159,17 +159,17 @@ protected:
 	}
 };
 
-typedef basic_ssl_socketbuf<char> ssl_socketbuf;
-typedef basic_ssl_socketbuf<wchar_t> ssl_wsocketbuf;
+using ssl_socketbuf = basic_ssl_socketbuf<char>;
+using ssl_wsocketbuf = basic_ssl_socketbuf<wchar_t>;
 
 template<typename Char>
 class basic_ssl_socketstream
 : public std::basic_iostream<Char>
 {
 public:
-	typedef Char char_type;
-	typedef std::basic_iostream<char_type> stream_type;
-	typedef basic_ssl_socketbuf<char_type> buf_type;
+	using char_type = Char;
+	using stream_type = std::basic_iostream<char_type>;
+	using buf_type = basic_ssl_socketbuf<char_type>;
 
 protected:
 	buf_type buf;
@@ -300,8 +300,8 @@ public:
 
 };
 
-typedef basic_ssl_socketstream<char> ssl_socketstream;
-typedef basic_ssl_socketstream<wchar_t> ssl_wsocketstream;
+using ssl_socketstream = basic_ssl_socketstream<char>;
+using ssl_wsocketstream = basic_ssl_socketstream<wchar_t>;
 
 }} // skivvy::net
 

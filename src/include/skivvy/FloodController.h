@@ -49,8 +49,8 @@ using namespace hol::small_types::string_containers;
 class FloodController
 {
 private:
-	typedef std::queue<std::function<bool()>> dispatch_que;
-	typedef std::map<str, dispatch_que> dispatch_map;
+	using dispatch_que = std::queue<std::function<bool()>>;
+	using dispatch_map = std::map<str, dispatch_que>;
 
 	std::mutex mtx;
 	dispatch_map m; // channel -> dispatch_que

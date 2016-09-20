@@ -50,14 +50,14 @@ struct cookie
 	bool is_expired();
 };
 
-typedef std::map<str, cookie> cookie_map;
-typedef std::pair<str, cookie> cookie_pair;
-typedef cookie_map cookie_jar;
-typedef std::multimap<str, str> header_map;
-typedef std::pair<str, str> header_pair;
-typedef header_pair header;
-typedef header_map::iterator header_iter;
-typedef header_map::const_iterator header_citer;
+using cookie_map = std::map<str, cookie>;
+using cookie_pair = std::pair<str, cookie>;
+using cookie_jar = cookie_map;
+using header_map = std::multimap<str, str>;
+using header_pair = std::pair<str, str>;
+using header = header_pair;
+using header_iter = header_map::iterator;
+using header_citer = header_map::const_iterator;
 
 
 str urlencode(const str& url);

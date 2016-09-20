@@ -52,7 +52,7 @@ using namespace hol::small_types::string_containers;
 class RandomTimer
 {
 private:
-	typedef std::set<const void*> user_set;
+	using user_set = std::set<const void*>;
 
 	user_set users;
 	std::mutex mtx;
@@ -101,7 +101,7 @@ private:
 	  {return lhs.reply_to() < rhs.reply_to();}
 	};
 
-	typedef std::set<message, comp> message_set;
+	using message_set = std::set<message, comp>;
 
 	message_set messages;
 	std::mutex mtx;

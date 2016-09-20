@@ -309,9 +309,9 @@ public:
 	friend std::ostream& printmsg(std::ostream& os, const message& m);
 };
 
-typedef std::set<message> message_set;
-typedef message_set::iterator message_set_iter;
-typedef message_set::const_iterator message_set_citer;
+using message_set = std::set<message>;
+using message_set_iter = message_set::iterator;
+using message_set_citer = message_set::const_iterator;
 
 // TODO: Sort this mess out
 //void bug_message_cp(const std::string& K, const std::string& V, const message_cp& msg);

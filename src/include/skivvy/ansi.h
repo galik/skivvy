@@ -9,7 +9,7 @@
 
 namespace skivvy { namespace ansi {
 
-typedef std::numeric_limits<std::streamsize> streamlimits;
+using streamlimits = std::numeric_limits<std::streamsize>;
 
 const std::string norm = "\033[0m";
 const std::string col = "\033[";
@@ -229,11 +229,11 @@ class basic_ansibuf
 private:
 
 public:
-	typedef Char char_type;
-	typedef std::basic_streambuf<char_type> buf_type;
-	typedef std::basic_ostream<char_type> stream_type;
-	typedef typename buf_type::int_type int_type;
-	typedef typename std::basic_streambuf<Char>::traits_type traits_type;
+	using char_type = Char;
+	using buf_type = std::basic_streambuf<char_type>;
+	using stream_type = std::basic_ostream<char_type>;
+	using buf_type::int_type int_type = typename;
+	using std::basic_streambuf<Char>::traits_type traits_type = typename;
 
 protected:
 
@@ -330,17 +330,17 @@ protected:
 //	}
 };
 
-typedef basic_ansibuf<char> ansibuf;
-typedef basic_ansibuf<wchar_t> wansibuf;
+using ansibuf = basic_ansibuf<char>;
+using wansibuf = basic_ansibuf<wchar_t>;
 
 template<typename Char>
 class basic_ansistream
 : public std::basic_iostream<Char>
 {
 public:
-	typedef Char char_type;
-	typedef std::basic_iostream<char_type> stream_type;
-	typedef basic_ansibuf<char_type> buf_type;
+	using char_type = Char;
+	using stream_type = std::basic_iostream<char_type>;
+	using buf_type = basic_ansibuf<char_type>;
 
 protected:
 	buf_type buf;
@@ -350,8 +350,8 @@ public:
 	basic_ansistream(std::ostream& os): stream_type(&buf) { buf.set_os(os); }
 };
 
-typedef basic_ansistream<char> ansistream;
-typedef basic_ansistream<wchar_t> wansistream;
+using ansistream = basic_ansistream<char>;
+using wansistream = basic_ansistream<wchar_t>;
 
 
 }} // skivvy::ansi

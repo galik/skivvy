@@ -46,7 +46,7 @@ bool parse_rangelist(const str& rangelist, siz_vec& items);
 template<typename Rep, typename Period>
 void print_duration(std::chrono::duration<Rep, Period> t, std::ostream& os)
 {
-	typedef std::chrono::duration<int, std::ratio<60 * 60 * 24>> days;
+	using days = std::chrono::duration<int, std::ratio<60 * 60 * 24>>;
 
 	auto d = std::chrono::duration_cast < days > (t);
 	auto h = std::chrono::duration_cast < std::chrono::hours > (t - d);

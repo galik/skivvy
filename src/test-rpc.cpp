@@ -56,8 +56,8 @@ Param copy_container(const Param& p, Param& rp)
 	return ret;
 }
 
-typedef std::vector<int> int_vector;
-typedef std::vector<std::string> str_vector;
+using int_vector = std::vector<int>;
+using str_vector = std::vector<std::string>;
 
 template<typename Param>
 bool rpc(call& c)
@@ -90,10 +90,10 @@ Param rpc_copy_container(const Param& p, Param& rp)
 	return ret;
 }
 
-typedef std::map<int, std::string> int_str_map;
-typedef std::pair<int, std::string> int_str_pair;
-typedef std::map<std::string, int> str_int_map;
-typedef std::pair<std::string, int> str_int_pair;
+using int_str_map = std::map<int, std::string>;
+using int_str_pair = std::pair<int, std::string>;
+using str_int_map = std::map<std::string, int>;
+using str_int_pair = std::pair<std::string, int>;
 
 int main()
 {

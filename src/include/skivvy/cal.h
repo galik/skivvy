@@ -14,13 +14,13 @@
 
 namespace skivvy { namespace cal {
 
-typedef size_t year_t;
-typedef size_t month_t;
-typedef size_t week_t;
-typedef size_t day_t;
-typedef size_t hour_t;
-typedef size_t min_t;
-typedef size_t sec_t;
+using year_t = size_t;
+using month_t = size_t;
+using week_t = size_t;
+using day_t = size_t;
+using hour_t = size_t;
+using min_t = size_t;
+using sec_t = size_t;
 
 inline
 year_t get_year(time_t u = time(0))

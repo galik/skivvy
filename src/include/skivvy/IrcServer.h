@@ -98,6 +98,7 @@ public:
 	 * @return false on failure.
 	 */
 	virtual bool connect(const str& host, long port = 6667) = 0;
+	virtual void close() = 0;
 
 	virtual bool send(const str& cmd) = 0;
 	virtual bool send_unlogged(const str& cmd) = 0;
@@ -295,6 +296,7 @@ private:
 
 public:
 	bool connect(const str& host, long port = 6667) override;
+	void close() override;
 	bool send_unlogged(const str& cmd) override;
 	bool receive(str& line) override;
 };
@@ -304,6 +306,7 @@ class RemoteIrcServer
 {
 public:
 	bool connect(const str& host, long port) override;
+	void close() override;
 	bool send_unlogged(const str& cmd) override;
 	bool receive(str& line) override;
 

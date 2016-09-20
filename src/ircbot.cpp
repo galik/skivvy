@@ -69,9 +69,9 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 namespace skivvy { namespace ircbot {
 
-using st_clk = std::chrono::system_clock;
+using clock = std::chrono::system_clock;
 
-PLUGIN_INFO("skivvy", "IrcBot", "0.5.0");
+PLUGIN_INFO("skivvy", "IrcBot", "0.5.1");
 
 using namespace skivvy;
 using namespace skivvy::irc;
@@ -159,104 +159,6 @@ str BasicIrcBotPlugin::help(const str& cmd) const
 	return actions.at(cmd).help;
 }
 
-// ManagedIrcBotPlugin ========================
-
-//bool ManagedIrcBotPlugin::init()
-//{
-//	if(!(irc = bot.get_irc_server()))
-//		return false;
-//	actions.clear();
-//	return initialize();
-//}
-//
-//ManagedIrcBotPlugin::ManagedIrcBotPlugin(IrcBot& bot)
-//: bot(bot), irc(0)
-//{
-//}
-//
-//ManagedIrcBotPlugin::~ManagedIrcBotPlugin() {}
-//
-//void ManagedIrcBotPlugin::add(const str& trigger, const str& alias, const str& help, action_func func)
-//{
-//	actions[trigger] = func;
-//	infos[trigger] = {alias, help};
-//	str word_key = get_trigger_key("word", trigger);
-//	for(auto&& a: bot.get_vec(word_key, alias))
-//		aliases[a] = trigger;
-//}
-//
-//str_vec ManagedIrcBotPlugin::list() const
-//{
-//	str_vec aliases;
-//	decltype(infos.begin()) inf;
-//	for(auto&& action: actions)
-//	{
-//		bug_var(action.first);
-//		if((inf = infos.find(action.first)) == infos.end())
-//			continue;
-//		bug_var(inf->first);
-//		str word_key = get_trigger_key("word", action.first);
-//		bug_var(word_key);
-//		for(auto&& alias: bot.get_vec(word_key, inf->second.alias))
-//		{
-//			bug_var(alias);
-//			aliases.push_back(alias);
-//		}
-//	}
-//	return aliases;
-//}
-//
-//str ManagedIrcBotPlugin::help(const str& cmd) const
-//{
-//	// cmd is an alias
-//	auto a = aliases.find(cmd);
-//	if(a == aliases.end())
-//	{
-//		LOG::E << "unknown command alias: " << cmd;
-//		return {};
-//	}
-//
-//	auto i = infos.find(a->second);
-//	if(i == infos.end())
-//	{
-//		LOG::E << "unknown command trigger: " << a->second;
-//		return {};
-//	}
-//
-//	str h;
-//	str sep;
-//	str help_key = get_trigger_key("help", i->first);
-//	for(auto&& help: bot.get_vec(help_key, i->second.help))
-//	{
-//		hol::replace_all_mute(help, "\\t", "\t");
-//		hol::replace_all_mute(help, "\\n", "\n");
-//		hol::replace_all_mute(help, "\\s", "  ");
-//		h += sep + cmd + " " + help;
-//		sep = "\n";
-//	}
-//	return h;
-//}
-//
-//void ManagedIrcBotPlugin::execute(const str& cmd, const message& msg)
-//{
-//	// cmd is an alias
-//	auto a = aliases.find(cmd);
-//	if(a == aliases.end())
-//	{
-//		LOG::E << "unknon command alias: " << cmd;
-//		return;
-//	}
-//
-//	auto f = actions.find(a->second);
-//	if(f == actions.end())
-//	{
-//		LOG::E << "unknown command trigger: " << a->second;
-//		return;
-//	}
-//
-//	f->second(msg);
-//}
-
 // =======================================================================
 
 IrcBotPluginRPtr IrcBotPluginLoader::operator()(const str& file, IrcBot& bot)
@@ -329,7 +231,9 @@ void IrcBot::del_plugin(const str& id)
 	}
 }
 
+// =======================================================================
 // IRCBot
+// =======================================================================
 
 IrcBot::IrcBot()
 : debug(false)
@@ -783,6 +687,7 @@ bool IrcBot::init(const str& config_file)
 	fc.start();
 
 	LOG::I << "Initializing plugins [" << plugins.size() << "]:";
+
 	plugin_vec_iter p = plugins.begin();
 	while(p != plugins.end())
 	{
@@ -832,6 +737,7 @@ bool IrcBot::init(const str& config_file)
 		if(!irc->receive(line))
 		{
 			bug("failed to receive");
+			irc->close();
 			if(get<bool>("irc.test.mode") == true)
 			{
 				done = true;
@@ -1015,7 +921,7 @@ bool IrcBot::init(const str& config_file)
 			else if(get_set("trigger.word.uptime", "!uptime").count(cmd))//"!uptime")
 			{
 				soss oss;
-				print_duration(st_clk::now() - st_clk::from_time_t(uptime), oss);
+				print_duration(clock::now() - clock::from_time_t(uptime), oss);
 				str time = oss.str();
 				hol::trim_mute(time);
 				fc_reply(msg, "I have been active for " + time);

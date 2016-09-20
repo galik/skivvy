@@ -2,10 +2,10 @@
 #include <vector>
 #include <iostream>
 
-typedef std::string str;
-typedef str::iterator str_iter;
-typedef str::const_iterator str_citer;
-typedef std::pair<str, str> str_str_pair;
+using str = std::string;
+using str_iter = str::iterator;
+using str_citer = str::const_iterator;
+using str_str_pair = std::pair<str, str>;
 
 bool wildmatch(str_citer mi, const str_citer me
 	, str_citer ii, const str_citer ie)

@@ -44,9 +44,9 @@ namespace skivvy { namespace ircbot {
 class RServerIrcBotPlugin
 : public BasicIrcBotPlugin
 {
-	typedef int socket;
+	using socket = int;
 public:
-	typedef long port;
+	using port = long;
 
 private:
 	socket ss; // server socket

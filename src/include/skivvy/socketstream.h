@@ -67,11 +67,11 @@ class basic_socketbuf
 : public std::basic_streambuf<Char>
 {
 public:
-	typedef Char char_type;
-	typedef std::basic_streambuf<char_type> buf_type;
-	typedef std::basic_ostream<char_type> stream_type;
-	typedef typename buf_type::int_type int_type;
-	typedef typename std::basic_streambuf<Char>::traits_type traits_type;
+	using char_type = Char;
+	using buf_type = std::basic_streambuf<char_type>;
+	using stream_type = std::basic_ostream<char_type>;
+	using int_type = typename buf_type::int_type;
+	using traits_type = typename std::basic_streambuf<Char>::traits_type;
 
 protected:
 
@@ -150,17 +150,17 @@ protected:
 	}
 };
 
-typedef basic_socketbuf<char> socketbuf;
-typedef basic_socketbuf<wchar_t> wsocketbuf;
+using socketbuf = basic_socketbuf<char>;
+using wsocketbuf = basic_socketbuf<wchar_t>;
 
 template<typename Char>
 class basic_socketstream
 : public std::basic_iostream<Char>
 {
 public:
-	typedef Char char_type;
-	typedef std::basic_iostream<char_type> stream_type;
-	typedef basic_socketbuf<char_type> buf_type;
+	using char_type = Char;
+	using stream_type = std::basic_iostream<char_type>;
+	using buf_type = basic_socketbuf<char_type>;
 
 protected:
 	buf_type buf;
@@ -231,8 +231,8 @@ public:
 	}
 };
 
-typedef basic_socketstream<char> socketstream;
-typedef basic_socketstream<wchar_t> wsocketstream;
+using socketstream = basic_socketstream<char>;
+using wsocketstream = basic_socketstream<wchar_t>;
 
 }} // skivvy::net
 

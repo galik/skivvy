@@ -90,9 +90,9 @@ struct msgevent
 	msgevent(): when(std::time(0)) {}
 };
 
-typedef std::list<msgevent> msgevent_lst;
-typedef std::map<str, msgevent_lst> msgevent_map;
-typedef std::pair<const str, msgevent_lst> msgevent_pair;
+using msgevent_lst = std::list<msgevent>;
+using msgevent_map = std::map<str, msgevent_lst>;
+using msgevent_pair = std::pair<const str, msgevent_lst>;
 
 struct user_info
 {
@@ -196,7 +196,7 @@ class IrcBotRPCService
 : public rpc::service
 {
 public:
-	typedef std::shared_ptr<rpc::call> call_ptr;
+	using call_ptr = std::shared_ptr<rpc::call>;
 
 	virtual ~IrcBotRPCService() {}
 
@@ -232,7 +232,7 @@ class IrcBotPlugin
 {
 public:
 	void* dl = 0;
-	typedef str_vec command_list;
+	using command_list = str_vec;
 	virtual ~IrcBotPlugin() {}
 
 	/**
@@ -308,9 +308,9 @@ public:
 	virtual void exit() = 0;
 };
 
-typedef IrcBotPlugin* IrcBotPluginRPtr;
-typedef std::unique_ptr<IrcBotPlugin> IrcBotPluginUPtr;
-typedef std::shared_ptr<IrcBotPlugin> IrcBotPluginSPtr;
+using IrcBotPluginRPtr = IrcBotPlugin*;
+using IrcBotPluginUPtr = std::unique_ptr<IrcBotPlugin>;
+using IrcBotPluginSPtr = std::shared_ptr<IrcBotPlugin>;
 
 /**
  * This is the abstract superclass for bot
@@ -363,7 +363,7 @@ public:
 	 */
 	struct action
 	{
-		typedef std::function<void(const message& msg)> action_func;
+		using action_func = std::function<void(const message& msg)>;
 		enum
 		{
 			INVISIBLE = 0b01, ALIAS = 0b10
@@ -377,9 +377,9 @@ public:
 		: cmd(cmd), help(help), func(func), flags(flags) {}
 	};
 
-//	typedef std::vector<action> action_vec;
-	typedef std::map<str, action> action_map;
-	typedef std::pair<str, action> action_pair;
+//	using action_vec = std::vector<action>;
+	using action_map = std::map<str, action>;
+	using action_pair = std::pair<str, action>;
 
 protected:
 	IrcBot& bot;
@@ -472,8 +472,8 @@ public:
 //: public IrcBotPlugin
 //{
 //public:
-//	typedef std::function<void(const message& msg)> action_func;
-//	typedef std::map<str, action_func> action_map;
+//	using action_func = std::function<void(const message& msg)>;
+//	using action_map = std::map<str, action_func>;
 //
 //private:
 //	str get_trigger_key(const str& part, const str& trigger) const
@@ -626,7 +626,7 @@ class IrcBot;
 //template<typename Plugin>
 //class IrcBotPluginHandle
 //{
-//	typedef std::shared_ptr<Plugin> PluginSPtr;
+//	using PluginSPtr = std::shared_ptr<Plugin>;
 //
 //	IrcBot& bot;
 //	str id;
@@ -671,30 +671,30 @@ class IrcBot
 public:
 	virtual ~IrcBot() {}
 
-	typedef std::map<str, str_vec> property_map;
-	typedef std::pair<const str, str_vec> property_pair;
-	typedef property_map::iterator property_iter;
-	typedef property_map::const_iterator property_citer;
+	using property_map = std::map<str, str_vec>;
+	using property_pair = std::pair<const str, str_vec>;
+	using property_iter = property_map::iterator;
+	using property_citer = property_map::const_iterator;
 
-	typedef std::pair<property_iter, property_iter> property_iter_pair;
-	typedef std::pair<property_iter, property_iter> property_range;
+	using property_iter_pair = std::pair<property_iter, property_iter>;
+	using property_range = std::pair<property_iter, property_iter>;
 
-	typedef std::vector<IrcBotPluginUPtr> plugin_vec;
-	typedef plugin_vec::iterator plugin_vec_iter;
-	typedef plugin_vec::const_iterator plugin_vec_citer;
+	using plugin_vec = std::vector<IrcBotPluginUPtr>;
+	using plugin_vec_iter = plugin_vec::iterator;
+	using plugin_vec_citer = plugin_vec::const_iterator;
 
-	typedef std::set<IrcBotMonitor*> monitor_set;
-	typedef std::set<IrcBotChoiceListener*> listener_set;
-	typedef std::map<str, IrcBotRPCService*> service_map;
-	typedef std::set<str> channel_set;
-	typedef std::map<str, IrcBotPluginRPtr> command_map;
-	typedef std::pair<str, IrcBotPluginRPtr> command_map_pair;
+	using monitor_set = std::set<IrcBotMonitor*>;
+	using listener_set = std::set<IrcBotChoiceListener*>;
+	using service_map = std::map<str, IrcBotRPCService*>;
+	using channel_set = std::set<str>;
+	using command_map = std::map<str, IrcBotPluginRPtr>;
+	using command_map_pair = std::pair<str, IrcBotPluginRPtr>;
 
-	typedef std::map<const str, str_set> nicks_map;
-	typedef std::pair<const str, str_set> nicks_map_pair;
-	typedef std::map<const str, str_set> str_str_set_map;
-	typedef nicks_map::iterator nicks_iter;
-	typedef nicks_map::const_iterator nick_citer;
+	using nicks_map = std::map<const str, str_set>;
+	using nicks_map_pair = std::pair<const str, str_set>;
+	using str_str_set_map = std::map<const str, str_set>;
+	using nicks_iter = nicks_map::iterator;
+	using nick_citer = nicks_map::const_iterator;
 
 private:
 	FloodController fc;
@@ -753,9 +753,9 @@ private:
 		bool operator==(const chan_prefix& cp) const { return plugin == cp.plugin; }
 	};
 
-	typedef std::set<chan_prefix> chan_prefix_set;
-	typedef std::map<str, chan_prefix_set> chan_access_map;
-	typedef std::pair<const str, chan_prefix_set> chan_access_pair;
+	using chan_prefix_set = std::set<chan_prefix>;
+	using chan_access_map = std::map<str, chan_prefix_set>;
+	using chan_access_pair = std::pair<const str, chan_prefix_set>;
 
 	chan_access_map chan_access; // ("#channel"|"*"|"PM") -> { {"plugin#1", "prefix1"}, {"plugin#2", "prefix2"} }
 
@@ -959,8 +959,11 @@ public:
 	{
 		return services.find(name) == services.end() ? 0 : services[name];
 	}
+
 private:
+
 	friend class IrcBotPluginHandle;
+
 	IrcBotPluginRPtr get_plugin(const str& id)
 	{
 		for(auto& plugin: plugins)
@@ -968,6 +971,7 @@ private:
 				return plugin.get();
 		return {};
 	}
+
 public:
 	IrcBotPluginHandle get_plugin_handle(const str& id)
 	{

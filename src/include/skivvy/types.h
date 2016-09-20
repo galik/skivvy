@@ -94,7 +94,7 @@ struct malloc_deleter
 	void operator()(T* p) { std::free(p); }
 };
 
-typedef std::unique_ptr<char, malloc_deleter> cstring_uptr;
+using cstring_uptr = std::unique_ptr<char, malloc_deleter>;
 
 }} // sookee::types
 

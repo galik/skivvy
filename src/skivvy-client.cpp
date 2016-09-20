@@ -53,7 +53,7 @@ struct malloc_deleter
 	void operator()(T* p) { std::free(p); }
 };
 
-typedef std::unique_ptr<char, malloc_deleter> cstring_uptr;
+using cstring_uptr = std::unique_ptr<char, malloc_deleter>;
 
 str wordexp(str var, int flags = 0)
 {
@@ -90,7 +90,7 @@ public:
 
 class SkivvyClient
 {
-	typedef std::chrono::system_clock clock;
+	using clock = std::chrono::system_clock;
 
 	str config_dir;
 	str host = "localhost";

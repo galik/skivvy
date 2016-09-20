@@ -138,11 +138,11 @@ void irc_service(int cs)
 	log("IRC service closed.");
 }
 
-typedef std::unique_lock<std::mutex> unique_lock;
-typedef std::vector<message> message_vec;
-typedef std::list<message> message_lst;
-typedef std::queue<message> message_que;
-typedef std::function<bool(const message&)> request_func;
+using unique_lock = std::unique_lock<std::mutex>;
+using message_vec = std::vector<message>;
+using message_lst = std::list<message>;
+using message_que = std::queue<message>;
+using request_func = std::function<bool(const message&)>;
 
 class irc_server
 {
