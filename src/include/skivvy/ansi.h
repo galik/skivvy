@@ -1,5 +1,5 @@
-#ifndef __GALIK_ANSI_H
-#define __GALIK_ANSI_H
+#ifndef SKIVVY_ANSI_H
+#define SKIVVY_ANSI_H
 
 #include <sstream>
 #include <iostream>
@@ -356,4 +356,4 @@ typedef basic_ansistream<wchar_t> wansistream;
 
 }} // skivvy::ansi
 
-#endif // __GALIK_ANSI_H
+#endif // SKIVVY_ANSI_H

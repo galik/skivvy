@@ -53,16 +53,14 @@ is granted under the same conditions.
 #include <cstring> // strerror()
 #include <cerrno>
 
-#include <sookee/log.h>
-#include <sookee/bug.h>
+#include <hol/bug.h>
+#include <hol/simple_logger.h>
 
 //#include <skivvy/logrep.h>
 
 namespace skivvy { namespace net {
 
-//using namespace skivvy::utils;
-using namespace sookee::bug;
-using namespace sookee::log;
+using namespace hol::simple_logger;
 
 template<typename Char>
 class basic_socketbuf

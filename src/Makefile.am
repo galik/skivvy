@@ -38,8 +38,20 @@ DEF_FLAGS = \
 GEN_FLAGS = -Wl,-E -Wfatal-errors -Wall -Wextra -Winit-self -ansi -pedantic-errors -pthread \
 	-I$(top_srcdir)/src/include
 
-AM_CPPFLAGS = $(SOOKEE_CFLAGS) $(OPENSSL_CFLAGS)
+HOL_INCS = -I$(HOME)/dev/header-only
+GSL_INCS = -I$(HOME)/dev/GSL
+RNG_INCS = -I$(HOME)/dev/range-v3/include
+DATE_INCS =  -I$(HOME)/dev/date
+STDFS_LIBS = -lstdc++fs
+
+STD_INCS = $(GSL_INCS) $(RNG_INCS) $(DATE_INCS) $(HOL_INCS)
+STD_LIBS = $(STDFS_LIBS)
+
+AM_CPPFLAGS = $(STD_INCS) $(OPENSSL_CFLAGS) $(BOOST_CPPFLAGS)
 AM_CXXFLAGS = $(GEN_FLAGS) $(DEF_FLAGS)
+AM_LDFLAGS = $(BOOST_LDFLAGS)
+
+BOOST_LIBS = $(BOOST_SYSTEM_LIB) $(BOOST_ASIO_LIB)
 
 skivvy_include_HEADERS = \
 	$(srcdir)/include/skivvy/ansi.h \
@@ -68,7 +80,7 @@ skivvy_include_HEADERS = \
 skivvy_include_bits_HEADERS = \
 	$(srcdir)/include/skivvy/bits/rpc.tcc
 
-BOTLIBS = -ldl -L$(builddir)/.libs -lskivvy $(SOOKEE_LIBS) 
+BOTLIBS = -ldl -L$(builddir)/.libs -lskivvy
 # -Wl,-E is required for programs that load plugin's
 BOTFLAGS = -Wl,-E
 
@@ -94,8 +106,8 @@ libskivvy_la_SOURCES = \
 	types.cpp \
 	utils.cpp
 	
-libskivvy_la_LIBADD = -L.libs $(SOOKEE_LIBS) $(OPENSSL_LIBS)
-libskivvy_la_LDFLAGS = -version-info 0:0:0 --enable-new-dtags
+libskivvy_la_LIBADD = -L.libs $(STD_LIBS) $(OPENSSL_LIBS) $(BOOST_LIBS)
+libskivvy_la_LDFLAGS = -version-info 0:0:0 --enable-new-dtags $(BOOST_LDFLAGS)
 
 # Development utils
 #noinst_PROGRAMS = \
@@ -119,7 +131,7 @@ libskivvy_la_LDFLAGS = -version-info 0:0:0 --enable-new-dtags
 bin_PROGRAMS = skivvy skivvy-client
 
 skivvy_SOURCES = skivvy.cpp
-skivvy_LDADD = -ldl -lskivvy $(SOOKEE_LIBS) $(OPENSSL_LIBS) -lstdc++fs
+skivvy_LDADD = -ldl -lskivvy $(STD_LIBS) $(OPENSSL_LIBS) -lstdc++fs
 skivvy_LDFLAGS = -Wl,-E --enable-new-dtags
 
 skivvy_client_SOURCES = skivvy-client.cpp

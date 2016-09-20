@@ -5,8 +5,8 @@
  *      Author: oaskivvy@gmail.com
  */
 
-#ifndef _SKIVVY_CAL_H_
-#define _SKIVVY_CAL_H_
+#ifndef SKIVVY_CAL_H
+#define SKIVVY_CAL_H
 
 #include <ctime>
 #include <cassert>
@@ -260,4 +260,4 @@ public:
 
 }} // skivvy::cal
 
-#endif /* _SKIVVY_CAL_H_ */
+#endif // SKIVVY_CAL_H

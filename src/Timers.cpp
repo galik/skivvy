@@ -30,10 +30,10 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 #include <skivvy/Timers.h>
 
-#include <sookee/bug.h>
-#include <sookee/log.h>
+#include <hol/bug.h>
+#include <hol/simple_logger.h>
+#include <hol/small_types.h>
 
-#include <sookee/types.h>
 #include <skivvy/utils.h>
 
 #include <random>
@@ -41,10 +41,11 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 namespace skivvy { namespace ircbot {
 
-using namespace sookee::types;
 using namespace skivvy::utils;
-using namespace sookee::bug;
-using namespace sookee::log;
+using namespace hol::simple_logger;
+using namespace hol::small_types::basic;
+
+using lock_guard = std::lock_guard<std::mutex>;
 
 RandomTimer::RandomTimer(std::function<void(const void*)> cb)
 : mindelay(1)
@@ -81,7 +82,7 @@ void RandomTimer::timer()
 		}
 		catch(std::exception& e)
 		{
-			log("e.what(): " << e.what());
+			LOG::X << e.what();
 		}
 	}
 }

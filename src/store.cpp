@@ -39,10 +39,10 @@ const str BackupStore::VERSION_KEY = "BackupStore-Version";
 
 void escape(str& s)
 {
-	replace(s, "\\", "\\0"); // escape delimiters
-	replace(s, "{", "\\1");
-	replace(s, "}", "\\2");
-	replace(s, ",", "\\3");
+	hol::replace_all_mute(s, "\\", "\\0"); // escape delimiters
+	hol::replace_all_mute(s, "{", "\\1");
+	hol::replace_all_mute(s, "}", "\\2");
+	hol::replace_all_mute(s, ",", "\\3");
 }
 
 str escaped(const str& cs)
@@ -54,10 +54,10 @@ str escaped(const str& cs)
 
 void unescape(str& s)
 {
-	replace(s, "\\3", ",");
-	replace(s, "\\2", "}");
-	replace(s, "\\1", "{");
-	replace(s, "\\0", "\\");
+	hol::replace_all_mute(s, "\\3", ",");
+	hol::replace_all_mute(s, "\\2", "}");
+	hol::replace_all_mute(s, "\\1", "{");
+	hol::replace_all_mute(s, "\\0", "\\");
 }
 
 str unescaped(const str& cs)

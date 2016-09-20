@@ -30,8 +30,8 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 '-----------------------------------------------------------------*/
 
-#include <sookee/str.h>
-#include <sookee/types.h>
+#include <hol/string_utils.h>
+#include <hol/small_types.h>
 #include <skivvy/logrep.h>
 
 #include <thread>
@@ -39,15 +39,15 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 namespace skivvy { namespace props {
 
-using namespace sookee::types;
+using namespace hol::small_types::basic;
 using namespace skivvy::utils;
-using namespace sookee::utils;
 
+using lock_guard = std::lock_guard<std::mutex>;
 
 typedef std::map<const str, str> property_map;
 typedef std::pair<const str, str> property_pair;
-typedef property_map::iterator property_iter;
-typedef property_map::const_iterator property_citer;
+//typedef property_map::iterator property_iter;
+//typedef property_map::const_iterator property_citer;
 
 template<typename T>
 struct serialize
@@ -84,7 +84,8 @@ public:
 	{
 		bug_fun();
 
-		property_citer ci;
+		decltype(t.cbegin()) ci;
+
 		lock_guard lock(mtx);
 
 		if((ci = t.find(s)) != t.cend())

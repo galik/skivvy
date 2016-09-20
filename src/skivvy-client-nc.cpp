@@ -4,11 +4,11 @@
 #include <cerrno>
 #include <cstring>
 
-#include <sookee/str.h>
+#include <hol/string_utils.h>
 #include <sookee/ios.h>
 #include <sookee/cfg.h>
 
-#include <sookee/types.h>
+#include <hol/small_types.h>
 #include <skivvy/socketstream.h>
 
 #include <readline/readline.h>

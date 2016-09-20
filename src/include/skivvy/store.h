@@ -28,13 +28,14 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 '-----------------------------------------------------------------*/
 
-#include <sookee/types/basic.h>
+#include <hol/small_types.h>
 
-#include <sookee/bug.h>
-#include <sookee/log.h>
-#include <sookee/stl.h>
-#include <sookee/str.h>
-#include <sookee/ios.h>
+#include <hol/bug.h>
+#include <hol/basic_serialization.h>
+#include <hol/simple_logger.h>
+#include <range/v3/all.hpp>
+#include <hol/string_utils.h>
+//#include <sookee/ios.h>
 
 #include <memory>
 #include <istream>
@@ -47,11 +48,13 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 namespace skivvy { namespace utils {
 
-using namespace sookee::types;
-using namespace sookee::utils;
-using namespace sookee::bug;
-using namespace sookee::log;
-using namespace sookee::ios;
+using namespace hol::small_types::ios;
+using namespace hol::small_types::ios::functions;
+using namespace hol::small_types::basic;
+using namespace hol::small_types::string_containers;
+using namespace hol::simple_logger;
+
+using lock_guard = std::lock_guard<std::mutex>;
 
 // Container serialization
 
@@ -264,7 +267,7 @@ protected:
 
 	static bool pcre_match(const str& r, const str& s, bool full = false)
 	{
-		log("WARN: deprecated function use: sreg_match()");
+		LOG::W << "deprecated function use: sreg_match()";
 //		if(full)
 //			return pcrecpp::RE(r).FullMatch(s);
 //		return pcrecpp::RE(r).PartialMatch(s);
@@ -370,7 +373,7 @@ public:
 //			if(pcre_match(r, v, true))
 //				res.push_back(v);
 //		return res;
-		log("WARN: deprecated function use: get_sreg_vec_with_key()");
+		LOG::W << "deprecated function use: get_sreg_vec_with_key()";
 		return get_sreg_vec_with_key(k, r);
 	}
 
@@ -465,7 +468,7 @@ public:
 
 using StoreUPtr = std::unique_ptr<Store>;
 
-USING_MAP(str, str_vec, str_vec_map);
+using str_vec_map = std::map<str, str_vec>;
 
 class MappedStore
 : public Store
@@ -540,7 +543,7 @@ public:
 
 	str_set get_keys_if_pcre(const str& reg) override
 	{
-		log("WARN: deprecated function use: get_keys_if_sreg()");
+		LOG::W << "deprecated function use: get_keys_if_sreg()";
 		return get_keys_if_sreg(reg);
 	}
 
@@ -731,7 +734,7 @@ public:
 //		ifs.close();
 //
 //		return res;
-		log("WARN: deprecated function use: get_keys_if_sreg()");
+		LOG::W << "deprecated function use: get_keys_if_sreg()";
 		return get_keys_if_sreg(reg);
 	}
 
@@ -913,7 +916,7 @@ public:
 //		ifs.close();
 //
 //		return res;
-		log("WARN: deprecated function use: get_keys_if_sreg()");
+		LOG::W << "deprecated function use: get_keys_if_sreg()";
 		return get_keys_if_sreg(reg);
 	}
 

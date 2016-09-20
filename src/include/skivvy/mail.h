@@ -31,7 +31,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 '-----------------------------------------------------------------*/
 
-#include <sookee/str.h>
+#include <hol/string_utils.h>
 #include <sookee/ios.h>
 #include <sookee/types/basic.h>
 #include <skivvy/logrep.h>

@@ -34,19 +34,27 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 //#include <sookee/socketstream.h>
 
-#include <sookee/socketstream.h>
-#include <sookee/ssl_socketstream.h>
-#include <skivvy/socketstream.h> // TODO: REMOVE THIS!!!
+//#include <sookee/socketstream.h>
+//#include <sookee/ssl_socketstream.h>
+//#include <skivvy/socketstream.h> // TODO: REMOVE THIS!!!
+#include <boost/asio.hpp>
+
 #include <skivvy/message.h>
 
-#include <sookee/types.h>
+#include <hol/small_types.h>
+#include <hol/simple_logger.h>
 
 #include <memory>
 
-namespace skivvy { namespace ircbot {
+namespace skivvy {
+namespace ircbot {
 
-using namespace sookee;
-using namespace sookee::types;
+using namespace boost;
+using namespace hol::simple_logger;
+using namespace hol::small_types::basic;
+using namespace hol::small_types::string_containers;
+
+using lock_guard = std::lock_guard<std::mutex>;
 
 /**
  * Class to manage the dialogue with a remote IRC server.
@@ -79,9 +87,7 @@ using namespace sookee::types;
 class IrcServer
 {
 public:
-	virtual ~IrcServer() {}
-	virtual bool send(const str& cmd) = 0;
-	virtual bool send_unlogged(const str& cmd) = 0;
+	virtual ~IrcServer() = default;
 
 	/**
 	 * Open a TCP/IP connection to the host on the given port
@@ -92,6 +98,16 @@ public:
 	 * @return false on failure.
 	 */
 	virtual bool connect(const str& host, long port = 6667) = 0;
+
+	virtual bool send(const str& cmd) = 0;
+	virtual bool send_unlogged(const str& cmd) = 0;
+
+	/**
+	 * Get a line from the IRC server.
+	 *
+	 * @return false on failure.
+	 */
+	virtual bool receive(str& line) = 0;
 
 	/**
 	 * Initiate the dialogue between the client and the server
@@ -236,13 +252,6 @@ public:
 	 */
 	virtual bool reply_pm(const message& msg, const str& text) = 0;
 	virtual bool reply_pm_notice(const message& msg, const str& text) = 0;
-
-	/**
-	 * Get a line from the IRC server.
-	 *
-	 * @return false on failure.
-	 */
-	virtual bool receive(str& line) = 0;
 };
 
 using IrcServerUptr = std::unique_ptr<IrcServer>;
@@ -276,57 +285,6 @@ public:
 	bool reply_pm_notice(const message& msg, const str& text) override;
 };
 
-template<typename SocketStream>
-class BasicRemoteIrcServer
-: public BaseIrcServer
-{
-private:
-	std::mutex mtx_ss;
-//	skivvy::net::socketstream ss;
-	SocketStream ss; //TODO: PUT THIS BACK
-
-public:
-	bool send_unlogged(const str& cmd)
-	{
-		lock_guard lock(mtx_ss);
-		ss << cmd.substr(0, 510) << "\r\n" << std::flush;
-		if(ss)
-			return true;
-		return false;
-	}
-
-	bool connect(const str& host, long port)
-	{
-		ss.clear();
-		if(ss.open(host, port))
-			return true;
-		return false;
-	}
-
-	bool receive(str& line)
-	{
-		if(std::getline(ss, line))
-			return true;
-		return false;
-	}
-};
-
-using RemoteIrcServer = BasicRemoteIrcServer<sookee::net::netstream>;
-using RemoteSSLIrcServer = BasicRemoteIrcServer<sookee::net::ssl_socketstream>;
-
-//class RemoteSSLIrcServer
-//: public BaseIrcServer
-//{
-//private:
-//	std::mutex mtx_ss;
-//	net::ssl_socketstream ss;
-//
-//public:
-//	bool send_unlogged(const str& cmd);
-//	bool connect(const str& host, long port = 9999);
-//	bool receive(str& line);
-//};
-
 class TestIrcServer
 : public BaseIrcServer
 {
@@ -336,11 +294,44 @@ private:
 	std::ofstream ofs;
 
 public:
-	bool send_unlogged(const str& cmd);
-	bool connect(const str& host, long port = 6667);
-	bool receive(str& line);
+	bool connect(const str& host, long port = 6667) override;
+	bool send_unlogged(const str& cmd) override;
+	bool receive(str& line) override;
 };
 
-}} // skivvy::ircbot
+class RemoteIrcServer
+: public BaseIrcServer
+{
+public:
+	bool connect(const str& host, long port) override;
+	bool send_unlogged(const str& cmd) override;
+	bool receive(str& line) override;
+
+private:
+	mutable std::mutex mtx_ss;
+	asio::io_service io_service;
+	asio::ip::tcp::socket ss{io_service};
+};
+
+// TODO: Make AsyncRemoteIrcServer work
+
+//class AsyncRemoteIrcServer
+//: public RemoteIrcServer
+//{
+//public:
+//	using receive_callback = void(*)(message const& msg);
+//
+//	void set_receive_callback(receive_callback cb) { this->cb = cb; }
+//
+//	bool connect(const str& host, long port) override;
+//	void close() { done = true; }
+//
+//private:
+//	receive_callback cb = nullptr;
+//	std::atomic_bool done{false};
+//};
+
+} // ircbot
+} // skivvy
 
 #endif // _SKIVVY_REMOTE_IRC_SERVER_H_
