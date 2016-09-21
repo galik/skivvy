@@ -71,7 +71,7 @@ namespace skivvy { namespace ircbot {
 
 using clock = std::chrono::system_clock;
 
-PLUGIN_INFO("skivvy", "IrcBot", "0.5.1");
+PLUGIN_INFO("skivvy", "IrcBot", "0.6.0");
 
 using namespace skivvy;
 using namespace skivvy::irc;
@@ -156,7 +156,26 @@ str BasicIrcBotPlugin::help(const str& cmd) const
 	if(actions.at(cmd).flags & action::INVISIBLE)
 		return "none";
 	bug_var(actions.at(cmd).help);
-	return actions.at(cmd).help;
+
+	auto help = actions.at(cmd).help;
+
+	if(!help.empty() && help[0] == '=')
+	{
+		auto new_cmd = help.substr(1);
+		bug_var(new_cmd);
+		if(!actions.count(new_cmd))
+		{
+			LOG::E << "unknown command alias: " << new_cmd << " for command: " << cmd;
+			return "unknown command alias";
+		}
+
+		if(actions.at(new_cmd).flags & action::INVISIBLE)
+			return "none";
+
+		help = actions.at(new_cmd).help;
+	}
+
+	return cmd + " " + help;
 }
 
 // =======================================================================
