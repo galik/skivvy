@@ -1,5 +1,5 @@
-#ifndef _SKIVVY_STORE_H_
-#define _SKIVVY_STORE_H_
+#ifndef SKIVVY_STORE_H
+#define SKIVVY_STORE_H
 /*
  *  Created on: 04 Jan 2013
  *      Author: oaskivvy@gmail.com
@@ -43,10 +43,10 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <fstream>
 #include <sstream>
 
-//#include <pcrecpp.h>
 #include <fnmatch.h>
 
-namespace skivvy { namespace utils {
+namespace skivvy {
+namespace utils {
 
 using namespace hol::small_types::ios;
 using namespace hol::small_types::ios::functions;
@@ -265,14 +265,14 @@ public:
 
 protected:
 
-	static bool pcre_match(const str& r, const str& s, bool full = false)
-	{
-		LOG::W << "deprecated function use: sreg_match()";
-//		if(full)
-//			return pcrecpp::RE(r).FullMatch(s);
-//		return pcrecpp::RE(r).PartialMatch(s);
-		return sreg_match(r, s, full);
-	}
+//	static bool pcre_match(const str& r, const str& s, bool full = false)
+//	{
+//		LOG::W << "deprecated function use: sreg_match()";
+////		if(full)
+////			return pcrecpp::RE(r).FullMatch(s);
+////		return pcrecpp::RE(r).PartialMatch(s);
+//		return sreg_match(r, s, full);
+//	}
 
 	static bool sreg_match(const str& r, const str& s, bool full = false)
 	{
@@ -490,23 +490,12 @@ private:
 
 	void load()
 	{
-		thread_local static str line, k, v;
-		thread_local static std::istringstream iss;
-
+		decltype(store)().swap(store);
 		if(auto ifs = std::ifstream(file))
-		{
-			store.clear();
-			while(std::getline(ifs, line))
-			{
-				iss.clear();
-				iss.str(line);
-				k.clear();
-				v.clear();
-				std::getline(std::getline(iss, k, ':') >> std::ws, v);
-				if(!k.empty())
-					store[k].push_back(v);
-			}
-		}
+			for(std::string line; std::getline(ifs, line);)
+				if(auto pos = line.find(':') + 1)
+					store[line.substr(0, pos - 1)].push_back(
+						line.substr(std::min(pos + 1, line.size())));
 	}
 
 	void save()
@@ -518,9 +507,7 @@ private:
 					ofs << p.first << ": " << v << '\n';
 		}
 		else
-		{
 			throw std::runtime_error("Unable to save store: " + file + " " + std::strerror(errno));
-		}
 	}
 
 public:
@@ -533,6 +520,7 @@ public:
 	BackupStore(const str& file): file(file)
 	{
 		reload();
+		try{save();}catch(...){throw std::runtime_error(std::strerror(errno));}
 	}
 
 	void reload()
@@ -1021,5 +1009,7 @@ public:
 	}
 };
 
-}} // skivvy::utils
-#endif // _SKIVVY_STORE_H_
+} // utils
+} // skivvy
+
+#endif // SKIVVY_STORE_H
