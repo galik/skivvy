@@ -185,7 +185,7 @@ IrcBotPluginRPtr IrcBotPluginLoader::operator()(const str& file, IrcBot& bot)
 	void* dl = 0;
 	IrcBotPluginRPtr(*skivvy_ircbot_factory)(IrcBot&) = 0;
 
-	LOG::I << "PLUGIN LOAD: " << file;
+	LOG::A << "PLUGIN LOAD: " << file;
 
 	//if(!(dl = dlopen(file.c_str(), RTLD_NOW|RTLD_GLOBAL)))
 	if(!(dl = dlopen(file.c_str(), RTLD_LAZY|RTLD_GLOBAL)))
@@ -269,7 +269,7 @@ IrcBot::IrcBot()
 
 std::istream& load_props(std::istream& is, IrcBot& bot, str_map& vars, str& prefix)
 {
-	LOG::I << "Loading properties:";
+	LOG::A << "Loading properties:";
 	siz pos;
 	str line;
 	while(std::getline(is, line))
@@ -679,7 +679,7 @@ bool IrcBot::init(const str& config_file)
 	}
 	else if(get("server.ssl", false))
 	{
-		LOG::I << "INFO: Using SSL";
+		LOG::I << "Using SSL";
 		// irc = std::make_unique<RemoteSSLIrcServer>();
 		hol_throw_runtime_error("SSL not implemented yet");
 	}
@@ -712,22 +712,25 @@ bool IrcBot::init(const str& config_file)
 	{
 		if(!(*p))
 		{
-			LOG::I << "Null plugin found during initialisation.";
-			p = plugins.erase(p);
-			continue;
-		}
-		if(!(*p)->init())
-		{
-			LOG::I << "Plugin failed during initialization.";
+			LOG::E << "Null plugin found during initialization.";
 			p = plugins.erase(p);
 			continue;
 		}
 
-		LOG::I << "\tPlugin initialized: " << (*p)->get_id() << ": " << (*p)->get_name() << " v" << (*p)->get_version();
+		LOG::A << "INITIALIZING: " << (*p)->get_id() << ": " << (*p)->get_name() << " v" << (*p)->get_version();
+
+		if(!(*p)->init())
+		{
+			LOG::E << "Plugin failed during initialization.";
+			p = plugins.erase(p);
+			continue;
+		}
+
+		LOG::I << "Plugin initialized: ";// << (*p)->get_id() << ": " << (*p)->get_name() << " v" << (*p)->get_version();
 
 		for(str& c: (*p)->list())
 		{
-			LOG::I << "\t\tRegister command: " << c;
+			LOG::I << "  Register command: " << c;
 			commands[c] = p->get();
 		}
 		++p;
@@ -931,6 +934,7 @@ bool IrcBot::init(const str& config_file)
 						irc->part(c);
 					}
 					done = true;
+					LOG::A << "!die command received and understood";
 				}
 				else
 				{
@@ -1189,10 +1193,72 @@ bool IrcBot::allow_cmd_access(const str& cmd, const message& msg)
 
 void IrcBot::execute(const str& cmd, const message& msg)
 {
-	auto found = commands.find(cmd);
+	bug_fun();
+	bug_var(cmd);
+	bug_var(msg.get_chan());
+
+	// allow command aliasing
+
+	// command.alias: #channel !from !to
+	//
+	// If there is an alias in effect the original command
+	// must stop working. It should ONLY be accessible through
+	// its alias.
+	//
+
+	str cmd_alias;
+
+	bool in_use = false;
+	str chan, from, to;
+	for(auto const& c: get_set("command.alias", cmd))
+	{
+		bug_var(c);
+		if(!(siss(c) >> chan >> from >> to))
+			continue;
+
+		bug_var(chan);
+		bug_var(from);
+		bug_var(to);
+
+		if(hol::lower_mute(chan) != hol::lower_copy(msg.get_chan()))
+			continue;
+
+		if(to == cmd)
+		{
+			in_use = true;
+			break;
+		}
+
+		if(from == cmd)
+		{
+			cmd_alias = to;
+			break;
+		}
+	}
+
+	bug_var(cmd_alias);
+	bug_var(in_use);
+
+	if(in_use) // command belongs to another bot in this channel
+	{
+		LOG::W << "Rejecting in-use command: " << cmd << ", must use alias: " << from;
+		return;
+	}
+
+	// not in use and no alias found
+	if(cmd_alias.empty())
+		cmd_alias = cmd;
+
+	bug_var(cmd_alias);
+
+	if(cmd_alias != cmd)
+		LOG::I << "Using command alias: " << cmd_alias << " for: " << cmd;
+
+	//
+	auto found = commands.find(cmd_alias);
 	if(found == commands.end())
 	{
-		LOG::I << "IrcBot::execute(): Unknown command: " << cmd;
+		LOG::I << "IrcBot::execute(): Unknown command: " << cmd_alias;
 		return;
 	}
 
@@ -1200,8 +1266,8 @@ void IrcBot::execute(const str& cmd, const message& msg)
 	{
 		try
 		{
-			if(allow_cmd_access(cmd, msg))
-				plugin->execute(cmd, msg);
+			if(allow_cmd_access(cmd_alias, msg))
+				plugin->execute(cmd_alias, msg);
 			else if(msg.from_channel())
 				LOG::I << "PLUGIN " << plugin->get_name()
 					<< " NOT AUTHORISED FOR CHANNEL: " << msg.get_to();
@@ -1269,6 +1335,7 @@ str IrcBot::help(const str& cmd) const
 
 void IrcBot::exit()
 {
+	bug_fun();
 	LOG::I << "Closing down plugins:";
 	for(auto& p: plugins)
 	{
