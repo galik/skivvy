@@ -64,7 +64,8 @@ void print_duration(std::chrono::duration<Rep, Period> t, std::ostream& os)
 str prompt_color(const str& seed);
 #define REPLY_PROMPT skivvy::utils::prompt_color(__func__)
 
-int rand_int(int low, int high);
+/// use hol::random_utils
+//int rand_int(int low, int high);
 
 #ifndef DEV
 #define DEV "-unset"
@@ -106,8 +107,32 @@ str wild_replace(const str wild, const str_vec& replacements);
 
 // Missing from removal of libsookee
 
-str::size_type extract_delimited_text(const str& in, const str& d1, const str& d2, str& out, size_t pos);
+str::size_type extract_delimited_text(const str& in, const str& d1, const str& d2, str& out, size_t pos = 0);
 
+/// pos is updated to position after second delimiter
+//inline
+//str extract_delimited_text(const str& in, const str& d1, const str& d2, size_t& pos)
+//{
+//	str s;
+//	pos = extract_delimited_text(in, d1, d2, s, pos);
+//	return s;
+//}
+
+struct extract_delimited_text_rv
+{
+	str text;
+	str::size_type pos = 0;
+	explicit operator bool() const { return pos != str::npos; }
+};
+
+inline
+extract_delimited_text_rv
+extract_delimited_text(const str& in, const str& d1, const str& d2, size_t pos = 0)
+{
+	extract_delimited_text_rv rv;
+	rv.pos = extract_delimited_text(in, d1, d2, rv.text, pos);
+	return rv;
+}
 
 }} // skivvy::utils
 

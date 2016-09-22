@@ -33,12 +33,12 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 #include <hol/simple_logger.h>
 #include <hol/small_types.h>
-//#include <sookee/ios.h>
-//#include <skivvy/logrep.h>
+#include <hol/random_utils.h>
 #include <skivvy/irc.h>
 
 namespace skivvy { namespace utils {
 
+using namespace hol::random_utils;
 using namespace hol::small_types::ios;
 using namespace hol::small_types::ios::functions;
 using namespace hol::small_types::basic;
@@ -132,12 +132,12 @@ str prompt_color(const str& seed)
 }
 
 
-int rand_int(int low, int high)
-{
-	thread_local static std::mt19937 g(std::random_device{}());
-	std::uniform_int_distribution<> d(low, high);
-	return d(g);
-}
+//int rand_int(int low, int high)
+//{
+//	thread_local static std::mt19937 g(std::random_device{}());
+//	std::uniform_int_distribution<> d(low, high);
+//	return d(g);
+//}
 
 str wild_replace(const str wild, const str& replacement)
 {
@@ -157,7 +157,7 @@ str wild_replace(const str wild, const str_vec& replacements)
 		else if(c == '\\')
 			esc = true;
 		else if(c == '*')
-			fixed += replacements[rand_int(0, replacements.size() - 1)];
+			fixed += rnd::random_element(replacements);
 		else
 			fixed += c;
 	}

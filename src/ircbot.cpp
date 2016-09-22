@@ -54,6 +54,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <hol/bug.h>
 #include <hol/simple_logger.h>
 #include <hol/string_utils.h>
+#include <hol/random_utils.h>
 
 #include <skivvy/ios.h>
 #include <skivvy/stl.h>
@@ -77,6 +78,7 @@ using namespace skivvy;
 using namespace skivvy::irc;
 using namespace skivvy::utils;
 
+using namespace hol::random_utils;
 using namespace hol::simple_logger;
 using namespace hol::small_types::basic;
 using namespace hol::small_types::string_containers;
@@ -514,7 +516,7 @@ void IrcBot::official_join(const str& channel)
 	str_vec welcomes = get_vec(PROP_WELCOME);
 
 	if(!welcomes.empty())
-		irc->say(channel, welcomes[rand_int(0, welcomes.size() - 1)]);
+		irc->say(channel, rnd::random_element(welcomes));
 }
 
 // =====================================
@@ -923,23 +925,45 @@ bool IrcBot::init(const str& config_file)
 
 			if(get_set("trigger.word.die", "!die").count(cmd))
 			{
-				if(!have(PROP_PASSWORD) || get(PROP_PASSWORD) == msg.get_user_params())
+				str pass;
+				if(!(ios::getstring(siss(msg.get_user_params()), pass)))
+				{
+					fc_reply(msg, cmd + " <password>");
+					continue;
+				}
+				if(!have(PROP_PASSWORD) || get(PROP_PASSWORD) == pass)
 				{
 					str_vec goodbyes = get_vec(PROP_GOODBYE);
 
 					for(const str& c: chans)
 					{
 						if(!goodbyes.empty())
-							irc->say(c, goodbyes[rand_int(0, goodbyes.size() - 1)]);
+							irc->say(c, rnd::random_element(goodbyes));
 						irc->part(c);
 					}
 					done = true;
 					LOG::A << "!die command received and understood";
+					continue;
 				}
-				else
-				{
-					fc_reply(msg, "Incorrect password.");
-				}
+				fc_reply(msg, "Wrong password");
+
+//				if(!have(PROP_PASSWORD) || get(PROP_PASSWORD) == msg.get_user_params())
+//				{
+//					str_vec goodbyes = get_vec(PROP_GOODBYE);
+//
+//					for(const str& c: chans)
+//					{
+//						if(!goodbyes.empty())
+//							irc->say(c, goodbyes[rand_int(0, goodbyes.size() - 1)]);
+//						irc->part(c);
+//					}
+//					done = true;
+//					LOG::A << "!die command received and understood";
+//				}
+//				else
+//				{
+//					fc_reply(msg, "Incorrect password.");
+//				}
 			}
 			else if(get_set("trigger.word.uptime", "!uptime").count(cmd))//"!uptime")
 			{
@@ -1011,9 +1035,7 @@ bool IrcBot::init(const str& config_file)
 			else if(get_set("trigger.word.restart", "!restart").count(cmd))//"!restart")
 			{
 				str pass;
-				std::istringstream iss(msg.get_user_params());
-
-				if(!(ios::getstring(iss, pass)))
+				if(!(ios::getstring(siss(msg.get_user_params()), pass)))
 				{
 					fc_reply(msg, "!restart <password>");
 					continue;
@@ -1023,6 +1045,7 @@ bool IrcBot::init(const str& config_file)
 					done = true;
 					restart = true;
 				}
+				fc_reply(msg, "Wrong password");
 			}
 			else if(get_set("trigger.word.pset", "!pset").count(cmd))//"!pset")
 			{
@@ -1462,7 +1485,7 @@ void IrcBot::exec(const std::string& cmd, std::ostream* os)
 			for(const str& c: chans)
 			{
 				if(!goodbyes.empty())
-					irc->say(c, goodbyes[rand_int(0, goodbyes.size() - 1)]);
+					irc->say(c, rnd::random_element(goodbyes));
 				irc->part(c);
 			}
 			done = true;
@@ -1474,7 +1497,7 @@ void IrcBot::exec(const std::string& cmd, std::ostream* os)
 			for(const str& c: chans)
 			{
 				if(!goodbyes.empty())
-					irc->say(c, goodbyes[rand_int(0, goodbyes.size() - 1)]);
+					irc->say(c, rnd::random_element(goodbyes));
 				irc->part(c);
 			}
 			restart = true;
