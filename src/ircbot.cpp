@@ -1608,15 +1608,6 @@ void IrcBot::exec(const std::string& cmd, std::ostream* os)
 			(*os) << "ERROR: Commands begin with /.\n";
 }
 
-bool IrcBot::preg_match(const str& r, const str& s, bool full) const
-{
-//	if(full)
-//		return pcrecpp::RE(r).FullMatch(s);
-//	return pcrecpp::RE(r).PartialMatch(s);
-	LOG::W << "deprecated function use: preg_match()";
-	return sreg_match(r, s, full);
-}
-
 bool IrcBot::sreg_match(const str& r, const str& s, bool full) const
 {
 	std::regex e(r);

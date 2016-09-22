@@ -731,7 +731,6 @@ public:
 	/**
 	 * Match s according to regular expression r.
 	 */
-	bool preg_match(const str& r, const str& s, bool full = false) const; // pcre regex
 	bool wild_match(const str& w, const str& s, int flags = 0) const;
 	bool sreg_match(const str& w, const str& s, bool full = false) const; // std::regex
 
