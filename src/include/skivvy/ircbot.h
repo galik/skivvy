@@ -468,112 +468,6 @@ public:
 	virtual void exit() = 0;
 };
 
-//class ManagedIrcBotPlugin
-//: public IrcBotPlugin
-//{
-//public:
-//	using action_func = std::function<void(const message& msg)>;
-//	using action_map = std::map<str, action_func>;
-//
-//private:
-//	str get_trigger_key(const str& part, const str& trigger) const
-//	{
-//		return get_id() + ".trigger." + part + "." + trigger;
-//	}
-//
-//protected:
-//	IrcBot& bot;
-//	IrcServer* irc = nullptr;
-//
-//	struct info
-//	{
-//		str alias; // default alias
-//		str help; // default help
-//	};
-//
-//	using info_map = std::map<str, info>;
-//
-//	action_map actions; // trigger -> action_func
-//	info_map infos; // trigger -> {alias, help}
-//	str_map aliases; // alias -> trigger
-//
-//	void add(const str& trigger, const str& alias, const str& help, action_func func);
-//
-//public:
-//	ManagedIrcBotPlugin(IrcBot& bot);
-//	virtual ~ManagedIrcBotPlugin();
-//
-//	/**
-//	 * Implementing bots must override this function
-//	 * to initialize themselves.
-//	 *
-//	 * This is where the bot should
-//	 * check for the presence of plugins
-//	 * that it depends on.
-//	 *
-//	 * Also action objects should be registered in this function
-//	 * by calling void add():
-//	 *
-//	 * add
-//	 * ({
-//	 *     "trigger"
-//	 *     , "default alias" // !alarm
-//	 *     , "default help" // Does stuff
-//	 *     , [&](const message& msg){ do_command(msg); }
-//	 * });
-//	 *
-//	 * Where do_command(const message& msg) is the function that
-//	 * actually performs the command.
-//	 *
-//	 * @return false on failure
-//	 */
-//	virtual bool initialize() = 0;
-//
-//	// INTERFACE: IrcBotPlugin DON'T Override
-//
-//	/**
-//	 * Implementing classes should not override this
-//	 * function. This class provides its own implementation
-//	 * which calls the pure virtual function
-//	 * BasicIrcBotPlugin::initialize(). Implementations
-//	 * should override that instead.
-//	 */
-//	bool init() final override;
-//
-//	/**
-//	 * Implementing classes should not override this
-//	 * function. This class provides its own implementation
-//	 * which supplies the return information from the list of
-//	 * BasicIrcBotPlugin::action objects provided by calling
-//	 * the void BasicIrcBotPlugin::add(const action& a) function.
-//	 */
-//	str_vec list() const final override;
-//
-//	/**
-//	 * Implementing classes should not override this
-//	 * function. This class provides its own implementation
-//	 * which calls the relevant std::function from the list of
-//	 * BasicIrcBotPlugin::action objects provided by calling
-//	 * the void BasicIrcBotPlugin::add(const action& a) function.
-//	 */
-//	virtual void execute(const str& cmd, const message& msg) final;
-//
-//	/**
-//	 * Implementing classes should not override this
-//	 * function. This class provides its own implementation
-//	 * which supplies the return information from the list of
-//	 * BasicIrcBotPlugin::action objects provided by calling
-//	 * the void BasicIrcBotPlugin::add(const action& a) function.
-//	 */
-//	virtual str help(const str& cmd) const final;
-//
-//	virtual str get_id() const = 0;
-//	virtual str get_name() const = 0;
-//	virtual str get_version() const = 0;
-//
-//	virtual void exit() = 0;
-//};
-
 /**
  * The plugin implementation source should
  * use this macro to make itself loadable as
@@ -909,8 +803,6 @@ public:
 		if(v.empty())
 			v.push_back(dflt);
 		return v;
-//		str_vec& v = props[s];
-//		return v.empty() ? str_vec{dflt} : v;
 	}
 
 	str_set get_set(const str& s) const
