@@ -108,18 +108,34 @@ auto txt = []
 	return ansi::ansi_fsm {active};
 }();
 
-//class ansi_filter
-//: public hol::simple_logger::log_filter
-//{
-//public:
-//	std::string operator()(std::string s) const
-//	{
-//		return txt(s);
-//	}
-//
-//private:
-//	ansi::ansi_fsm txt;
-//};
+auto unprintable_filter2 = [](std::string s)
+{
+	for(char& c: s)
+		if(!std::isprint(c) && c != '\r' && c != '\n' && c != '\t')
+			c = '?';
+	return s;
+};
+
+auto unprintable_filter = [](std::string s)
+{
+	static auto d = "0123456789ABCDEF";
+	thread_local static std::string b = "[0x00]";
+	thread_local static std::string o;
+	o.clear();
+	for(char& c: s)
+	{
+		if(std::isprint(c) || c == '\r' || c == '\n' || c == '\t')
+			o += c;
+		else
+		{
+			b[3] = d[c >> 4];
+			b[4] = d[c & 0x0F];
+			o += b;
+		}
+	}
+
+	return o;
+};
 
 int main(int argc, char* argv[])
 {
@@ -130,8 +146,8 @@ int main(int argc, char* argv[])
 
 		IrcBot bot;
 
-//		log_out::synchronize_output();
-//		log_out::filter([](std::string s){return txt(s);});
+		log_out::synchronize_output();
+		log_out::filter(unprintable_filter);
 
 		LOG::A << bot.get_name() << " /v" << bot.get_version() + "/";
 
