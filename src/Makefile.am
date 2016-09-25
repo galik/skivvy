@@ -55,6 +55,7 @@ BOOST_LIBS = $(BOOST_SYSTEM_LIB) $(BOOST_ASIO_LIB)
 
 skivvy_include_HEADERS = \
 	$(srcdir)/include/skivvy/ansi.h \
+	$(srcdir)/include/skivvy/botdb.h \
 	$(srcdir)/include/skivvy/cal.h \
 	$(srcdir)/include/skivvy/FloodController.h \
 	$(srcdir)/include/skivvy/ios.h \
