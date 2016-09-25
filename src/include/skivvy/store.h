@@ -505,10 +505,14 @@ public:
 		return ci;
 	}
 
+	// this method destroys the case of the keys
+	// TODO: find a way to preserver it
+	// maybe switch case sensitivity on *after* the copy?
 	void replace_store(str_vec_map&& store)
 	{
 		for(auto const& p: this->store)
-			store[p.first] = p.second;
+			for(auto const e: p.second)
+				store[p.first].push_back(e);
 		this->store.swap(store);
 	}
 
