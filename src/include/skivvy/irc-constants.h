@@ -6,7 +6,7 @@
 
 namespace skivvy { namespace irc {
 
-using namespace hol::small_types::basic;
+using namespace header_only_library::small_types::basic;
 
 #define KEYWORD(w) const str w = #w
 

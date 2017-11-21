@@ -33,7 +33,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 namespace skivvy { namespace net {
 
-using namespace hol::small_types::basic;
+using namespace header_only_library::small_types::basic;
 
 struct cookie
 {

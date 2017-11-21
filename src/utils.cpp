@@ -33,17 +33,20 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 #include <hol/simple_logger.h>
 #include <hol/small_types.h>
-#include <hol/random_utils.h>
+#include <hol/random_numbers.h>
 #include <skivvy/irc.h>
 
 namespace skivvy { namespace utils {
 
-using namespace hol::random_utils;
-using namespace hol::small_types::ios;
-using namespace hol::small_types::ios::functions;
-using namespace hol::small_types::basic;
+namespace hol {
+	using namespace header_only_library::random_numbers;
+}
+
+using namespace header_only_library::small_types::ios;
+using namespace header_only_library::small_types::ios::functions;
+using namespace header_only_library::small_types::basic;
 using namespace skivvy::irc;
-using namespace hol::simple_logger;
+using namespace header_only_library::simple_logger;
 //using namespace sookee::ios;
 
 bool parse_rangelist(const str& rangelist, siz_vec& items)
@@ -157,7 +160,7 @@ str wild_replace(const str wild, const str_vec& replacements)
 		else if(c == '\\')
 			esc = true;
 		else if(c == '*')
-			fixed += rnd::random_element(replacements);
+			fixed += hol::random_element(replacements);
 		else
 			fixed += c;
 	}
@@ -166,20 +169,20 @@ str wild_replace(const str wild, const str_vec& replacements)
 
 // Missing from removal of libsookee
 
-str::size_type extract_delimited_text(const str& in, const str& d1, const str& d2, str& out, size_t pos)
-{
-//	if(pos == str::npos)
-//		return pos;
-
-	auto end = pos;
-
-	if((pos = in.find(d1, pos)) != str::npos)
-		if((end = in.find(d2, (pos = pos + d1.size()))) != str::npos)
-		{
-			out = in.substr(pos, end - pos);
-			return end + d2.size();
-		}
-	return str::npos;
-}
+//str::size_type extract_delimited_text(const str& in, const str& d1, const str& d2, str& out, size_t pos)
+//{
+////	if(pos == str::npos)
+////		return pos;
+//
+//	auto end = pos;
+//
+//	if((pos = in.find(d1, pos)) != str::npos)
+//		if((end = in.find(d2, (pos = pos + d1.size()))) != str::npos)
+//		{
+//			out = in.substr(pos, end - pos);
+//			return end + d2.size();
+//		}
+//	return str::npos;
+//}
 
 }} // skivvy::cal

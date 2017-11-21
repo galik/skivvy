@@ -40,9 +40,13 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 namespace skivvy { namespace net {
 
-using namespace hol::simple_logger;
-using namespace hol::small_types::basic;
-using namespace hol::small_types::string_containers;
+namespace hol {
+	using namespace header_only_library::string_utils;
+}
+
+using namespace header_only_library::simple_logger;
+using namespace header_only_library::small_types::basic;
+using namespace header_only_library::small_types::string_containers;
 
 using str_pair = std::pair<str, str>;
 

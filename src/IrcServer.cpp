@@ -41,9 +41,13 @@ namespace skivvy { namespace ircbot {
 using namespace skivvy;
 using namespace skivvy::irc;
 
-using namespace hol::small_types::basic;
-using namespace hol::small_types::string_containers;
-using namespace hol::simple_logger;
+namespace hol {
+	using namespace header_only_library::string_utils;
+}
+
+using namespace header_only_library::small_types::basic;
+using namespace header_only_library::small_types::string_containers;
+using namespace header_only_library::simple_logger;
 
 // BASE
 
@@ -112,7 +116,7 @@ bool BaseIrcServer::notice(const str& to, const str& text)
 
 bool BaseIrcServer::whois(const str_set& masks)
 {
-	return send(WHOIS + " " + hol::join(masks, ","));
+	return send(WHOIS + " " + hol::join(std::begin(masks), std::end(masks), ","));
 }
 
 bool BaseIrcServer::quit(const str& reason)
@@ -128,8 +132,8 @@ bool BaseIrcServer::kick(const str_set& chans, const str_set& users, const str& 
 {
 	str cmd = KICK;
 
-	cmd += " " + hol::join(chans, ",");
-	cmd += " " + hol::join(users, ",");
+	cmd += " " + hol::join(std::begin(chans), std::end(chans), ",");
+	cmd += " " + hol::join(std::begin(users), std::end(users), ",");
 
 	return send(cmd + " :" + comment);
 }
@@ -307,7 +311,6 @@ bool RemoteIrcServer::receive(str& line)
 	}
 
 	return true;
-
 }
 
 }} // skivvy::ircbot

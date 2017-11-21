@@ -37,7 +37,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 namespace skivvy { namespace irc {
 
-using namespace hol::small_types::basic;
+using namespace header_only_library::small_types::basic;
 
 extern const str IRC_BOLD;
 extern const str IRC_COLOR;

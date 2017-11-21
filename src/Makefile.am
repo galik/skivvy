@@ -92,6 +92,7 @@ skivvy_library_LTLIBRARIES = \
 libskivvy_la_SOURCES = \
 	message.cpp \
 	cal.cpp \
+	botdb.cpp \
 	FloodController.cpp \
 	ios.cpp \
 	ircbot.cpp \

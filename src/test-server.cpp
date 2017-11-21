@@ -51,7 +51,7 @@ using namespace skivvy;
 using namespace skivvy::irc;
 using namespace sookee::types;
 using namespace sookee::bug;
-using namespace hol::simple_logger;
+using namespace header_only_library::simple_logger;
 
 #define bug_in(i) do{bug(i.peek());}while(false)
 #define CSTRING(s) s,sizeof(s)

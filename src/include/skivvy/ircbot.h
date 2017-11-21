@@ -38,7 +38,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 //#include <skivvy/socketstream.h> // TODO: REMOVE THIS!!!
 //#include <sookee/ssl_socketstream.h>
 
-#include <boost/asio.hpp>
+//#include <boost/asio.hpp>
 
 #include <skivvy/FloodController.h>
 #include <hol/small_types.h>
@@ -68,9 +68,9 @@ namespace fs = std::experimental::filesystem;
 
 namespace skivvy { namespace ircbot {
 
-using namespace hol::small_types::basic;
-using namespace hol::small_types::string_containers;
-using namespace hol::simple_logger;
+using namespace header_only_library::small_types::basic;
+using namespace header_only_library::small_types::string_containers;
+using namespace header_only_library::simple_logger;
 using namespace skivvy::utils;
 
 const str DATA_DIR = "home";
@@ -908,23 +908,27 @@ public:
 	virtual void exit();
 };
 
+inline
 IrcBotPluginHandle::IrcBotPluginHandle(IrcBot& bot, const str& id)
 : bot(bot), id(id)
 {
 }
 
+inline
 IrcBotPluginHandle::IrcBotPluginHandle(const IrcBotPluginHandle& handle)
 : bot(handle.bot), id(handle.id), plugin(handle.plugin)
 , plugin_load_time(handle.plugin_load_time)
 {
 }
 
+inline
 IrcBotPluginHandle::operator void*() /*const*/
 {
 	ensure_plugin();
 	return plugin;
 }
 
+inline
 IrcBotPluginHandle& IrcBotPluginHandle::operator=(const IrcBotPluginHandle& handle)
 {
 	id = handle.id;
@@ -933,6 +937,7 @@ IrcBotPluginHandle& IrcBotPluginHandle::operator=(const IrcBotPluginHandle& hand
 	return *this;
 }
 
+inline
 void IrcBotPluginHandle::ensure_plugin()
 {
 	if(bot.get_plugin_load_time() > plugin_load_time)
@@ -942,6 +947,7 @@ void IrcBotPluginHandle::ensure_plugin()
 	}
 }
 
+inline
 IrcBotPlugin& IrcBotPluginHandle::operator*()
 {
 	ensure_plugin();
@@ -951,6 +957,7 @@ IrcBotPlugin& IrcBotPluginHandle::operator*()
 	return *plugin;
 }
 
+inline
 IrcBotPlugin* IrcBotPluginHandle::operator->()
 {
 	ensure_plugin();

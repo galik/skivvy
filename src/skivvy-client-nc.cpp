@@ -176,7 +176,7 @@ int main(int argc, char* argv[])
 		{
 			if(++arg == args.end())
 			{
-				con("ERROR: --config requires argument:");
+				out_con("ERROR: --config requires argument:");
 				return 1;
 			}
 			config_dir = *arg;
@@ -185,7 +185,7 @@ int main(int argc, char* argv[])
 		{
 			if(++arg == args.end())
 			{
-				con("ERROR: --host requires argument:");
+				out_con("ERROR: --host requires argument:");
 				return 1;
 			}
 			host = *arg;
@@ -194,7 +194,7 @@ int main(int argc, char* argv[])
 		{
 			if(++arg == args.end())
 			{
-				con("ERROR: --port requires argument:");
+				out_con("ERROR: --port requires argument:");
 				return 1;
 			}
 			port = *arg;

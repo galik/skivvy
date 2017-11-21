@@ -32,11 +32,16 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 #include <chrono>
 #include <hol/small_types.h>
+#include <hol/string_utils.h>
 
 namespace skivvy { namespace utils {
 
-using namespace hol::small_types::basic;
-using namespace hol::small_types::string_containers;
+namespace hol {
+	using namespace header_only_library::string_utils;
+}
+
+using namespace header_only_library::small_types::basic;
+using namespace header_only_library::small_types::string_containers;
 
 using siz_vec = std::vector<siz>;
 
@@ -107,7 +112,7 @@ str wild_replace(const str wild, const str_vec& replacements);
 
 // Missing from removal of libsookee
 
-str::size_type extract_delimited_text(const str& in, const str& d1, const str& d2, str& out, size_t pos = 0);
+//str::size_type extract_delimited_text(const str& in, const str& d1, const str& d2, str& out, size_t pos = 0);
 
 /// pos is updated to position after second delimiter
 //inline
@@ -130,7 +135,7 @@ extract_delimited_text_rv
 extract_delimited_text(const str& in, const str& d1, const str& d2, size_t pos = 0)
 {
 	extract_delimited_text_rv rv;
-	rv.pos = extract_delimited_text(in, d1, d2, rv.text, pos);
+	rv.pos = hol::extract_delimited_text(in, d1, d2, rv.text, pos);
 	return rv;
 }
 

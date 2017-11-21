@@ -50,9 +50,9 @@ namespace skivvy {
 namespace ircbot {
 
 using namespace boost;
-using namespace hol::simple_logger;
-using namespace hol::small_types::basic;
-using namespace hol::small_types::string_containers;
+using namespace header_only_library::simple_logger;
+using namespace header_only_library::small_types::basic;
+using namespace header_only_library::small_types::string_containers;
 
 using lock_guard = std::lock_guard<std::mutex>;
 

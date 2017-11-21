@@ -35,11 +35,15 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 #include <skivvy/ircbot.h>
 
+//namespace hol {
+//	using namespace header_only_library::term_utils;
+//}
+
 using namespace skivvy::ircbot;
 using namespace skivvy::utils;
-using namespace hol::simple_logger;
-using namespace hol::small_types::ios;
-using namespace hol::small_types::basic;
+using namespace header_only_library::simple_logger;
+using namespace header_only_library::small_types::ios;
+using namespace header_only_library::small_types::basic;
 
 #include <cstdio>
 #include <execinfo.h>
@@ -52,9 +56,9 @@ using namespace hol::small_types::basic;
 inline
 void set_default_log_colors()
 {
-	using namespace hol::simple_logger;
-	using namespace hol::term_utils::ansi;
-	using namespace hol::term_utils::ansi::color;
+	using namespace header_only_library::simple_logger;
+	using namespace header_only_library::term_utils::ansi;
+	using namespace header_only_library::term_utils::ansi::color;
 
 	auto border = ansi_esc({FAINT_ON}) + "│ " + ansi_esc({FAINT_OFF});
 	auto BOLD = ansi_esc({BOLD_ON});
@@ -74,9 +78,9 @@ void set_default_log_colors()
 inline
 void set_html_logging()
 {
-	using namespace hol::simple_logger;
-	using namespace hol::term_utils::ansi;
-	using namespace hol::term_utils::ansi::color;
+	using namespace header_only_library::simple_logger;
+	using namespace header_only_library::term_utils::ansi;
+	using namespace header_only_library::term_utils::ansi::color;
 
 //	auto border = ansi_esc({FAINT_ON}) + "│ " + ansi_esc({FAINT_OFF});
 //	auto BOLD = ansi_esc({BOLD_ON});
@@ -98,9 +102,9 @@ void set_html_logging()
 
 auto txt = []
 {
-	using namespace hol::term_utils;
+	using namespace header_only_library::term_utils;
 	bool active = false;
-	if((active = hol::term_utils::term_supports_color()))
+	if((active = header_only_library::term_utils::term_supports_color()))
 		set_default_log_colors();
 
 //	set_html_logging();

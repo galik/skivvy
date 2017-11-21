@@ -60,7 +60,7 @@ is granted under the same conditions.
 
 namespace skivvy { namespace net {
 
-using namespace hol::simple_logger;
+using namespace header_only_library::simple_logger;
 
 template<typename Char>
 class basic_socketbuf

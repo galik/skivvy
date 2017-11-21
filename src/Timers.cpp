@@ -33,7 +33,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <hol/bug.h>
 #include <hol/simple_logger.h>
 #include <hol/small_types.h>
-#include <hol/random_utils.h>
+#include <hol/random_numbers.h>
 
 #include <skivvy/utils.h>
 
@@ -42,10 +42,13 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 namespace skivvy { namespace ircbot {
 
+namespace hol {
+	using namespace header_only_library::random_numbers;
+}
+
 using namespace skivvy::utils;
-using namespace hol::random_utils;
-using namespace hol::simple_logger;
-using namespace hol::small_types::basic;
+using namespace header_only_library::simple_logger;
+using namespace header_only_library::small_types::basic;
 
 using lock_guard = std::lock_guard<std::mutex>;
 
@@ -77,7 +80,7 @@ void RandomTimer::timer()
 			for(const void* user: users)
 				cb(user);
 
-			std::time_t end = std::time(0) + rnd::random_number(mindelay, maxdelay);
+			std::time_t end = std::time(0) + hol::random_number(mindelay, maxdelay);
 			//bug("NEXT QUOTE: " << ctime(&end));
 			while(!users.empty() && std::time(0) < end)
 				std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -175,7 +178,7 @@ void MessageTimer::timer()
 		for(const message& m: messages)
 			cb(m);
 
-		std::time_t end = std::time(0) + rnd::random_number(mindelay, maxdelay);
+		std::time_t end = std::time(0) + hol::random_number(mindelay, maxdelay);
 		bug("NEXT CALL: " << ctime(&end));
 		while(!messages.empty() && std::time(0) < end)
 			std::this_thread::sleep_for(std::chrono::seconds(1));

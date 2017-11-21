@@ -48,11 +48,15 @@ http://www.gnu.org/licenses/gpl-2.0.html
 namespace skivvy {
 namespace utils {
 
-using namespace hol::small_types::ios;
-using namespace hol::small_types::ios::functions;
-using namespace hol::small_types::basic;
-using namespace hol::small_types::string_containers;
-using namespace hol::simple_logger;
+namespace hol {
+	using namespace header_only_library::string_utils;
+}
+
+using namespace header_only_library::small_types::ios;
+using namespace header_only_library::small_types::ios::functions;
+using namespace header_only_library::small_types::basic;
+using namespace header_only_library::small_types::string_containers;
+using namespace header_only_library::simple_logger;
 
 using lock_guard = std::lock_guard<std::mutex>;
 

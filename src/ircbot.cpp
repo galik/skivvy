@@ -54,7 +54,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <hol/bug.h>
 #include <hol/simple_logger.h>
 #include <hol/string_utils.h>
-#include <hol/random_utils.h>
+#include <hol/random_numbers.h>
 
 #include <skivvy/ios.h>
 #include <skivvy/stl.h>
@@ -78,10 +78,14 @@ using namespace skivvy;
 using namespace skivvy::irc;
 using namespace skivvy::utils;
 
-using namespace hol::random_utils;
-using namespace hol::simple_logger;
-using namespace hol::small_types::basic;
-using namespace hol::small_types::string_containers;
+namespace hol {
+	using namespace header_only_library::string_utils;
+	using namespace header_only_library::random_numbers;
+}
+
+using namespace header_only_library::simple_logger;
+using namespace header_only_library::small_types::basic;
+using namespace header_only_library::small_types::string_containers;
 
 static const str SERVER_HOST = "server.host";
 static const str SERVER_HOST_DEFAULT = "localhost";
@@ -290,7 +294,7 @@ std::istream& load_props(std::istream& is, IrcBot& bot, str_map& vars, str& pref
 		// replace environment vars
 		str var;
 		str::size_type pos= 0;
-		while((pos = extract_delimited_text(line, "${", "}", var, pos)) != str::npos)
+		while((pos = hol::extract_delimited_text(line, "${", "}", var, pos)) != str::npos)
 			hol::replace_all_mute(line, "${" + var + "}", std::getenv(var.c_str()));
 
 		// prefix processing
@@ -431,7 +435,7 @@ bool IrcBot::fc_say(const str& to, const str& text)
 
 bool IrcBot::fc_reply_help(const message& msg, const str& text, const str& prefix)
 {
-	for(const str& s: hol::split_copy(text, "\n"))
+	for(const str& s: hol::split_fold(text, "\n"))
 		if(!fc.send(msg.get_to(), [this,msg,prefix,s]{ return irc->reply(msg, prefix + s); }))
 			return false;
 	return true;
@@ -459,7 +463,7 @@ bool IrcBot::fc_reply_pm_notice(const message& msg, const str& text)
 
 bool IrcBot::fc_reply_pm_help(const message& msg, const str& text, const str& prefix)
 {
-	for(const str& s: hol::split_copy(text, "\n"))
+	for(const str& s: hol::split_fold(text, "\n"))
 		if(!fc.send(msg.get_to(), [this,msg,prefix,s]{ return irc->reply_pm(msg, prefix + s); }))
 			return false;
 	return true;
@@ -516,7 +520,7 @@ void IrcBot::official_join(const str& channel)
 	str_vec welcomes = get_vec(PROP_WELCOME);
 
 	if(!welcomes.empty())
-		irc->say(channel, rnd::random_element(welcomes));
+		irc->say(channel, hol::random_element(welcomes));
 }
 
 // =====================================
@@ -938,7 +942,7 @@ bool IrcBot::init(const str& config_file)
 					for(const str& c: chans)
 					{
 						if(!goodbyes.empty())
-							irc->say(c, rnd::random_element(goodbyes));
+							irc->say(c, hol::random_element(goodbyes));
 						irc->part(c);
 					}
 					done = true;
@@ -975,7 +979,7 @@ bool IrcBot::init(const str& config_file)
 			}
 			else if(get_set("trigger.word.join", "!join").count(cmd))//"!join")
 			{
-				str_vec param = hol::split_copy(msg.get_user_params());
+				str_vec param = hol::split_fold(msg.get_user_params());
 
 				if(param.size() == 2)
 				{
@@ -999,7 +1003,7 @@ bool IrcBot::init(const str& config_file)
 			}
 			else if(get_set("trigger.word.part", "!part").count(cmd))//"!part")
 			{
-				str_vec param = hol::split_copy(msg.get_user_params());
+				str_vec param = hol::split_fold(msg.get_user_params());
 
 				if(param.size() == 2)
 				{
@@ -1485,7 +1489,7 @@ void IrcBot::exec(const std::string& cmd, std::ostream* os)
 			for(const str& c: chans)
 			{
 				if(!goodbyes.empty())
-					irc->say(c, rnd::random_element(goodbyes));
+					irc->say(c, hol::random_element(goodbyes));
 				irc->part(c);
 			}
 			done = true;
@@ -1497,7 +1501,7 @@ void IrcBot::exec(const std::string& cmd, std::ostream* os)
 			for(const str& c: chans)
 			{
 				if(!goodbyes.empty())
-					irc->say(c, rnd::random_element(goodbyes));
+					irc->say(c, hol::random_element(goodbyes));
 				irc->part(c);
 			}
 			restart = true;

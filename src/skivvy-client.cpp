@@ -19,14 +19,18 @@
 
 #include <boost/asio.hpp>
 
-#define con(m) do{std::cout<<m<<'\n';}while(0)
+#define out_con(m) do{std::cout<<m<<'\n';}while(0)
+
+namespace hol {
+	using namespace header_only_library::string_utils;
+}
 
 using namespace boost;
-using namespace hol::small_types::ios;
-using namespace hol::small_types::ios::functions;
-using namespace hol::small_types::basic;
-using namespace hol::small_types::string_containers;
-using namespace hol::simple_logger;
+using namespace header_only_library::small_types::ios;
+using namespace header_only_library::small_types::ios::functions;
+using namespace header_only_library::small_types::basic;
+using namespace header_only_library::small_types::string_containers;
+using namespace header_only_library::simple_logger;
 
 //class ssl_iostream
 //{
@@ -265,7 +269,7 @@ int main(int argc, char* argv[])
 		{
 			if(++arg == args.end())
 			{
-				con("ERROR: --config requires argument:");
+				out_con("ERROR: --config requires argument:");
 				return 1;
 			}
 			config_dir = *arg;
@@ -274,7 +278,7 @@ int main(int argc, char* argv[])
 		{
 			if(++arg == args.end())
 			{
-				con("ERROR: --host requires argument:");
+				out_con("ERROR: --host requires argument:");
 				return 1;
 			}
 			host = *arg;
@@ -283,7 +287,7 @@ int main(int argc, char* argv[])
 		{
 			if(++arg == args.end())
 			{
-				con("ERROR: --port requires argument:");
+				out_con("ERROR: --port requires argument:");
 				return 1;
 			}
 			port = *arg;

@@ -35,7 +35,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 namespace skivvy { namespace types {
 
-using namespace hol::simple_logger;
+using namespace header_only_library::simple_logger;
 
 std::istream& delay::parse(std::istream& is)
 {
