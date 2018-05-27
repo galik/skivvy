@@ -1,5 +1,5 @@
-#ifndef _SKIVVY_STORE_H_
-#define _SKIVVY_STORE_H_
+#ifndef SKIVVY_STORE_H
+#define SKIVVY_STORE_H
 /*
  *  Created on: 04 Jan 2013
  *      Author: oaskivvy@gmail.com
@@ -28,13 +28,14 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 '-----------------------------------------------------------------*/
 
-#include <sookee/types/basic.h>
+#include <hol/small_types.h>
 
-#include <sookee/bug.h>
-#include <sookee/log.h>
-#include <sookee/stl.h>
-#include <sookee/str.h>
-#include <sookee/ios.h>
+#include <hol/bug.h>
+#include <hol/basic_serialization.h>
+#include <hol/simple_logger.h>
+#include <range/v3/all.hpp>
+#include <hol/string_utils.h>
+//#include <sookee/ios.h>
 
 #include <memory>
 #include <istream>
@@ -42,16 +43,22 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <fstream>
 #include <sstream>
 
-//#include <pcrecpp.h>
 #include <fnmatch.h>
 
-namespace skivvy { namespace utils {
+namespace skivvy {
+namespace utils {
 
-using namespace sookee::types;
-using namespace sookee::utils;
-using namespace sookee::bug;
-using namespace sookee::log;
-using namespace sookee::ios;
+namespace hol {
+	using namespace header_only_library::string_utils;
+}
+
+using namespace header_only_library::small_types::ios;
+using namespace header_only_library::small_types::ios::functions;
+using namespace header_only_library::small_types::basic;
+using namespace header_only_library::small_types::string_containers;
+using namespace header_only_library::simple_logger;
+
+using lock_guard = std::lock_guard<std::mutex>;
 
 // Container serialization
 
@@ -255,6 +262,33 @@ std::ostream& operator<<(std::ostream& os, const std::vector<T>& vec)
 	return write_container(os, vec);
 }
 
+class ci_cmp_type
+{
+public:
+	ci_cmp_type(bool ci): ci(ci) {}
+
+	bool operator()(str const& a, str const& b) const
+	{
+		if(ci)
+			return std::lexicographical_compare(a.begin(), a.end(), b.begin(), b.end(), ci_type());
+		return a < b;
+	}
+
+private:
+	struct ci_type
+	{
+		bool operator()(char a, char b) const
+		{
+			return std::tolower(a) < std::tolower(b);
+		}
+	};
+
+	bool ci;
+};
+
+// TODO: replace ci_fix(a) == ci_fix(b) with ci_equals(a, b)
+// TODO: replace ci_fix(a) != ci_fix(b) with ci_not_equals(a, b)
+
 class Store
 {
 public:
@@ -262,30 +296,37 @@ public:
 
 protected:
 
-	static bool pcre_match(const str& r, const str& s, bool full = false)
-	{
-		log("WARN: deprecated function use: sreg_match()");
-//		if(full)
-//			return pcrecpp::RE(r).FullMatch(s);
-//		return pcrecpp::RE(r).PartialMatch(s);
-		return sreg_match(r, s, full);
-	}
+	str ci_fix(str s) const { if(case_insensitive()) return hol::lower_mute(s); return s; }
 
-	static bool sreg_match(const str& r, const str& s, bool full = false)
+	bool sreg_match(const str& r, const str& s, bool full = false)
 	{
-		std::regex e(r);
+		using namespace std::regex_constants;
+
+		syntax_option_type opts = ECMAScript;
+
+		if(case_insensitive())
+			opts |= icase;
+
+		std::regex e(r, opts);
+
 		if(full)
 			return std::regex_match(s, e);
 		return std::regex_search(s, e);
 	}
 
-	static bool wild_match(const str& w, const str& s, int flags = 0)
+	bool wild_match(const str& w, const str& s, int flags = 0)
 	{
+		if(case_insensitive())
+			flags |= FNM_CASEFOLD;
+
 		return !fnmatch(w.c_str(), s.c_str(), flags | FNM_EXTMATCH);
 	}
 
 public:
 	virtual ~Store() {}
+
+	virtual bool case_insensitive() const = 0; // { return ci; }
+	virtual void case_insensitive(bool ci) = 0; // { this->ci = ci; }
 
 	str get(const str& k, const str& dflt = "")
 	{
@@ -339,8 +380,6 @@ public:
 	}
 
 
-	[[deprecated("Replaced by get_keys_if_sreg")]]
-	virtual str_set get_keys_if_pcre(const str& r) = 0;
 	virtual str_set get_keys_if_sreg(const str& r) = 0;
 	virtual str_set get_keys_if_wild(const str& w) = 0;
 
@@ -360,18 +399,6 @@ public:
 		str_vec vec = get_vec(k);
 		str_set set(vec.begin(), vec.end());
 		return set;
-	}
-
-	[[deprecated]]
-	str_vec get_pcre_vec_with_key(const str& k, const str& r)
-	{
-//		str_vec res;
-//		for(const auto& v: get_vec(k))
-//			if(pcre_match(r, v, true))
-//				res.push_back(v);
-//		return res;
-		log("WARN: deprecated function use: get_sreg_vec_with_key()");
-		return get_sreg_vec_with_key(k, r);
 	}
 
 	/**
@@ -405,7 +432,7 @@ public:
 	}
 
 	/**
-	 * Set each value from iteratore [first, last) against key k, clearing any current keys.
+	 * Set each value from iterator [first, last) against key k, clearing any current keys.
 	 */
 	template<typename InputIter>
 	void set_from(const str& k, InputIter first, InputIter last)
@@ -461,18 +488,53 @@ public:
 	 * Set nth element of key vector.
 	 */
 	virtual void set_at(const str& k, siz n, const str& v) = 0;
+
+private:
+//	bool ci = false;
 };
 
 using StoreUPtr = std::unique_ptr<Store>;
 
-USING_MAP(str, str_vec, str_vec_map);
+//using str_vec_map = std::map<str, str_vec>;
+using str_vec_map = std::map<str, str_vec, ci_cmp_type>;
 
 class MappedStore
 : public Store
 {
+public:
+	MappedStore(): store(ci_cmp_type(false)), ci(false) {}
+
+	bool case_insensitive() const override
+	{
+		return ci;
+	}
+
+	// this method destroys the case of the keys
+	// TODO: find a way to preserver it
+	// maybe switch case sensitivity on *after* the copy?
+	void replace_store(str_vec_map&& store)
+	{
+		for(auto const& p: this->store)
+			for(auto const e: p.second)
+				store[p.first].push_back(e);
+		this->store.swap(store);
+	}
+
+	void case_insensitive(bool ci) override
+	{
+		if(this->ci == ci)
+			return;
+
+		replace_store(str_vec_map{ci_cmp_type{ci}});
+
+		this->ci = ci;
+	}
+
 protected:
 	str_vec_map store;
 
+private:
+	bool ci;
 };
 
 class BackupStore
@@ -487,23 +549,13 @@ private:
 
 	void load()
 	{
-		thread_local static str line, k, v;
-		thread_local static std::istringstream iss;
-
+//		decltype(store)().swap(store);
+		store.clear();
 		if(auto ifs = std::ifstream(file))
-		{
-			store.clear();
-			while(std::getline(ifs, line))
-			{
-				iss.clear();
-				iss.str(line);
-				k.clear();
-				v.clear();
-				std::getline(std::getline(iss, k, ':') >> std::ws, v);
-				if(!k.empty())
-					store[k].push_back(v);
-			}
-		}
+			for(std::string line; std::getline(ifs, line);)
+				if(auto pos = line.find(':') + 1)
+					store[line.substr(0, pos - 1)].push_back(
+						line.substr(std::min(pos + 1, line.size())));
 	}
 
 	void save()
@@ -515,9 +567,7 @@ private:
 					ofs << p.first << ": " << v << '\n';
 		}
 		else
-		{
 			throw std::runtime_error("Unable to save store: " + file + " " + std::strerror(errno));
-		}
 	}
 
 public:
@@ -530,18 +580,13 @@ public:
 	BackupStore(const str& file): file(file)
 	{
 		reload();
+		try{save();}catch(...){throw std::runtime_error(std::strerror(errno));}
 	}
 
 	void reload()
 	{
 		lock_guard lock(mtx);
 		load();
-	}
-
-	str_set get_keys_if_pcre(const str& reg) override
-	{
-		log("WARN: deprecated function use: get_keys_if_sreg()");
-		return get_keys_if_sreg(reg);
 	}
 
 	str_set get_keys_if_sreg(const str& reg) override
@@ -670,7 +715,7 @@ private:
 		static siss iss;
 
 		if(store.size() > max)
-			store = str_vec_map();
+			store.clear();// = str_vec_map();
 
 		ifs.open(file);
 
@@ -684,7 +729,7 @@ private:
 				k.clear();
 				v.clear();
 				sgl(sgl(iss, k, ':') >> std::ws, v);
-				if(!k.empty() && k == key)
+				if(!k.empty() && ci_fix(k) == ci_fix(key))
 					store[k].push_back(v);
 			}
 		}
@@ -699,7 +744,7 @@ private:
 
 		str line;
 		while(sgl(ifs, line))
-			if(sgl(siss(line), line, ':') && line != key)
+			if(sgl(siss(line), line, ':') && ci_fix(line) != ci_fix(key))
 				ss << line << '\n';
 
 		ifs.close();
@@ -717,23 +762,6 @@ private:
 
 public:
 	CacheStore(const str& file, siz max = 0):file(file), max(max) {}
-
-	str_set get_keys_if_pcre(const str& reg) override
-	{
-//		str_set res;
-//		lock_guard lock(mtx);
-//
-//		ifs.open(file);
-//		str line;
-//		while(sgl(ifs, line))
-//			if(sgl(siss(line), line, ':') && pcre_match(reg, line))
-//				res.insert(line);
-//		ifs.close();
-//
-//		return res;
-		log("WARN: deprecated function use: get_keys_if_sreg()");
-		return get_keys_if_sreg(reg);
-	}
 
 	str_set get_keys_if_sreg(const str& reg) override
 	{
@@ -772,7 +800,7 @@ public:
 		ifs.open(file);
 		str line;
 		while(sgl(ifs, line))
-			if(!res && sgl(siss(line), line, ':') && line == k)
+			if(!res && sgl(siss(line), line, ':') && ci_fix(line) == ci_fix(k))
 				res = true;
 		ifs.close();
 		return res;
@@ -866,7 +894,7 @@ private:
 			k.clear();
 			v.clear();
 			if(sgl(sgl(ss, k, ':') >> std::ws, v))
-				if(k == key)
+				if(ci_fix(k) == ci_fix(key))
 					store.push_back(v);
 		}
 		ifs.close();
@@ -882,7 +910,7 @@ private:
 
 		str line;
 		while(sgl(ifs, line))
-			if(sgl(siss(line), line, ':') && line != key)
+			if(sgl(siss(line), line, ':') && ci_fix(line) != ci_fix(key))
 				ss << line << '\n';
 
 		ifs.close();
@@ -900,22 +928,6 @@ private:
 
 public:
 	FileStore(const str& file):file(file) {}
-
-	str_set get_keys_if_pcre(const str& reg) override
-	{
-//		str_set res;
-//		lock_guard lock(mtx);
-//
-//		ifs.open(file);
-//		while(sgl(ifs, line))
-//			if(sgl(siss(line), line, ':') && pcre_match(reg, line))
-//				res.insert(line);
-//		ifs.close();
-//
-//		return res;
-		log("WARN: deprecated function use: get_keys_if_sreg()");
-		return get_keys_if_sreg(reg);
-	}
 
 	str_set get_keys_if_sreg(const str& reg) override
 	{
@@ -952,7 +964,7 @@ public:
 		lock_guard lock(mtx);
 		ifs.open(file);
 		while(sgl(ifs, line))
-			if(!res && sgl(siss(line), line, ':') && line == k)
+			if(!res && sgl(siss(line), line, ':') && ci_fix(line) == ci_fix(k))
 				res = true;
 		ifs.close();
 		return res;
@@ -1018,5 +1030,7 @@ public:
 	}
 };
 
-}} // skivvy::utils
-#endif // _SKIVVY_STORE_H_
+} // utils
+} // skivvy
+
+#endif // SKIVVY_STORE_H

@@ -3,22 +3,73 @@
 #include <string>
 #include <cerrno>
 #include <cstring>
+#include <mutex>
+#include <atomic>
+#include <future>
+#include <chrono>
+#include <wordexp.h>
 
-#include <sookee/str.h>
-#include <sookee/ios.h>
-#include <sookee/cfg.h>
-
-#include <sookee/types.h>
-#include <skivvy/socketstream.h>
+#include <hol/bug.h>
+#include <hol/string_utils.h>
+#include <hol/small_types.h>
+#include <hol/simple_logger.h>
 
 #include <readline/readline.h>
 #include <readline/history.h>
 
-using namespace skivvy;
-using namespace sookee::ios;
-using namespace sookee::types;
-using namespace sookee::utils;
-using namespace sookee::props;
+#include <boost/asio.hpp>
+
+#define out_con(m) do{std::cout<<m<<'\n';}while(0)
+
+namespace hol {
+	using namespace header_only_library::string_utils;
+}
+
+using namespace boost;
+using namespace header_only_library::small_types::ios;
+using namespace header_only_library::small_types::ios::functions;
+using namespace header_only_library::small_types::basic;
+using namespace header_only_library::small_types::string_containers;
+using namespace header_only_library::simple_logger;
+
+//class ssl_iostream
+//{
+//public:
+//	ssl_iostream(): msg_stream(&msg) {}
+//	~ssl_iostream() { asio::write(msg_stream, msg); }
+//
+//	template<typename T> friend
+//	ssl_iostream& operator<<(ssl_iostream& io, T const& v)
+//	{
+//		io.msg_stream << v;
+//		io.msg_stream.flush();
+//		return io;
+//	}
+//
+//private:
+//	boost::asio::streambuf msg;
+//	std::ostream msg_stream;
+//};
+
+struct malloc_deleter
+{
+	template <class T>
+	void operator()(T* p) { std::free(p); }
+};
+
+using cstring_uptr = std::unique_ptr<char, malloc_deleter>;
+
+str wordexp(str var, int flags = 0)
+{
+	wordexp_t p;
+	if(!wordexp(var.c_str(), &p, flags))
+	{
+		if(p.we_wordc && p.we_wordv[0])
+			var = p.we_wordv[0];
+		wordfree(&p);
+	}
+	return var;
+}
 
 namespace this_thread {
 
@@ -43,24 +94,73 @@ public:
 
 class SkivvyClient
 {
+	using clock = std::chrono::system_clock;
+
 	str config_dir;
 	str host = "localhost";
 	str port = "7334";
 
 	this_thread::out os;
 
+	std::mutex send_mtx;
+
+	struct recv_rv
+	{
+		boost::system::error_code ec;
+		str msg;
+		explicit operator bool() const { return !ec; };
+	};
+
+	static
+	recv_rv recv(asio::ip::tcp::socket& sock)
+	{
+		recv_rv rv;
+		std::array<char, 1024> buf;
+		while(auto len = sock.read_some(asio::buffer(buf), rv.ec))
+		{
+			rv.msg.append(buf.data(), len);
+			if(len < buf.size())
+				break;
+		}
+		return rv;
+	}
+
+	static
+	boost::system::error_code send(asio::ip::tcp::socket& sock, str msg)
+	{
+		boost::system::error_code ec;
+		auto pos = msg.data();
+		auto end = pos + msg.size();
+		while(!ec && (pos += sock.write_some(asio::buffer(pos, end - pos), ec)) < end) {}
+		return ec;
+	}
+
 	bool send(const str& cmd, str& res, bool report = true)
 	{
-		net::socketstream ss;
-		if(!ss.open(host, std::stoi(port)))
+		std::lock_guard<std::mutex> lock(send_mtx);
+
+		asio::io_service io_service;
+		asio::ip::tcp::socket ss(io_service);
+		boost::system::error_code ec;
+		asio::ip::tcp::resolver resolver(io_service);
+		asio::connect(ss, resolver.resolve({host, port}), ec);
+
+		if(ec)
 		{
 			if(report)
-				os << "error: " << std::strerror(errno) << std::endl;
+				os << "error: " << ec.message() << std::endl;
 			return false;
 		}
 
-		(ss << cmd).put('\0') << std::flush;
-		return (bool)sgl(ss, res, '\0');
+		if(!(ec = send(ss, cmd + "\0")))
+		{
+			if(auto rv = recv(ss))
+				res = rv.msg;
+			else
+				ec = rv.ec;
+		}
+
+		return !ec;
 	}
 
 	std::atomic<bool> done;
@@ -85,25 +185,24 @@ public:
 		return status;
 	}
 
-	void poll()
-	{
-		str line;
-		while(!done)
-		{
-			if(send("/get_status", line))
-				for(auto&& l: parse_status(std::move(line)))
-					os << l << std::endl;
-			std::this_thread::sleep_for(std::chrono::milliseconds(500));
-		}
-		dusted = true;
-	}
+//	void poll()
+//	{
+//		str line;
+//		while(!done)
+//		{
+//			if(send("/get_status", line))
+//				for(auto&& l: parse_status(std::move(line)))
+//					if(!hol::trim_mute(l).empty())
+//						os << l << std::endl;
+//			std::this_thread::sleep_for(std::chrono::milliseconds(500));
+//		}
+//		dusted = true;
+//	}
 
 	void run()
 	{
 		using_history();
 		read_history((config_dir + "/.history").c_str());
-
-		fut = std::async(std::launch::async, [this]{ poll(); });
 
 		str name;
 		str chan;
@@ -118,7 +217,7 @@ public:
 
 		input.reset(readline(shell_prompt.c_str()));
 
-		while(line != "/die" && input && trim(line = input.get()) != "exit")
+		while(line != "/die" && input && hol::trim_mute(line = input.get()) != "exit")
 		{
 			if(!line.empty())
 			{
@@ -130,7 +229,7 @@ public:
 				}
 
 				str res;
-				if(send(line, res) && !trim(res).empty())
+				if(send(line, res) && !hol::trim_mute(res).empty())
 					os << res << std::endl;
 
 				if(send("/botnick", name))
@@ -141,13 +240,13 @@ public:
 
 		done = true;
 
-		st_clk::time_point timeout = st_clk::now() + std::chrono::seconds(10);
+		clock::time_point timeout = clock::now() + std::chrono::seconds(10);
 
-		while(!dusted && timeout < st_clk::now())
+		while(!dusted && timeout < clock::now())
 			std::this_thread::sleep_for(std::chrono::seconds(1));
 
 		if(!dusted)
-			log("ERROR: client timed out waiting for response");
+			LOG::E << "client timed out waiting for response";
 
 		if(fut.valid())
 			fut.get();
@@ -170,7 +269,7 @@ int main(int argc, char* argv[])
 		{
 			if(++arg == args.end())
 			{
-				con("ERROR: --config requires argument:");
+				out_con("ERROR: --config requires argument:");
 				return 1;
 			}
 			config_dir = *arg;
@@ -179,7 +278,7 @@ int main(int argc, char* argv[])
 		{
 			if(++arg == args.end())
 			{
-				con("ERROR: --host requires argument:");
+				out_con("ERROR: --host requires argument:");
 				return 1;
 			}
 			host = *arg;
@@ -188,7 +287,7 @@ int main(int argc, char* argv[])
 		{
 			if(++arg == args.end())
 			{
-				con("ERROR: --port requires argument:");
+				out_con("ERROR: --port requires argument:");
 				return 1;
 			}
 			port = *arg;

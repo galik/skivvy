@@ -30,8 +30,8 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 #include <skivvy/message.h>
 
-#include <sookee/types.h>
-#include <sookee/str.h>
+#include <hol/small_types.h>
+#include <hol/string_utils.h>
 #include <skivvy/store.h>
 #include <skivvy/logrep.h>
 
@@ -40,8 +40,9 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 namespace skivvy { namespace ircbot {
 
-using namespace sookee::types;
-using namespace sookee::utils;
+using namespace header_only_library::small_types::ios;
+using namespace header_only_library::small_types::basic;
+using namespace header_only_library::small_types::string_containers;
 using namespace skivvy::utils;
 
 std::istream& operator>>(std::istream& is, message& m)
@@ -84,7 +85,7 @@ str message::get_user_cmd() const
 {
 	str cmd;
 	sgl(siss(get_trailing()), cmd, ' ');
-	return trim(cmd);
+	return hol::trim_mute(cmd);
 }
 
 str message::get_user_params() const
@@ -94,7 +95,7 @@ str message::get_user_params() const
 	sgl(iss, params, ' ');
 	if(!sgl(iss, params))
 		return "";
-	return trim(params);
+	return hol::trim_mute(params);
 }
 
 str message::get_nick() const
@@ -348,7 +349,7 @@ bool message::parse(const str& line)
 
 	this->line = line;
 	this->when = std::time(0); // now
-	siss iss(soo::rtrim(this->line)); // solve cr crlf endings
+	siss iss(hol::trim_right_mute(this->line)); // solve cr crlf endings
 	if(iss.peek() == ':') // optional prefix
 		iss.ignore() >> prefix;
 	return (bool)sgl(iss >> command, params);

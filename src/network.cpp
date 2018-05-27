@@ -33,18 +33,22 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <ctime>
 #include <iomanip>
 
-#include <sookee/types.h>
-#include <sookee/str.h>
-#include <sookee/bug.h>
-#include <sookee/log.h>
+#include <hol/small_types.h>
+#include <hol/string_utils.h>
+#include <hol/bug.h>
+#include <hol/simple_logger.h>
 
 namespace skivvy { namespace net {
 
-using namespace sookee::bug;
-using namespace sookee::log;
-using namespace sookee::utils;
-using namespace sookee::types;
+namespace hol {
+	using namespace header_only_library::string_utils;
+}
 
+using namespace header_only_library::simple_logger;
+using namespace header_only_library::small_types::basic;
+using namespace header_only_library::small_types::string_containers;
+
+using str_pair = std::pair<str, str>;
 
 cookie::cookie()
 : secure(false)
@@ -140,25 +144,25 @@ std::istream& read_http_headers(std::istream&is, header_map& headers)
 
 	if(!std::getline(is, line))
 	{
-		log("STREAM ERROR: " << line);
-		log("          is: " << (bool)is);
+		LOG::E << line;
+		LOG::E << "  is: " << bool(is);
 		return is;
 	}
 
 	if(line.find("200") == str::npos || line.find("OK") == str::npos)
 	{
-		log("BAD RESPONSE: " << line);
+		LOG::E << "BAD RESPONSE: " << line;
 	}
 
 	str key, val;
 	std::istringstream iss;
 
-	while(is && std::getline(is, line) && !trim(line).empty())
+	while(is && std::getline(is, line) && !hol::trim_mute(line).empty())
 	{
 		iss.clear();
 		iss.str(line);
 		if(iss >> key && std::getline(iss, val))
-			headers.insert(std::make_pair(lower(trim(key, " \t\r\n:")), trim(val)));
+			headers.insert(std::make_pair(hol::lower_mute(hol::trim_mute(key, " \t\r\n:")), hol::trim_mute(val)));
 	}
 	return is;
 }
@@ -198,10 +202,10 @@ std::istream& read_http_response_data(std::istream&is, const header_map& headers
 				return is;
 			}
 			else
-				log("BAD content-length.");
+				LOG::E << "BAD content-length.";
 		}
 	}
-	log("Unknown data response method.");
+	LOG::E << "Unknown data response method.";
 	return is;
 }
 
@@ -268,8 +272,8 @@ str urldecode(std::string s)
 			oss.fill('0');
 			oss << "%" << std::setw(2) << std::hex << i;
 
-			urlism[lower_copy(oss.str())] = str(1, char(i));
-			urlism[upper_copy(oss.str())] = str(1, char(i));
+			urlism[hol::lower_copy(oss.str())] = str(1, char(i));
+			urlism[hol::upper_copy(oss.str())] = str(1, char(i));
 		}
 	}
 

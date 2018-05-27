@@ -1,6 +1,6 @@
 #pragma once
-#ifndef _SOOKEE_IRCBOT_FLOODCONTROLLER_H_
-#define _SOOKEE_IRCBOT_FLOODCONTROLLER_H_
+#ifndef SKIVVY_IRCBOT_FLOODCONTROLLER_H
+#define SKIVVY_IRCBOT_FLOODCONTROLLER_H
 
 /*
  * FloodController.h
@@ -32,7 +32,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 '-----------------------------------------------------------------*/
 
-#include <sookee/types.h>
+#include <hol/small_types.h>
 
 #include <mutex>
 #include <future>
@@ -40,15 +40,17 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 namespace skivvy { namespace ircbot {
 
-using namespace sookee::types;
+using namespace header_only_library::small_types::ios;
+using namespace header_only_library::small_types::basic;
+using namespace header_only_library::small_types::string_containers;
 
 /**
  */
 class FloodController
 {
 private:
-	typedef std::queue<std::function<bool()>> dispatch_que;
-	typedef std::map<str, dispatch_que> dispatch_map;
+	using dispatch_que = std::queue<std::function<bool()>>;
+	using dispatch_map = std::map<str, dispatch_que>;
 
 	std::mutex mtx;
 	dispatch_map m; // channel -> dispatch_que
@@ -85,4 +87,4 @@ public:
 
 }} // namespace skivvy { namespace ircbot {
 
-#endif // _SOOKEE_IRCBOT_FLOODCONTROLLER_H_
+#endif // SKIVVY_IRCBOT_FLOODCONTROLLER_H

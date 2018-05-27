@@ -28,7 +28,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 '-----------------------------------------------------------------*/
 
-#include <sookee/types.h>
+#include <hol/small_types.h>
 #include <skivvy/irc.h>
 
 #include <cmath>
@@ -36,7 +36,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 namespace skivvy { namespace irc {
 
-using namespace sookee::types;
+using namespace header_only_library::small_types::basic;
 
 const std::string IRC_REVERSE = "\u0016";
 const std::string IRC_ITALICS = "\u0016";
@@ -105,11 +105,16 @@ std::array<color, 16> irc_colors
 // h² = a² + b² + c²
 //  h = sqr(a² + b² + c²)
 
+size_t difference(size_t a, size_t b)
+{
+	return std::max(a, b) - std::min(a, b);
+}
+
 size_t distance(const color& c1, const color& c2)
 {
-	double r = std::abs(c1.r - c2.r);
-	double g = std::abs(c1.g - c2.g);
-	double b = std::abs(c1.b - c2.b);
+	double r = difference(c1.r, c2.r);
+	double g = difference(c1.g, c2.g);
+	double b = difference(c1.b, c2.b);
 	double h = std::sqrt((r * r) + (g * g) + (b * b));
 	return size_t(h);
 }

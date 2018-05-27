@@ -37,11 +37,11 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <ctime>
 #include <chrono>
 
-#include <sookee/types.h>
+#include <hol/small_types.h>
 
 namespace skivvy { namespace types {
 
-using namespace sookee::types;
+using namespace header_only_library::small_types::basic;
 
 struct delay
 {
@@ -94,7 +94,7 @@ struct malloc_deleter
 	void operator()(T* p) { std::free(p); }
 };
 
-typedef std::unique_ptr<char, malloc_deleter> cstring_uptr;
+using cstring_uptr = std::unique_ptr<char, malloc_deleter>;
 
 }} // sookee::types
 

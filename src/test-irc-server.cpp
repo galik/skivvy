@@ -24,7 +24,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <skivvy/server.h>
 
 #include <skivvy/logrep.h>
-#include <sookee/types.h>
+#include <hol/small_types.h>
 #include <skivvy/socketstream.h>
 
 namespace skivvy { namespace net {

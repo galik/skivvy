@@ -31,7 +31,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 '-----------------------------------------------------------------*/
 
-#include <sookee/types.h>
+#include <hol/small_types.h>
 #include <skivvy/ircbot.h>
 #include <skivvy/logrep.h>
 
@@ -69,9 +69,9 @@ class TrivialIrcBotPlugin
  , public IrcBotMonitor
 {
 public:
-	typedef std::vector<question> q_vec;
-	typedef q_vec::iterator q_vec_iter;
-	typedef q_vec::const_iterator q_vec_citer;
+	using q_vec = std::vector<question>;
+	using q_vec_iter = q_vec::iterator;
+	using q_vec_citer = q_vec::const_iterator;
 
 private:
 	q_vec questions;

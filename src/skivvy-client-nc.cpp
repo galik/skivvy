@@ -4,11 +4,11 @@
 #include <cerrno>
 #include <cstring>
 
-#include <sookee/str.h>
+#include <hol/string_utils.h>
 #include <sookee/ios.h>
 #include <sookee/cfg.h>
 
-#include <sookee/types.h>
+#include <hol/small_types.h>
 #include <skivvy/socketstream.h>
 
 #include <readline/readline.h>
@@ -176,7 +176,7 @@ int main(int argc, char* argv[])
 		{
 			if(++arg == args.end())
 			{
-				con("ERROR: --config requires argument:");
+				out_con("ERROR: --config requires argument:");
 				return 1;
 			}
 			config_dir = *arg;
@@ -185,7 +185,7 @@ int main(int argc, char* argv[])
 		{
 			if(++arg == args.end())
 			{
-				con("ERROR: --host requires argument:");
+				out_con("ERROR: --host requires argument:");
 				return 1;
 			}
 			host = *arg;
@@ -194,7 +194,7 @@ int main(int argc, char* argv[])
 		{
 			if(++arg == args.end())
 			{
-				con("ERROR: --port requires argument:");
+				out_con("ERROR: --port requires argument:");
 				return 1;
 			}
 			port = *arg;

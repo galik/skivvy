@@ -6,7 +6,7 @@
 #include <skivvy/stl.h>
 #include <skivvy/str.h>
 //#include <skivvy/rcon.h>
-#include <sookee/types.h>
+#include <hol/small_types.h>
 #include <skivvy/ircbot.h>
 #include <skivvy/logrep.h>
 #include <skivvy/network.h>

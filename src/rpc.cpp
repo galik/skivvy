@@ -6,7 +6,7 @@
  */
 
 /*-----------------------------------------------------------------.
-| Copyright (C) 2011 SooKee oaskivvy@gmail.com               |
+| Copyright (C) 2011 SooKee oaskivvy@gmail.com                     |
 '------------------------------------------------------------------'
 
 This program is free software; you can redistribute it and/or

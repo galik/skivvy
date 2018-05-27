@@ -28,10 +28,10 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 '-----------------------------------------------------------------*/
 
-#include <sookee/types.h>
-#include <sookee/bug.h>
-#include <sookee/log.h>
-#include <sookee/str.h>
+#include <hol/small_types.h>
+#include <hol/bug.h>
+#include <hol/simple_logger.h>
+#include <hol/string_utils.h>
 
 #include <skivvy/IrcServer.h>
 #include <skivvy/irc-constants.h>
@@ -41,10 +41,13 @@ namespace skivvy { namespace ircbot {
 using namespace skivvy;
 using namespace skivvy::irc;
 
-using namespace sookee::types;
-using namespace sookee::utils;
-using namespace sookee::bug;
-using namespace sookee::log;
+namespace hol {
+	using namespace header_only_library::string_utils;
+}
+
+using namespace header_only_library::small_types::basic;
+using namespace header_only_library::small_types::string_containers;
+using namespace header_only_library::simple_logger;
 
 // BASE
 
@@ -55,7 +58,7 @@ str ctcp_escape(str s)
 
 bool BaseIrcServer::send(const str& cmd)
 {
-	log("send: " << cmd);
+	LOG::I << "send: " << cmd;
 	return send_unlogged(cmd);
 }
 
@@ -113,7 +116,7 @@ bool BaseIrcServer::notice(const str& to, const str& text)
 
 bool BaseIrcServer::whois(const str_set& masks)
 {
-	return send(WHOIS + " " + soo::join(masks, ","));
+	return send(WHOIS + " " + hol::join(std::begin(masks), std::end(masks), ","));
 }
 
 bool BaseIrcServer::quit(const str& reason)
@@ -129,8 +132,8 @@ bool BaseIrcServer::kick(const str_set& chans, const str_set& users, const str& 
 {
 	str cmd = KICK;
 
-	cmd += " " + soo::join(chans, ",");
-	cmd += " " + soo::join(users, ",");
+	cmd += " " + hol::join(std::begin(chans), std::end(chans), ",");
+	cmd += " " + hol::join(std::begin(users), std::end(users), ",");
 
 	return send(cmd + " :" + comment);
 }
@@ -203,37 +206,13 @@ bool BaseIrcServer::reply_pm_notice(const message& msg, const str& text)
 }
 
 
-// REMOTE
-
-//bool BasicRemoteIrcServer::send_unlogged(const str& cmd)
-//{
-//	lock_guard lock(mtx_ss);
-//	ss << cmd.substr(0, 510) << "\r\n" << std::flush;
-//	if(!ss)
-//		log("ERROR: send failed.");
-//	return (bool)ss;
-//}
-
-//bool BasicRemoteIrcServer::connect(const str& host, long port)
-//{
-//	ss.clear();
-//	ss.open(host, port);
-//	return (bool)ss;
-//}
-//
-//bool BasicRemoteIrcServer::receive(str& line)
-//{
-//	return (bool)std::getline(ss, line);
-//}
-
 // TEST
 
 bool TestIrcServer::send_unlogged(const str& cmd)
 {
-	ofs << cmd.substr(0, 510) << "\r\n" << std::flush;
-	if(!ofs)
-		log("ERROR: send failed.");
-	return (bool)ofs;
+	if(!(ofs << cmd.substr(0, 510) << "\r\n" << std::flush))
+		LOG::E << "send failed.";
+	return bool(ofs);
 }
 
 bool TestIrcServer::connect(const str& host, long port)
@@ -253,14 +232,85 @@ bool TestIrcServer::connect(const str& host, long port)
 	return ifs && ofs;
 }
 
+void TestIrcServer::close()
+{
+	ifs.close();
+	ofs.close();
+}
+
 bool TestIrcServer::receive(str& line)
 {
-//	static siz no = 0;
-//	++no;
-//	bug_var(no);
-//	sookee::bug::out() << no << ": ";
 	std::getline(ifs, line);
 	return ifs && true;
+}
+
+// REMOTE
+
+bool RemoteIrcServer::connect(const str& host, long port)
+{
+	bug_fun();
+	close();
+//	if(ss.is_open())
+//		ss.close();
+
+	io_service.reset();
+
+	boost::system::error_code ec;
+	asio::ip::tcp::resolver resolver(io_service);
+	asio::connect(ss, resolver.resolve({host, std::to_string(port)}));
+
+	if(ec)
+	{
+		LOG::E << ec.message();
+		return false;
+	}
+
+	return true;
+}
+
+void RemoteIrcServer::close()
+{
+	if(ss.is_open())
+		ss.close();
+}
+
+bool RemoteIrcServer::send_unlogged(const str& cmd)
+{
+	lock_guard lock(mtx_ss);
+//		ss << cmd.substr(0, 510) << "\r\n" << std::flush;
+	boost::system::error_code ec;
+
+	auto const buf = cmd + "\r\n";
+	auto pos = buf.data();
+	auto end = pos + buf.size();
+	while((pos += ss.write_some(asio::buffer(pos, end - pos), ec)) < end)
+		if(ec)
+			return false;
+
+	return true;
+}
+
+bool RemoteIrcServer::receive(str& line)
+{
+	line.clear();
+
+	std::array<char, 1024> buf;
+	boost::system::error_code ec;
+
+	while(auto len = ss.read_some(asio::buffer(buf), ec))
+	{
+		line.append(buf.data(), len);
+		if(len < buf.size())
+			break;
+	}
+
+	if(ec)
+	{
+		LOG::E << ec.message();
+		return false;
+	}
+
+	return true;
 }
 
 }} // skivvy::ircbot

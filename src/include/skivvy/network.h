@@ -25,7 +25,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 '-----------------------------------------------------------------*/
 
-#include <sookee/types.h>
+#include <hol/small_types.h>
 
 #include <map>
 #include <string>
@@ -33,7 +33,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 namespace skivvy { namespace net {
 
-using namespace sookee::types;
+using namespace header_only_library::small_types::basic;
 
 struct cookie
 {
@@ -50,14 +50,14 @@ struct cookie
 	bool is_expired();
 };
 
-typedef std::map<str, cookie> cookie_map;
-typedef std::pair<str, cookie> cookie_pair;
-typedef cookie_map cookie_jar;
-typedef str_mmap header_map;
-typedef str_pair header_pair;
-typedef header_pair header;
-typedef header_map::iterator header_iter;
-typedef header_map::const_iterator header_citer;
+using cookie_map = std::map<str, cookie>;
+using cookie_pair = std::pair<str, cookie>;
+using cookie_jar = cookie_map;
+using header_map = std::multimap<str, str>;
+using header_pair = std::pair<str, str>;
+using header = header_pair;
+using header_iter = header_map::iterator;
+using header_citer = header_map::const_iterator;
 
 
 str urlencode(const str& url);

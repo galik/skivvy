@@ -30,18 +30,16 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 '-----------------------------------------------------------------*/
 
-#include <sookee/bug.h>
+#include <hol/bug.h>
 
 namespace skivvy { namespace utils {
-
-using namespace sookee::bug;
 
 #ifndef DEBUG
 #define bug_msg(m)
 #define BUG_COMMAND(m)
 #else
 #define QUOTE(s) #s
-#define bug_msg(m) do{printmsg(sookee::bug::out(), (m));}while(false)
+#define bug_msg(m) do{printmsg(std::cout, (m));}while(false)
 #define BUG_COMMAND(m) \
 bug_fun(); \
 bug("//---------------------------------------------------"); \

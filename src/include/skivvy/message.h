@@ -34,14 +34,16 @@ http://www.gnu.org/licenses/gpl-2.0.html
 //#include <sookee/socketstream.h>
 
 //#include <sookee/stl.h>
-#include <sookee/str.h>
-#include <sookee/types.h>
-#include <sookee/bug.h>
+#include <hol/string_utils.h>
+#include <hol/small_types.h>
+#include <hol/bug.h>
 
 
 namespace skivvy { namespace ircbot {
 
-using namespace sookee::types;
+using namespace header_only_library::small_types::ios;
+using namespace header_only_library::small_types::basic;
+using namespace header_only_library::small_types::string_containers;
 
 class message
 {
@@ -307,9 +309,9 @@ public:
 	friend std::ostream& printmsg(std::ostream& os, const message& m);
 };
 
-typedef std::set<message> message_set;
-typedef message_set::iterator message_set_iter;
-typedef message_set::const_iterator message_set_citer;
+using message_set = std::set<message>;
+using message_set_iter = message_set::iterator;
+using message_set_citer = message_set::const_iterator;
 
 // TODO: Sort this mess out
 //void bug_message_cp(const std::string& K, const std::string& V, const message_cp& msg);

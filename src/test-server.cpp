@@ -34,12 +34,12 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <iostream>
 #include <functional>
 
-#include <sookee/bug.h>
-#include <sookee/log.h>
+#include <hol/bug.h>
+#include <hol/simple_logger.h>
 #include <sookee/stl.h>
-#include <sookee/str.h>
+#include <hol/string_utils.h>
 
-#include <sookee/types.h>
+#include <hol/small_types.h>
 #include <skivvy/server.h>
 #include <skivvy/socketstream.h>
 #include <skivvy/message.h>
@@ -51,7 +51,7 @@ using namespace skivvy;
 using namespace skivvy::irc;
 using namespace sookee::types;
 using namespace sookee::bug;
-using namespace sookee::log;
+using namespace header_only_library::simple_logger;
 
 #define bug_in(i) do{bug(i.peek());}while(false)
 #define CSTRING(s) s,sizeof(s)
@@ -138,11 +138,11 @@ void irc_service(int cs)
 	log("IRC service closed.");
 }
 
-typedef std::unique_lock<std::mutex> unique_lock;
-typedef std::vector<message> message_vec;
-typedef std::list<message> message_lst;
-typedef std::queue<message> message_que;
-typedef std::function<bool(const message&)> request_func;
+using unique_lock = std::unique_lock<std::mutex>;
+using message_vec = std::vector<message>;
+using message_lst = std::list<message>;
+using message_que = std::queue<message>;
+using request_func = std::function<bool(const message&)>;
 
 class irc_server
 {

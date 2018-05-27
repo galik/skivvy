@@ -38,7 +38,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <sstream>
 #include <algorithm>
 
-#include <sookee/types.h>
+#include <hol/small_types.h>
 #include <skivvy/logrep.h>
 #include <skivvy/irc.h>
 #include <skivvy/ios.h>
@@ -221,9 +221,9 @@ void OAStatsIrcBotPlugin::oa1v1(const message& msg)
 
 	str type;
 
-	typedef std::vector<sub> sub_vec;
-	typedef sub_vec::iterator sub_vec_iter;
-	typedef sub_vec::const_iterator sub_vec_citer;
+	using sub_vec = std::vector<sub>;
+	using sub_vec_iter = sub_vec::iterator;
+	using sub_vec_citer = sub_vec::const_iterator;
 
 	sub_vec subs;
 	cal::year_t year = cal::get_year();
@@ -259,7 +259,7 @@ void OAStatsIrcBotPlugin::oa1v1(const message& msg)
 		candidate(bool subst, const str& match): subst(subst), match(match) {}
 	};
 
-	typedef std::pair<candidate, candidate> candidate_pair;
+	using candidate_pair = std::pair<candidate, candidate>;
 
 	std::vector<candidate_pair> candidates;
 

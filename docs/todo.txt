@@ -7,11 +7,28 @@ A - Addition
 F - FIXED
 X - Won't fix
 
+= 0.6 ==
+
+M Replace cal.h with date.h
+M Rework core processing
+M New plugin API (fixing help system)
+A Plugin Tools (facilitate common features)
+  1. api() helpers?
+M Finish core plugins:
+  1. bugzone
+  2. chanops
+  3. factoid
+  4. grabber
+  5. rawplug
+  6. rserver
+B Fix plugin dependencies
+B Fix plugin re-loading (with dependencies)
+
 = 1.0 ==
 
 M Change IrcBotMonitor to deliver send_event and recv_event
- -> to capture the bot's owm output if required. {1.0}
-B rconmsg does not sunbscribe to PMs - only channels {1.0}
+ -> to capture the bot's own output if required. {1.0}
+B rconmsg does not subscribe to PMs - only channels {1.0}
  -> When subscription is created, inserts bot's name rather than subscriber
 M Change rawplug API to mirror new message API
 M Make sure all config.example files are complete {1.0}

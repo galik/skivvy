@@ -52,10 +52,10 @@ public:
 
 class server
 {
-	typedef std::pair<int, std::future<void> > proc;
-	typedef std::list<proc> proc_list;
-	typedef proc_list::iterator proc_iter;
-	typedef proc_list::const_iterator proc_citer;
+	using proc = std::pair<int, std::future<void>>;
+	using proc_list = std::list<proc>;
+	using proc_iter = proc_list::iterator;
+	using proc_citer = proc_list::const_iterator;
 
 	enum PROC { SOCKET, FUTURE };
 

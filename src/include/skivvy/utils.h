@@ -27,14 +27,23 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 '-----------------------------------------------------------------*/
 
-#ifndef _SKIVVY_UTILS_H_
-#define _SKIVVY_UTILS_H_
+#ifndef SKIVVY_UTILS_H
+#define SKIVVY_UTILS_H
 
-#include <sookee/types.h>
+#include <chrono>
+#include <hol/small_types.h>
+#include <hol/string_utils.h>
 
 namespace skivvy { namespace utils {
 
-using namespace sookee::types;
+namespace hol {
+	using namespace header_only_library::string_utils;
+}
+
+using namespace header_only_library::small_types::basic;
+using namespace header_only_library::small_types::string_containers;
+
+using siz_vec = std::vector<siz>;
 
 // "1-4", "7", "9-11 ", " 15 - 16" ... -> siz_vec{1,2,3,4,7,9,10,11,15,16}
 bool parse_rangelist(const str& rangelist, siz_vec& items);
@@ -42,7 +51,7 @@ bool parse_rangelist(const str& rangelist, siz_vec& items);
 template<typename Rep, typename Period>
 void print_duration(std::chrono::duration<Rep, Period> t, std::ostream& os)
 {
-	typedef std::chrono::duration<int, std::ratio<60 * 60 * 24>> days;
+	using days = std::chrono::duration<int, std::ratio<60 * 60 * 24>>;
 
 	auto d = std::chrono::duration_cast < days > (t);
 	auto h = std::chrono::duration_cast < std::chrono::hours > (t - d);
@@ -60,7 +69,8 @@ void print_duration(std::chrono::duration<Rep, Period> t, std::ostream& os)
 str prompt_color(const str& seed);
 #define REPLY_PROMPT skivvy::utils::prompt_color(__func__)
 
-int rand_int(int low, int high);
+/// use hol::random_utils
+//int rand_int(int low, int high);
 
 #ifndef DEV
 #define DEV "-unset"
@@ -100,6 +110,35 @@ str wild_replace(const str wild, const str& replacement);
  */
 str wild_replace(const str wild, const str_vec& replacements);
 
+// Missing from removal of libsookee
+
+//str::size_type extract_delimited_text(const str& in, const str& d1, const str& d2, str& out, size_t pos = 0);
+
+/// pos is updated to position after second delimiter
+//inline
+//str extract_delimited_text(const str& in, const str& d1, const str& d2, size_t& pos)
+//{
+//	str s;
+//	pos = extract_delimited_text(in, d1, d2, s, pos);
+//	return s;
+//}
+
+struct extract_delimited_text_rv
+{
+	str text;
+	str::size_type pos = 0;
+	explicit operator bool() const { return pos != str::npos; }
+};
+
+inline
+extract_delimited_text_rv
+extract_delimited_text(const str& in, const str& d1, const str& d2, size_t pos = 0)
+{
+	extract_delimited_text_rv rv;
+	rv.pos = hol::extract_delimited_text(in, d1, d2, rv.text, pos);
+	return rv;
+}
+
 }} // skivvy::utils
 
-#endif // _SKIVVY_UTILS_H_
+#endif // SKIVVY_UTILS_H

@@ -1,12 +1,12 @@
 #pragma once
-#ifndef _SKIVVY_IRC_CONSTANTS_H_
-#define _SKIVVY_IRC_CONSTANTS_H_
+#ifndef SKIVVY_IRC_CONSTANTS_H
+#define SKIVVY_IRC_CONSTANTS_H
 
-#include <sookee/types.h>
+#include <hol/small_types.h>
 
 namespace skivvy { namespace irc {
 
-using namespace sookee::types;
+using namespace header_only_library::small_types::basic;
 
 #define KEYWORD(w) const str w = #w
 
@@ -195,4 +195,4 @@ const str ERR_USERSDONTMATCH = "502";
 
 }} // skivvy::irc
 
-#endif // _SKIVVY_IRC_CONSTANTS_H_
+#endif // SKIVVY_IRC_CONSTANTS_H

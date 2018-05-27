@@ -34,7 +34,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 #include <sstream>
 #include <iostream>
 
-#include <sookee/types.h>
+#include <hol/small_types.h>
 #include <skivvy/irc.h>
 #include <skivvy/logrep.h>
 #include <skivvy/network.h>

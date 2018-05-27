@@ -1,9 +1,6 @@
-#!/bin/sh
-echo "Running aclocal..." ; aclocal $ACLOCAL_FLAGS || exit 1
-echo "Running autoheader..." ; autoheader || exit 1
-echo "Running libtoolize..." ; libtoolize --copy --force --install || exit 1
-echo "Running autoconf..." ; autoconf || exit 1
-echo "Running automake..." ; automake --add-missing --copy --gnu || exit 1
+#!/bin/bash
 
-#./configure "$@"
-
+mkdir -p m4
+mkdir -p aux-bits
+autoheader --warnings=all
+autoreconf --force --install -I aux-bits -I m4

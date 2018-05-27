@@ -30,10 +30,11 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 #include <skivvy/Timers.h>
 
-#include <sookee/bug.h>
-#include <sookee/log.h>
+#include <hol/bug.h>
+#include <hol/simple_logger.h>
+#include <hol/small_types.h>
+#include <hol/random_numbers.h>
 
-#include <sookee/types.h>
 #include <skivvy/utils.h>
 
 #include <random>
@@ -41,10 +42,15 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 namespace skivvy { namespace ircbot {
 
-using namespace sookee::types;
+namespace hol {
+	using namespace header_only_library::random_numbers;
+}
+
 using namespace skivvy::utils;
-using namespace sookee::bug;
-using namespace sookee::log;
+using namespace header_only_library::simple_logger;
+using namespace header_only_library::small_types::basic;
+
+using lock_guard = std::lock_guard<std::mutex>;
 
 RandomTimer::RandomTimer(std::function<void(const void*)> cb)
 : mindelay(1)
@@ -74,14 +80,14 @@ void RandomTimer::timer()
 			for(const void* user: users)
 				cb(user);
 
-			std::time_t end = std::time(0) + rand_int(mindelay, maxdelay);
+			std::time_t end = std::time(0) + hol::random_number(mindelay, maxdelay);
 			//bug("NEXT QUOTE: " << ctime(&end));
 			while(!users.empty() && std::time(0) < end)
 				std::this_thread::sleep_for(std::chrono::seconds(1));
 		}
 		catch(std::exception& e)
 		{
-			log("e.what(): " << e.what());
+			LOG::X << e.what();
 		}
 	}
 }
@@ -172,7 +178,7 @@ void MessageTimer::timer()
 		for(const message& m: messages)
 			cb(m);
 
-		std::time_t end = std::time(0) + rand_int(mindelay, maxdelay);
+		std::time_t end = std::time(0) + hol::random_number(mindelay, maxdelay);
 		bug("NEXT CALL: " << ctime(&end));
 		while(!messages.empty() && std::time(0) < end)
 			std::this_thread::sleep_for(std::chrono::seconds(1));

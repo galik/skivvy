@@ -1,6 +1,6 @@
 #pragma once
-#ifndef _SOOKEE_RPC_TCC_
-#define _SOOKEE_RPC_TCC_
+#ifndef SKIVVY_RPC_TCC
+#define SKIVVY_RPC_TCC
 /*
  * rpc.tcc
  *
@@ -199,6 +199,6 @@ std::ostream& operator<<(std::ostream& os, const std::map<K, V>& m)
 	return container_os(os, m);
 }
 
-}} // sookee::rpc
+}} // skivvy::rpc
 
-#endif // _SOOKEE_RPC_TCC_
+#endif // SKIVVY_RPC_TCC

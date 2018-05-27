@@ -34,14 +34,16 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 #include <experimental/filesystem>
 
-#include <sookee/socketstream.h>
-#include <skivvy/socketstream.h> // TODO: REMOVE THIS!!!
-#include <sookee/ssl_socketstream.h>
+//#include <sookee/socketstream.h>
+//#include <skivvy/socketstream.h> // TODO: REMOVE THIS!!!
+//#include <sookee/ssl_socketstream.h>
+
+//#include <boost/asio.hpp>
 
 #include <skivvy/FloodController.h>
-#include <sookee/types.h>
-#include <sookee/bug.h>
-#include <sookee/log.h>
+#include <hol/small_types.h>
+#include <hol/bug.h>
+#include <hol/simple_logger.h>
 #include <skivvy/message.h>
 #include <skivvy/IrcServer.h>
 #include <skivvy/rpc.h>
@@ -66,9 +68,9 @@ namespace fs = std::experimental::filesystem;
 
 namespace skivvy { namespace ircbot {
 
-using namespace sookee::types;
-using namespace sookee::log;
-using namespace sookee::bug;
+using namespace header_only_library::small_types::basic;
+using namespace header_only_library::small_types::string_containers;
+using namespace header_only_library::simple_logger;
 using namespace skivvy::utils;
 
 const str DATA_DIR = "home";
@@ -88,9 +90,9 @@ struct msgevent
 	msgevent(): when(std::time(0)) {}
 };
 
-typedef std::list<msgevent> msgevent_lst;
-typedef std::map<str, msgevent_lst> msgevent_map;
-typedef std::pair<const str, msgevent_lst> msgevent_pair;
+using msgevent_lst = std::list<msgevent>;
+using msgevent_map = std::map<str, msgevent_lst>;
+using msgevent_pair = std::pair<const str, msgevent_lst>;
 
 struct user_info
 {
@@ -194,7 +196,7 @@ class IrcBotRPCService
 : public rpc::service
 {
 public:
-	typedef std::shared_ptr<rpc::call> call_ptr;
+	using call_ptr = std::shared_ptr<rpc::call>;
 
 	virtual ~IrcBotRPCService() {}
 
@@ -230,7 +232,7 @@ class IrcBotPlugin
 {
 public:
 	void* dl = 0;
-	typedef str_vec command_list;
+	using command_list = str_vec;
 	virtual ~IrcBotPlugin() {}
 
 	/**
@@ -306,9 +308,9 @@ public:
 	virtual void exit() = 0;
 };
 
-typedef IrcBotPlugin* IrcBotPluginRPtr;
-typedef std::unique_ptr<IrcBotPlugin> IrcBotPluginUPtr;
-typedef std::shared_ptr<IrcBotPlugin> IrcBotPluginSPtr;
+using IrcBotPluginRPtr = IrcBotPlugin*;
+using IrcBotPluginUPtr = std::unique_ptr<IrcBotPlugin>;
+using IrcBotPluginSPtr = std::shared_ptr<IrcBotPlugin>;
 
 /**
  * This is the abstract superclass for bot
@@ -361,7 +363,7 @@ public:
 	 */
 	struct action
 	{
-		typedef std::function<void(const message& msg)> action_func;
+		using action_func = std::function<void(const message& msg)>;
 		enum
 		{
 			INVISIBLE = 0b01, ALIAS = 0b10
@@ -375,9 +377,9 @@ public:
 		: cmd(cmd), help(help), func(func), flags(flags) {}
 	};
 
-//	typedef std::vector<action> action_vec;
-	typedef std::map<str, action> action_map;
-	typedef std::pair<str, action> action_pair;
+//	using action_vec = std::vector<action>;
+	using action_map = std::map<str, action>;
+	using action_pair = std::pair<str, action>;
 
 protected:
 	IrcBot& bot;
@@ -466,112 +468,6 @@ public:
 	virtual void exit() = 0;
 };
 
-//class ManagedIrcBotPlugin
-//: public IrcBotPlugin
-//{
-//public:
-//	typedef std::function<void(const message& msg)> action_func;
-//	typedef std::map<str, action_func> action_map;
-//
-//private:
-//	str get_trigger_key(const str& part, const str& trigger) const
-//	{
-//		return get_id() + ".trigger." + part + "." + trigger;
-//	}
-//
-//protected:
-//	IrcBot& bot;
-//	IrcServer* irc = nullptr;
-//
-//	struct info
-//	{
-//		str alias; // default alias
-//		str help; // default help
-//	};
-//
-//	using info_map = std::map<str, info>;
-//
-//	action_map actions; // trigger -> action_func
-//	info_map infos; // trigger -> {alias, help}
-//	str_map aliases; // alias -> trigger
-//
-//	void add(const str& trigger, const str& alias, const str& help, action_func func);
-//
-//public:
-//	ManagedIrcBotPlugin(IrcBot& bot);
-//	virtual ~ManagedIrcBotPlugin();
-//
-//	/**
-//	 * Implementing bots must override this function
-//	 * to initialize themselves.
-//	 *
-//	 * This is where the bot should
-//	 * check for the presence of plugins
-//	 * that it depends on.
-//	 *
-//	 * Also action objects should be registered in this function
-//	 * by calling void add():
-//	 *
-//	 * add
-//	 * ({
-//	 *     "trigger"
-//	 *     , "default alias" // !alarm
-//	 *     , "default help" // Does stuff
-//	 *     , [&](const message& msg){ do_command(msg); }
-//	 * });
-//	 *
-//	 * Where do_command(const message& msg) is the function that
-//	 * actually performs the command.
-//	 *
-//	 * @return false on failure
-//	 */
-//	virtual bool initialize() = 0;
-//
-//	// INTERFACE: IrcBotPlugin DON'T Override
-//
-//	/**
-//	 * Implementing classes should not override this
-//	 * function. This class provides its own implementation
-//	 * which calls the pure virtual function
-//	 * BasicIrcBotPlugin::initialize(). Implementations
-//	 * should override that instead.
-//	 */
-//	bool init() final override;
-//
-//	/**
-//	 * Implementing classes should not override this
-//	 * function. This class provides its own implementation
-//	 * which supplies the return information from the list of
-//	 * BasicIrcBotPlugin::action objects provided by calling
-//	 * the void BasicIrcBotPlugin::add(const action& a) function.
-//	 */
-//	str_vec list() const final override;
-//
-//	/**
-//	 * Implementing classes should not override this
-//	 * function. This class provides its own implementation
-//	 * which calls the relevant std::function from the list of
-//	 * BasicIrcBotPlugin::action objects provided by calling
-//	 * the void BasicIrcBotPlugin::add(const action& a) function.
-//	 */
-//	virtual void execute(const str& cmd, const message& msg) final;
-//
-//	/**
-//	 * Implementing classes should not override this
-//	 * function. This class provides its own implementation
-//	 * which supplies the return information from the list of
-//	 * BasicIrcBotPlugin::action objects provided by calling
-//	 * the void BasicIrcBotPlugin::add(const action& a) function.
-//	 */
-//	virtual str help(const str& cmd) const final;
-//
-//	virtual str get_id() const = 0;
-//	virtual str get_name() const = 0;
-//	virtual str get_version() const = 0;
-//
-//	virtual void exit() = 0;
-//};
-
 /**
  * The plugin implementation source should
  * use this macro to make itself loadable as
@@ -624,7 +520,7 @@ class IrcBot;
 //template<typename Plugin>
 //class IrcBotPluginHandle
 //{
-//	typedef std::shared_ptr<Plugin> PluginSPtr;
+//	using PluginSPtr = std::shared_ptr<Plugin>;
 //
 //	IrcBot& bot;
 //	str id;
@@ -669,30 +565,30 @@ class IrcBot
 public:
 	virtual ~IrcBot() {}
 
-	typedef std::map<str, str_vec> property_map;
-	typedef std::pair<const str, str_vec> property_pair;
-	typedef property_map::iterator property_iter;
-	typedef property_map::const_iterator property_citer;
+	using property_map = std::map<str, str_vec>;
+	using property_pair = std::pair<const str, str_vec>;
+	using property_iter = property_map::iterator;
+	using property_citer = property_map::const_iterator;
 
-	typedef std::pair<property_iter, property_iter> property_iter_pair;
-	typedef std::pair<property_iter, property_iter> property_range;
+	using property_iter_pair = std::pair<property_iter, property_iter>;
+	using property_range = std::pair<property_iter, property_iter>;
 
-	typedef std::vector<IrcBotPluginUPtr> plugin_vec;
-	typedef plugin_vec::iterator plugin_vec_iter;
-	typedef plugin_vec::const_iterator plugin_vec_citer;
+	using plugin_vec = std::vector<IrcBotPluginUPtr>;
+	using plugin_vec_iter = plugin_vec::iterator;
+	using plugin_vec_citer = plugin_vec::const_iterator;
 
-	typedef std::set<IrcBotMonitor*> monitor_set;
-	typedef std::set<IrcBotChoiceListener*> listener_set;
-	typedef std::map<str, IrcBotRPCService*> service_map;
-	typedef std::set<str> channel_set;
-	typedef std::map<str, IrcBotPluginRPtr> command_map;
-	typedef std::pair<str, IrcBotPluginRPtr> command_map_pair;
+	using monitor_set = std::set<IrcBotMonitor*>;
+	using listener_set = std::set<IrcBotChoiceListener*>;
+	using service_map = std::map<str, IrcBotRPCService*>;
+	using channel_set = std::set<str>;
+	using command_map = std::map<str, IrcBotPluginRPtr>;
+	using command_map_pair = std::pair<str, IrcBotPluginRPtr>;
 
-	typedef std::map<const str, str_set> nicks_map;
-	typedef std::pair<const str, str_set> nicks_map_pair;
-	typedef std::map<const str, str_set> str_str_set_map;
-	typedef nicks_map::iterator nicks_iter;
-	typedef nicks_map::const_iterator nick_citer;
+	using nicks_map = std::map<const str, str_set>;
+	using nicks_map_pair = std::pair<const str, str_set>;
+	using str_str_set_map = std::map<const str, str_set>;
+	using nicks_iter = nicks_map::iterator;
+	using nick_citer = nicks_map::const_iterator;
 
 private:
 	FloodController fc;
@@ -751,17 +647,17 @@ private:
 		bool operator==(const chan_prefix& cp) const { return plugin == cp.plugin; }
 	};
 
-	typedef std::set<chan_prefix> chan_prefix_set;
-	typedef std::map<str, chan_prefix_set> chan_access_map;
-	typedef std::pair<const str, chan_prefix_set> chan_access_pair;
+	using chan_prefix_set = std::set<chan_prefix>;
+	using chan_access_map = std::map<str, chan_prefix_set>;
+	using chan_access_pair = std::pair<const str, chan_prefix_set>;
 
 	chan_access_map chan_access; // ("#channel"|"*"|"PM") -> { {"plugin#1", "prefix1"}, {"plugin#2", "prefix2"} }
 
-	bool done;
 	bool debug;
 
-	bool connected;
-	bool registered;
+	std::atomic_bool done{false};
+	std::atomic_bool connected{false};
+	std::atomic_bool registered{false};
 
 	std::future<void> con;
 	std::istream* is;
@@ -835,7 +731,6 @@ public:
 	/**
 	 * Match s according to regular expression r.
 	 */
-	bool preg_match(const str& r, const str& s, bool full = false) const; // pcre regex
 	bool wild_match(const str& w, const str& s, int flags = 0) const;
 	bool sreg_match(const str& w, const str& s, bool full = false) const; // std::regex
 
@@ -907,8 +802,6 @@ public:
 		if(v.empty())
 			v.push_back(dflt);
 		return v;
-//		str_vec& v = props[s];
-//		return v.empty() ? str_vec{dflt} : v;
 	}
 
 	str_set get_set(const str& s) const
@@ -957,15 +850,19 @@ public:
 	{
 		return services.find(name) == services.end() ? 0 : services[name];
 	}
+
 private:
+
 	friend class IrcBotPluginHandle;
+
 	IrcBotPluginRPtr get_plugin(const str& id)
 	{
 		for(auto& plugin: plugins)
 			if(plugin->get_id() == id)
 				return plugin.get();
-		return IrcBotPluginRPtr(0);
+		return {};
 	}
+
 public:
 	IrcBotPluginHandle get_plugin_handle(const str& id)
 	{
@@ -987,6 +884,7 @@ public:
 	str configfile; // current config file
 
 	bool fc_say(const str& to, const str& text);
+	bool fc_do(const str& chan, std::function<bool()> func);
 
 	bool fc_reply(const message& msg, const str& text);
 	bool fc_reply_help(const message& msg, const str& text, const str& prefix = "");
@@ -1011,23 +909,27 @@ public:
 	virtual void exit();
 };
 
+inline
 IrcBotPluginHandle::IrcBotPluginHandle(IrcBot& bot, const str& id)
 : bot(bot), id(id)
 {
 }
 
+inline
 IrcBotPluginHandle::IrcBotPluginHandle(const IrcBotPluginHandle& handle)
 : bot(handle.bot), id(handle.id), plugin(handle.plugin)
 , plugin_load_time(handle.plugin_load_time)
 {
 }
 
+inline
 IrcBotPluginHandle::operator void*() /*const*/
 {
 	ensure_plugin();
 	return plugin;
 }
 
+inline
 IrcBotPluginHandle& IrcBotPluginHandle::operator=(const IrcBotPluginHandle& handle)
 {
 	id = handle.id;
@@ -1036,6 +938,7 @@ IrcBotPluginHandle& IrcBotPluginHandle::operator=(const IrcBotPluginHandle& hand
 	return *this;
 }
 
+inline
 void IrcBotPluginHandle::ensure_plugin()
 {
 	if(bot.get_plugin_load_time() > plugin_load_time)
@@ -1045,21 +948,23 @@ void IrcBotPluginHandle::ensure_plugin()
 	}
 }
 
+inline
 IrcBotPlugin& IrcBotPluginHandle::operator*()
 {
 	ensure_plugin();
 
 	if(!plugin)
-		log("ERROR: Bad IrcBotPluginHandle: " << this);
+		LOG::E << "Bad IrcBotPluginHandle: " << this;
 	return *plugin;
 }
 
+inline
 IrcBotPlugin* IrcBotPluginHandle::operator->()
 {
 	ensure_plugin();
 
 	if(!plugin)
-		log("ERROR: Bad IrcBotPluginHandle: " << this);
+		LOG::E << "Bad IrcBotPluginHandle: " << this;
 	return plugin;
 }
 

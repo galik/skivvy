@@ -82,7 +82,7 @@ struct keystats
 	}
 };
 
-typedef std::vector<keystats> stats_vector;
+using stats_vector = std::vector<keystats>;
 /**
  *
  */

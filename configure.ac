@@ -39,7 +39,7 @@ AC_PROG_INSTALL
 AC_LANG_CPLUSPLUS
 AX_CXX_COMPILE_STDCXX_14([noext],[mandatory])
 
-PKG_CHECK_MODULES([SOOKEE], [libsookee])
+#PKG_CHECK_MODULES([SOOKEE], [libsookee])
 PKG_CHECK_MODULES([OPENSSL], [openssl])
 
 AC_ARG_WITH([ncurses], AS_HELP_STRING([--with-ncurses], [Build the ncurses client]))
@@ -48,7 +48,8 @@ AS_IF([test "x$with_ncurses" = "xyes"], [
 ])
 AM_CONDITIONAL([MAKE_NCURSES], [test "x$NCURSES_LIBS" != "x"])
 
-
+AX_BOOST_BASE([1.6],, [AC_MSG_ERROR([skivvy needs Boost v1.6, but it was not found in your system])])
+AX_BOOST_ASIO
 
 AC_LANG_CPLUSPLUS
 AC_CONFIG_FILES([pkg-config/libskivvy.pc Makefile src/Makefile])
