@@ -52,6 +52,7 @@ http://www.gnu.org/licenses/gpl-2.0.html
 
 #include <hol/small_types.h>
 #include <hol/bug.h>
+#include <hol/macro_exceptions.h>
 #include <hol/simple_logger.h>
 #include <hol/string_utils.h>
 #include <hol/random_numbers.h>
@@ -424,6 +425,11 @@ IrcServer* IrcBot::get_irc_server() { return irc.get(); }
 bool IrcBot::fc_say(const str& to, const str& text)
 {
 	return fc.send(to, [this,to,text]()->bool{ return irc->say(to, text); });
+}
+
+bool IrcBot::fc_do(const str& chan, std::function<bool()> func)
+{
+	return fc.send(chan, func);
 }
 
 //bool IrcBot::fc_reply(const str& to, const str& text)

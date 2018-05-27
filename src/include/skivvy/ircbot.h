@@ -884,6 +884,7 @@ public:
 	str configfile; // current config file
 
 	bool fc_say(const str& to, const str& text);
+	bool fc_do(const str& chan, std::function<bool()> func);
 
 	bool fc_reply(const message& msg, const str& text);
 	bool fc_reply_help(const message& msg, const str& text, const str& prefix = "");
