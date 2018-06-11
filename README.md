@@ -2,5 +2,5 @@ skivvy
 ======
 
 Skivvy is an IRC Bot
-
-Visit: IRC FreeNode (irc.freenode.org) #skivvy
+ 
+**This code has moved here:** https://gitlab.com/Galik/skivvy
